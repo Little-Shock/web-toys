@@ -1,0 +1,62 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+}
+
+#gameCanvas {
+    border: 1px solid black;
+}
+
+#game-container {
+    text-align: center;
+    max-width: 1200px;  /* 增加游戏容器的最大宽度 */
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#emoji-container {
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    gap: 10px;  /* 增加间距 */
+    margin: 0 auto 20px;
+}
+
+.emoji {
+    font-size: 32px;  /* 增大字体大小 */
+    cursor: pointer;
+    transition: transform 0.1s;
+    width: 50px;  /* 增加宽度 */
+    height: 50px;  /* 增加高度 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff;  /* 添加背景色 */
+    border-radius: 8px;  /* 添加圆角 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);  /* 添加阴影 */
+}
+
+.emoji:hover {
+    transform: scale(1.2);
+}
+
+#message {
+    font-size: 24px;  /* 增大消息字体 */
+    font-weight: bold;
+    margin-top: 20px;
+    height: 30px;
+}
