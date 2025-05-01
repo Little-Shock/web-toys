@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Auto‑Sense Cyber Flash Card</title>
+  <style>
+    :root{--ar:1;--holo-angle:180deg;--holo-shift:0%;--tiltX:0deg;--tiltY:0deg;}
+    *,*::before,*::after{box-sizing:border-box;}
+    html,body{
+      margin:0;
+      height:100%;
+      overflow:hidden;                   /* prevent scrolling when interacting */
+      overscroll-behavior:contain;       /* disable iOS bounce / pull‑to‑refresh */
+      background:#050505;
+      font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      color:#e0e0e0;
+    }
+    body{display:flex;flex-direction:column;align-items:center;gap:1.7rem;padding:1.5rem;}
+    h1{font-size:1.28rem;margin:0;font-weight:600;text-align:center;}
+    .tip{font-size:.9rem;opacity:.75;text-align:center;max-width:36ch;}
+
+    /* upload */
+    .btn-upload{padding:.75em 1.2em;font-size:.95rem;border:1px solid #38f;background:#111;color:#38f;border-radius:8px;cursor:pointer;user-select:none;transition:.15s;text-decoration:none;}
+    .btn-upload:active{transform:scale(.96);}input[type=file]{display:none;}
+
+    /* card */
+    .card-wrap{
+      perspective:1200px;
+      width:min(80vw,420px);
+      aspect-ratio:var(--ar);
+      display:none;
+      touch-action:none;                 /* disable browser gestures */
+      user-select:none;                  /* avoid selection glow */
+    }
+    .card{position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;box-shadow:0 14px 30px rgba(0,0,0,.6);transition:transform .08s linear;transform:rotateX(var(--tiltX)) rotateY(var(--tiltY));backface-visibility:hidden;background:#000;}
+    .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;}
+    /* holo */
+    .holo{position:absolute;inset:-40%;background:conic-gradient(from var(--holo-angle),#00ffe0 0%,#0099ff 25%,#8600ff 55%,#ff009d 80%,#00ffe0 100%);mix-blend-mode:overlay;pointer-events:none;transform:translateX(var(--holo-shift));transition:transform .08s linear;}
+    /* noise shimmer layer */
+    .holo::after{
+      content:"";position:absolute;inset:0;
+      background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='60' height='60' filter='url(%23n)' opacity='0.2' /></svg>");
+      mix-blend-mode:screen;pointer-events:none;
+      animation:grain 0.4s steps(4) infinite;
+    }
+    @keyframes grain{0%{transform:translate(0,0);}100%{transform:translate(-60px,60px);}}
+    /* frame pulse */
+    .card::before,.card::after{content:"";position:absolute;inset:0;border:2px solid #00ffe0;border-radius:inherit;mix-blend-mode:screen;opacity:.3;animation:pulse 2.3s ease-in-out infinite;} .card::after{animation-delay:1.15s;opacity:.22;}@keyframes pulse{0%,100%{opacity:.25;}50%{opacity:.45;}}
+    /* Add styles for back link */
+    .back-link {
+        position: fixed;
+        top: 1rem;
+        right: 1rem; /* Positioned to the right */
+        z-index: 20;
+        background: rgba(255,255,255,0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        color: #ccc;
+        text-decoration: none;
+        font-size: 0.9rem;
+        backdrop-filter: blur(3px);
+        transition: background 0.3s;
+    }
+    .back-link:hover {
+        background: rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+<body>
+  <!-- Add the back link here -->
+  <a href="../index.html" class="back-link">返回主菜单</a>
+  
+  <h1>Cyber Flash Card</h1>
+  <p class="tip">自动检测：手机晃动 = 光效 + 3D 倾斜；桌面 = 鼠标悬停验证。</p>
+
+  <label class="btn-upload" for="file">选择图片</label>
+  <input type="file" id="file" accept="image/*">
+
+  <div class="card-wrap" id="wrap">
+    <div class="card" id="card">
+      <img id="pic" alt="uploaded" />
+      <div class="holo"></div>
+    </div>
+  </div>
+
+<script>
+const input  = document.getElementById('file');
+const wrap   = document.getElementById('wrap');
+const card   = document.getElementById('card');
+const pic    = document.getElementById('pic');
+const root   = document.documentElement;
+
+/* ==============================
+   State flags
+============================== */
+let gyroActive = false;      // true after at least one gyro reading
+let dragging    = false;     // pointer is currently pressed
+let lastTouch   = 0;         // throttle for touch‑move
+
+/* Helper: update CSS vars from beta / gamma‑like angles (deg) */
+function updateFromAngles(beta = 0, gamma = 0){
+  const tiltX = (beta  / 90 * -15).toFixed(2) + 'deg';
+  const tiltY = (gamma / 90 *  15).toFixed(2) + 'deg';
+  const angle = ((gamma + 90) / 180 * 360).toFixed(1) + 'deg';
+  const shift = (beta / 180 * 60).toFixed(1) + '%';
+
+  root.style.setProperty('--tiltX',  tiltX);
+  root.style.setProperty('--tiltY',  tiltY);
+  root.style.setProperty('--holo-angle', angle);
+  root.style.setProperty('--holo-shift', shift);
+}
+
+/* ==============================
+   2.  Pointer (mouse / touch) control
+============================== */
+wrap.addEventListener('pointerdown', () => dragging = true);
+wrap.addEventListener('pointerup',   () => { dragging = false; resetTilt(); });
+wrap.addEventListener('pointerleave',() => { dragging = false; resetTilt(); });
+
+wrap.addEventListener('pointermove', e => {
+  if (gyroActive) return;                 // gyro has priority
+  if (!dragging && e.pointerType !== 'mouse') return; // touch must be held
+
+  /* throttle 16 ms for mobile */
+  if (e.timeStamp - lastTouch < 16) return;
+  lastTouch = e.timeStamp;
+
+  const r = wrap.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+  const cx = r.width  / 2;
+  const cy = r.height / 2;
+
+  updateFromAngles((y - cy) / cy * 90, (x - cx) / cx * 90);
+});
+
+/* reset on tap‑release */
+function resetTilt() {
+  root.style.setProperty('--tiltX', '0deg');
+  root.style.setProperty('--tiltY', '0deg');
+  root.style.setProperty('--holo-shift', '0%');
+}
+
+/* ==============================
+   3.  Gyroscope control
+============================== */
+function bindGyro(){
+  if(typeof DeviceOrientationEvent === 'undefined') return;
+
+  const attach = () =>{
+    window.addEventListener('deviceorientation',ev=>{
+      if(ev.beta===null && ev.gamma===null) return; // ignore empty packets
+      gyroActive = true;
+      updateFromAngles(ev.beta, ev.gamma);
+    }, true);
+
+    /* if after 2 s still no readings, log a warning */
+    setTimeout(()=>{ if(!gyroActive) console.warn('⚠️ DeviceOrientation not delivering data.'); }, 2000);
+  };
+
+  if(DeviceOrientationEvent.requestPermission){
+    // iOS 13+ requires user gesture; ask once on first user interaction if initial call rejected
+    DeviceOrientationEvent.requestPermission()
+      .then(res=>{ if(res==='granted') attach(); })
+      .catch(()=>{ window.addEventListener('click',()=>DeviceOrientationEvent.requestPermission().then(p=>p==='granted'&&attach()),{once:true}); });
+  }else{
+    attach();
+  }
+}
+
+/* ==============================
+   1.  File upload → show card
+============================== */
+input.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  pic.src   = url;
+  wrap.style.display = 'block';
+
+  /* set aspect‑ratio from image */
+  const im = new Image();
+  im.onload = () => root.style.setProperty('--ar', (im.naturalWidth / im.naturalHeight).toFixed(3));
+  im.src = url;
+
+  /* try to bind gyro immediately */
+  bindGyro();
+});
+</script>
+</body>
+</html>

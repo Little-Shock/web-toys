@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Starborne Garden · 星生花园 · 网状线性版</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+      touch-action: none;
+      user-select: none;
+      font-family: sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at center, #030010, #000);
+    }
+
+    .back-link {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 20;
+      background: rgba(255,255,255,0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.9rem;
+      backdrop-filter: blur(3px);
+      transition: background 0.3s;
+    }
+
+    .back-link:hover {
+      background: rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+<body>
+<a href="../index.html" class="back-link">返回主菜单</a>
+
+<canvas id="garden"></canvas>
+
+<script>
+const canvas = document.getElementById('garden');
+const ctx = canvas.getContext('2d');
+
+let w, h, hw, hh;
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+  hw = w / 2;
+  hh = h / 2;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 参数配置
+const config = {
+  particleCount: 500,
+  connectRadius: 80,
+  maxLineWidth: 2.5,
+  minLineWidth: 0.3,
+  lineAlphaFactor: 0.6,
+  waveAmplitude: 10,
+  rippleSpeed: 0.02,
+  decayRate: 0.98,
+  reconnectionTime: 1500,
+  cameraZ: 400,
+};
+
+let time = 0;
+const particles = [];
+
+class Particle {
+  constructor(index) {
+    this.index = index;
+    this.angle = Math.random() * Math.PI * 2;
+    this.radius = Math.random() * 200 + 50;
+    this.n = Math.floor(Math.random() * 3) + 1;
+    this.omega = (Math.random() - 0.5) * 0.01;
+    this.a = Math.random() * 5 + 2;
+    this.zOffset = 0;
+    this.vx = this.vy = this.vz = 0;
+    this.rippleX = 0;
+    this.rippleY = 0;
+    this.reconnectTimer = 0;
+    this.color = 'hsla('+((this.radius/200)*60+270)+', 100%, 70%, 0.8)';
+  }
+
+  update(time) {
+    const t = time * 0.001;
+    const {n, a} = this;
+    const theta = this.angle + this.omega * t;
+    const ntht = n * theta + t;
+
+    let x = (this.radius + a * Math.cos(ntht)) * Math.cos(theta);
+    let y = (this.radius + a * Math.cos(ntht)) * Math.sin(theta);
+    let z = a * Math.sin(ntht);
+
+    // 添加涟漪扰动
+    x += this.rippleX;
+    y += this.rippleY;
+    z += this.zOffset;
+
+    // 三维到二维投影
+    const scale = config.cameraZ / (config.cameraZ - z);
+    this.x2d = hw + x * scale;
+    this.y2d = hh + y * scale;
+
+    // 更新涟漪衰减
+    this.rippleX *= config.decayRate;
+    this.rippleY *= config.decayRate;
+
+    // 自我修复逻辑
+    if (this.reconnectTimer > 0) {
+      this.reconnectTimer -= 1;
+    }
+
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+}
+
+// 初始化粒子
+for (let i = 0; i < config.particleCount; i++) {
+  particles.push(new Particle(i));
+}
+
+// 触摸交互记录
+const touches = [];
+
+canvas.addEventListener('pointerdown', e => {
+  const rect = canvas.getBoundingClientRect();
+  const tx = e.clientX - rect.left;
+  const ty = e.clientY - rect.top;
+  touches.push({x: tx, y: ty, type: 'down', start: time});
+});
+
+canvas.addEventListener('pointerup', e => {
+  const rect = canvas.getBoundingClientRect();
+  const tx = e.clientX - rect.left;
+  const ty = e.clientY - rect.top;
+  touches.push({x: tx, y: ty, type: 'up', time: time});
+});
+
+canvas.addEventListener('pointermove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const tx = e.clientX - rect.left;
+  const ty = e.clientY - rect.top;
+  touches.push({x: tx, y: ty, type: 'move', time: time});
+});
+
+// 设备晃动
+let lastX = 0, lastY = 0, lastZ = 0;
+window.addEventListener('devicemotion', e => {
+  const acc = e.accelerationIncludingGravity;
+  const dx = Math.abs(acc.x - lastX);
+  const dy = Math.abs(acc.y - lastY);
+  const dz = Math.abs(acc.z - lastZ);
+  if (dx > 0.5 || dy > 0.5 || dz > 0.5) {
+    for (let p of particles) {
+      p.rippleX += (acc.x - lastX) * 20;
+      p.rippleY += (acc.y - lastY) * 20;
+    }
+  }
+  lastX = acc.x;
+  lastY = acc.y;
+  lastZ = acc.z;
+});
+
+function drawLines(p1, p2) {
+  const dx = p1.x2d - p2.x2d;
+  const dy = p1.y2d - p2.y2d;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > config.connectRadius) return;
+
+  const alpha = (1 - dist / config.connectRadius) * config.lineAlphaFactor;
+  const lw = config.minLineWidth + (config.maxLineWidth - config.minLineWidth) * (1 - dist / config.connectRadius);
+
+  ctx.beginPath();
+  ctx.moveTo(p1.x2d, p1.y2d);
+  ctx.lineTo(p2.x2d, p2.y2d);
+  ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+  ctx.lineWidth = lw;
+  ctx.stroke();
+}
+
+function applyTouchEffects(p, tx, ty, type, duration) {
+  const dx = p.x2d - tx;
+  const dy = p.y2d - ty;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > config.connectRadius * 2) return;
+
+  const power = (1 - dist / (config.connectRadius * 2));
+  if (type === 'down') {
+    if (duration < 500) {
+      p.rippleX += (Math.random() - 0.5) * 5 * power;
+      p.rippleY += (Math.random() - 0.5) * 5 * power;
+    } else {
+      p.reconnectTimer = config.reconnectionTime;
+    }
+  } else if (type === 'move') {
+    p.rippleX += dx * 0.001 * power;
+    p.rippleY += dy * 0.001 * power;
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  time += 1;
+  ctx.fillStyle = 'rgba(0,0,0,0.1)';
+  ctx.fillRect(0, 0, w, h);
+
+  // 更新所有粒子
+  for (let p of particles) {
+    p.update(time);
+  }
+
+  // 处理触控效果
+  touches.forEach(t => {
+    for (let p of particles) {
+      applyTouchEffects(p, t.x, t.y, t.type, time - t.start || 0);
+    }
+  });
+
+  // 绘制连接线
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const p1 = particles[i];
+      const p2 = particles[j];
+      if (p1.reconnectTimer === 0 && p2.reconnectTimer === 0) {
+        drawLines(p1, p2);
+      }
+    }
+  }
+}
+
+animate();
+</script>
+</body>
+</html>
