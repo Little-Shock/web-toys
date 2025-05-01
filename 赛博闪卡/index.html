@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>赛博谷子 · Mobile WebGL</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden;-webkit-user-select:none;user-select:none}
+  #ui{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:10;color:#fff;font:15px/1.4 "SFMono-Regular",monospace;text-align:center}
+  #pick{display:inline-block;padding:6px 10px;border:1px solid #fff;border-radius:6px;background:rgba(255,255,255,.08);cursor:pointer}
+  input[type=file]{display:none}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+</head>
+
+<body>
+
+<!-- 简洁 UI：中央一个上传按钮 -->
+<div id="ui">
+  <label id="pick">点我上传图片<input id="uploader" type="file" accept="image/*"></label>
+</div>
+
+<!-- 顶点着色器 -->
+<script id="vtx" type="x-shader/x-vertex">
+attribute vec3 aPosition;
+varying vec2 vUV;
+void main(){
+  vUV = (aPosition.xy+1.0)*0.5;
+  gl_Position = vec4(aPosition,1.0);
+}
+</script>
+
+<!-- 片段着色器：RGB 错位 + 扫描线 + 噪声 + 视差光斑 -->
+<script id="frg" type="x-shader/x-fragment">
+precision mediump float;
+varying vec2 vUV;
+uniform sampler2D tex;
+uniform vec2  uRes;
+uniform float uTime;
+uniform vec2  uTilt;
+
+float rand(vec2 co){ return fract(sin(dot(co,vec2(12.9898,78.233)))*43758.5453); }
+
+void main(){
+  vec2 uv = vUV;
+
+  /* 随机行级错位 */
+  float glitch = step(0.97, rand(vec2(floor(uv.y*uRes.y*3.0), uTime)))*0.03;
+  uv.x += glitch;
+
+  /* RGB 错位 */
+  float off = 0.003 + 0.002*sin(uTime*1.6);
+  vec4 c;
+  c.r = texture2D(tex, uv+vec2( off,0.)).r;
+  c.g = texture2D(tex, uv).g;
+  c.b = texture2D(tex, uv-vec2(off,0.)).b;
+
+  /* 扫描线暗条 */
+  float scan = 0.06 * sin((uv.y + uTime*0.2)*uRes.y*3.1415);
+  c.rgb *= 1.0 - scan;
+
+  /* 亮度提升 + 粒噪 */
+  c.rgb += 0.25 + rand(uv*uTime)*0.05;
+
+  /* 视差光斑 */
+  float vig = 1.0 - distance(uv + uTilt*0.15, vec2(0.5));
+  c.rgb += vec3(0.2,0.15,0.28) * pow(vig, 2.0);
+
+  gl_FragColor = vec4(c.rgb,1.0);
+}
+</script>
+
+<script>
+let shaderProg, imgTex, gfx;
+let tilt   = {x:0,y:0}, target = {x:0,y:0};
+const SENS = 30;           // 倾斜灵敏度 (角度 → 范围 -1~1)
+
+function preload(){
+  shaderProg = loadShader('vtx','frg');
+}
+
+function setup(){
+  createCanvas(windowWidth, windowHeight, WEBGL);
+  noStroke();
+  gfx = createGraphics(2048, 2048);
+
+  /* 监听上传 */
+  select('#uploader').elt.onchange = e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    loadImage(URL.createObjectURL(f), pic=>{
+      gfx.image(pic,0,0,gfx.width,gfx.height);
+      imgTex = gfx;
+    });
+  };
+
+  /* 请求陀螺仪权限 (仅 iOS16+) */
+  if(typeof DeviceMotionEvent!=='undefined' && DeviceMotionEvent.requestPermission){
+    const ask=()=>DeviceMotionEvent.requestPermission().catch(()=>{});           // Safari 要用户手势
+    document.body.addEventListener('click', ask,{once:true});
+    document.body.addEventListener('touchend', ask,{once:true});
+  }
+}
+
+function draw(){
+  if(!imgTex){ background(15); return; }
+
+  shader(shaderProg);
+  shaderProg.setUniform('uRes', [width,height]);
+  shaderProg.setUniform('uTime', millis()/1000);
+  shaderProg.setUniform('tex', imgTex);
+
+  /* 逐帧平滑 */
+  tilt.x = lerp(tilt.x, target.x, 0.15);
+  tilt.y = lerp(tilt.y, target.y, 0.15);
+  shaderProg.setUniform('uTilt', [tilt.x, tilt.y]);
+
+  rect(-width/2,-height/2,width,height);
+}
+
+/* 鼠标/触控 Fallback —— 仅桌面 or 权限被拒绝时可用 */
+function mouseMoved(){ updateTilt(mouseX, mouseY); }
+function touchMoved(){ if(touches.length){ updateTilt(touches[0].x, touches[0].y); } }
+
+function updateTilt(px,py){
+  target.x = (px/width  - 0.5) * 2.0;
+  target.y = (py/height - 0.5) * 2.0;
+}
+
+/* DeviceOrientation 更顺滑地获取 beta / gamma */
+window.addEventListener('deviceorientation', e=>{
+  if(e.beta==null||e.gamma==null) return;
+  target.x = constrain(e.gamma / SENS, -1, 1); // 左右
+  target.y = constrain(e.beta  / SENS, -1, 1); // 前后
+}, true);
+
+function windowResized(){ resizeCanvas(windowWidth, windowHeight); }
+</script>
+</body>
+</html>
