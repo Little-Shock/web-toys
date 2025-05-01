@@ -89,6 +89,7 @@ function preload(){
 
 function setup(){
   createCanvas(windowWidth, windowHeight, WEBGL);
+  rectMode(CORNER); // Use top‑left origin so the full card sits inside the viewport
   noStroke();
   gfx = createGraphics(2048, 2048);
 
