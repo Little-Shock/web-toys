@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>赛博故障风 · Cyberpunk Glitch Effect</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">返回主菜单</a>
+
+  <!-- 加载指示器 -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">处理中...</div>
+  </div>
+
+  <div class="container">
+    <h1 class="title">赛博故障风</h1>
+    <p class="subtitle">上传图片，创造赛博朋克风格的故障艺术</p>
+
+    <!-- 上传区域 -->
+    <div class="upload-area" id="uploadArea">
+      <label for="imageUpload" class="upload-label">
+        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+        <span class="upload-text">点击或拖放图片</span>
+        <span class="upload-hint">推荐尺寸: 小于 2000px × 2000px</span>
+      </label>
+      <input type="file" id="imageUpload" accept="image/*" hidden>
+    </div>
+
+    <!-- 图片预览和效果区域 -->
+    <div class="preview-container" id="previewContainer" style="display: none;">
+      <div class="canvas-container">
+        <canvas id="glitchCanvas"></canvas>
+        <div class="canvas-controls">
+          <button id="fullscreenBtn" class="icon-btn" title="全屏预览">
+            <i class="fas fa-expand"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 移动端控制面板切换按钮 -->
+      <button id="toggleControlsBtn" class="toggle-controls-btn">
+        <i class="fas fa-sliders-h"></i> 效果控制
+      </button>
+
+      <!-- 控制面板 -->
+      <div class="controls-panel" id="controlsPanel">
+        <div class="controls-header">
+          <h3>效果调整</h3>
+          <button id="closeControlsBtn" class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- 预设效果按钮 -->
+        <div class="presets-container">
+          <button class="preset-btn" data-preset="cyberpunk">赛博朋克</button>
+          <button class="preset-btn" data-preset="vaporwave">蒸汽波</button>
+          <button class="preset-btn" data-preset="glitch">故障艺术</button>
+          <button class="preset-btn" data-preset="retro">复古风</button>
+        </div>
+
+        <div class="control-group">
+          <label for="glitchIntensity">故障强度</label>
+          <div class="slider-container">
+            <input type="range" id="glitchIntensity" min="0" max="100" value="50" class="slider">
+            <span class="value-display">50%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="rgbShift">RGB偏移</label>
+          <div class="slider-container">
+            <input type="range" id="rgbShift" min="0" max="100" value="30" class="slider">
+            <span class="value-display">30%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="scanLines">扫描线</label>
+          <div class="slider-container">
+            <input type="range" id="scanLines" min="0" max="100" value="40" class="slider">
+            <span class="value-display">40%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="noiseAmount">噪点</label>
+          <div class="slider-container">
+            <input type="range" id="noiseAmount" min="0" max="100" value="20" class="slider">
+            <span class="value-display">20%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="blockGlitch">块状故障</label>
+          <div class="slider-container">
+            <input type="range" id="blockGlitch" min="0" max="100" value="30" class="slider">
+            <span class="value-display">30%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="waveDistortion">波浪扭曲</label>
+          <div class="slider-container">
+            <input type="range" id="waveDistortion" min="0" max="100" value="25" class="slider">
+            <span class="value-display">25%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="colorShift">色彩偏移</label>
+          <div class="slider-container">
+            <input type="range" id="colorShift" min="0" max="100" value="35" class="slider">
+            <span class="value-display">35%</span>
+          </div>
+        </div>
+
+        <div class="quality-control">
+          <label for="qualitySelect">图像质量:</label>
+          <select id="qualitySelect" class="quality-select">
+            <option value="high">高 (可能较慢)</option>
+            <option value="medium" selected>中</option>
+            <option value="low">低 (更流畅)</option>
+          </select>
+        </div>
+
+        <div class="buttons-row">
+          <button id="randomizeBtn" class="btn"><i class="fas fa-random"></i> 随机效果</button>
+          <button id="saveImageBtn" class="btn"><i class="fas fa-download"></i> 保存图片</button>
+          <button id="resetBtn" class="btn"><i class="fas fa-undo"></i> 重置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全屏预览模态框 -->
+  <div id="fullscreenModal" class="fullscreen-modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <div class="fullscreen-canvas-container">
+        <canvas id="fullscreenCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/glitch.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

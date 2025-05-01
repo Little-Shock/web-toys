@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>织梦 · Fabric Dreams</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">返回主菜单</a>
+
+  <!-- 主界面 -->
+  <div class="container">
+    <!-- 画布容器 -->
+    <div class="canvas-container">
+      <canvas id="fabricCanvas"></canvas>
+    </div>
+
+    <!-- 工具面板 -->
+    <div class="tools-panel">
+      <!-- 织物类型选择 -->
+      <div class="tool-section">
+        <h3 class="section-title">织物类型</h3>
+        <div class="fabric-options">
+          <button class="fabric-option active" data-fabric="silk">
+            <span class="fabric-icon">🧣</span>
+            <span class="fabric-name">丝绸</span>
+          </button>
+          <button class="fabric-option" data-fabric="cotton">
+            <span class="fabric-icon">👕</span>
+            <span class="fabric-name">棉布</span>
+          </button>
+          <button class="fabric-option" data-fabric="wool">
+            <span class="fabric-icon">🧶</span>
+            <span class="fabric-name">羊毛</span>
+          </button>
+          <button class="fabric-option" data-fabric="denim">
+            <span class="fabric-icon">👖</span>
+            <span class="fabric-name">牛仔</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 纹理选择 -->
+      <div class="tool-section">
+        <h3 class="section-title">纹理</h3>
+        <div class="texture-options">
+          <div class="texture-option active" data-texture="plain">
+            <div class="texture-preview plain"></div>
+            <span class="texture-name">素色</span>
+          </div>
+          <div class="texture-option" data-texture="stripes">
+            <div class="texture-preview stripes"></div>
+            <span class="texture-name">条纹</span>
+          </div>
+          <div class="texture-option" data-texture="dots">
+            <div class="texture-preview dots"></div>
+            <span class="texture-name">圆点</span>
+          </div>
+          <div class="texture-option" data-texture="custom">
+            <div class="texture-preview custom">
+              <span class="upload-icon">+</span>
+            </div>
+            <span class="texture-name">自定义</span>
+          </div>
+        </div>
+        <input type="file" id="textureUpload" accept="image/*" hidden>
+      </div>
+
+      <!-- 颜色选择 -->
+      <div class="tool-section">
+        <h3 class="section-title">颜色</h3>
+        <div class="color-picker">
+          <div class="color-option active" data-color="#3498db" style="background-color: #3498db;"></div>
+          <div class="color-option" data-color="#e74c3c" style="background-color: #e74c3c;"></div>
+          <div class="color-option" data-color="#2ecc71" style="background-color: #2ecc71;"></div>
+          <div class="color-option" data-color="#f1c40f" style="background-color: #f1c40f;"></div>
+          <div class="color-option" data-color="#9b59b6" style="background-color: #9b59b6;"></div>
+          <div class="color-option" data-color="#34495e" style="background-color: #34495e;"></div>
+          <div class="color-option" data-color="#1abc9c" style="background-color: #1abc9c;"></div>
+          <div class="color-option" data-color="#e67e22" style="background-color: #e67e22;"></div>
+        </div>
+      </div>
+
+      <!-- 交互模式 -->
+      <div class="tool-section">
+        <h3 class="section-title">交互模式</h3>
+        <div class="mode-options">
+          <button class="mode-option active" data-mode="drag">
+            <span class="mode-icon">✋</span>
+            <span class="mode-name">拖拽</span>
+          </button>
+          <button class="mode-option" data-mode="pin">
+            <span class="mode-icon">📌</span>
+            <span class="mode-name">固定点</span>
+          </button>
+          <button class="mode-option" data-mode="cut">
+            <span class="mode-icon">✂️</span>
+            <span class="mode-name">剪裁</span>
+          </button>
+          <button class="mode-option" data-mode="wind">
+            <span class="mode-icon">💨</span>
+            <span class="mode-name">风力</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 控制按钮 -->
+      <div class="control-buttons">
+        <button id="resetButton" class="control-btn">重置织物</button>
+        <button id="saveButton" class="control-btn">保存图像</button>
+        <button id="settingsButton" class="control-btn">设置</button>
+      </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-header">
+        <h3>设置</h3>
+        <button id="closeSettings" class="close-btn">×</button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <label for="gravitySlider">重力强度</label>
+          <input type="range" id="gravitySlider" min="0" max="100" value="50">
+          <span class="value-display">50%</span>
+        </div>
+        <div class="setting-item">
+          <label for="stiffnessSlider">织物硬度</label>
+          <input type="range" id="stiffnessSlider" min="1" max="100" value="30">
+          <span class="value-display">30%</span>
+        </div>
+        <div class="setting-item">
+          <label for="dampingSlider">阻尼系数</label>
+          <input type="range" id="dampingSlider" min="1" max="100" value="20">
+          <span class="value-display">20%</span>
+        </div>
+        <div class="setting-item">
+          <label for="massSlider">织物质量</label>
+          <input type="range" id="massSlider" min="1" max="100" value="40">
+          <span class="value-display">40%</span>
+        </div>
+        <div class="setting-item">
+          <label for="resolutionSlider">网格精度</label>
+          <input type="range" id="resolutionSlider" min="10" max="50" value="20">
+          <span class="value-display">20</span>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="shadowToggle">显示阴影</label>
+          <input type="checkbox" id="shadowToggle" checked>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="soundToggle">启用音效</label>
+          <input type="checkbox" id="soundToggle" checked>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作提示 -->
+    <div id="instructionsPanel" class="instructions-panel">
+      <p>拖动织物或使用<span id="currentMode">拖拽</span>模式进行交互</p>
+    </div>
+  </div>
+
+  <!-- 加载脚本 -->
+  <script src="js/fabric-physics.js"></script>
+  <script src="js/fabric-renderer.js"></script>
+  <script src="js/audio-manager.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

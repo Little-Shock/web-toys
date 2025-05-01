@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>光绘 · Light Painting</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">返回主菜单</a>
+
+  <!-- 主界面 -->
+  <div class="container">
+    <!-- 画布容器 -->
+    <div class="canvas-container">
+      <canvas id="shadowCanvas"></canvas>
+    </div>
+
+    <!-- 工具面板 -->
+    <div class="tools-panel">
+      <!-- 光源选择 -->
+      <div class="tool-section">
+        <h3 class="section-title">光源</h3>
+        <div class="light-options">
+          <button class="light-option active" data-light="point">
+            <span class="light-icon">💡</span>
+            <span class="light-name">点光源</span>
+          </button>
+          <button class="light-option" data-light="spot">
+            <span class="light-icon">🔦</span>
+            <span class="light-name">聚光灯</span>
+          </button>
+          <button class="light-option" data-light="directional">
+            <span class="light-icon">☀️</span>
+            <span class="light-name">平行光</span>
+          </button>
+          <button class="light-option" data-light="ambient">
+            <span class="light-icon">🌟</span>
+            <span class="light-name">环境光</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 物体选择 -->
+      <div class="tool-section">
+        <h3 class="section-title">物体</h3>
+        <div class="object-options">
+          <button class="object-option active" data-object="rectangle">
+            <span class="object-icon">⬜</span>
+            <span class="object-name">矩形</span>
+          </button>
+          <button class="object-option" data-object="circle">
+            <span class="object-icon">⭕</span>
+            <span class="object-name">圆形</span>
+          </button>
+          <button class="object-option" data-object="triangle">
+            <span class="object-icon">△</span>
+            <span class="object-name">三角形</span>
+          </button>
+          <button class="object-option" data-object="custom">
+            <span class="object-icon">✏️</span>
+            <span class="object-name">自由绘制</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 颜色选择 -->
+      <div class="tool-section">
+        <h3 class="section-title">颜色</h3>
+        <div class="color-picker">
+          <div class="color-option active" data-color="#FFFFFF" style="background-color: #FFFFFF;"></div>
+          <div class="color-option" data-color="#FF5252" style="background-color: #FF5252;"></div>
+          <div class="color-option" data-color="#4CAF50" style="background-color: #4CAF50;"></div>
+          <div class="color-option" data-color="#2196F3" style="background-color: #2196F3;"></div>
+          <div class="color-option" data-color="#FFC107" style="background-color: #FFC107;"></div>
+          <div class="color-option" data-color="#9C27B0" style="background-color: #9C27B0;"></div>
+          <div class="color-option" data-color="#FF9800" style="background-color: #FF9800;"></div>
+          <div class="color-option" data-color="#00BCD4" style="background-color: #00BCD4;"></div>
+        </div>
+      </div>
+
+      <!-- 控制按钮 -->
+      <div class="control-buttons">
+        <button id="clearButton" class="control-btn">清空画布</button>
+        <button id="saveButton" class="control-btn">保存作品</button>
+        <button id="settingsButton" class="control-btn">设置</button>
+      </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-header">
+        <h3>设置</h3>
+        <button id="closeSettings" class="close-btn">×</button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <label for="lightIntensity">光源强度</label>
+          <input type="range" id="lightIntensity" min="1" max="100" value="70">
+          <span class="value-display">70%</span>
+        </div>
+        <div class="setting-item">
+          <label for="shadowSoftness">阴影柔和度</label>
+          <input type="range" id="shadowSoftness" min="1" max="100" value="50">
+          <span class="value-display">50%</span>
+        </div>
+        <div class="setting-item">
+          <label for="objectOpacity">物体透明度</label>
+          <input type="range" id="objectOpacity" min="0" max="100" value="80">
+          <span class="value-display">80%</span>
+        </div>
+        <div class="setting-item">
+          <label for="backgroundDarkness">背景暗度</label>
+          <input type="range" id="backgroundDarkness" min="0" max="100" value="90">
+          <span class="value-display">90%</span>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="animationEnabled">启用光源动画</label>
+          <input type="checkbox" id="animationEnabled" checked>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="soundEnabled">启用音效</label>
+          <input type="checkbox" id="soundEnabled" checked>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作提示 -->
+    <div id="instructionsPanel" class="instructions-panel">
+      <p>点击并拖动来放置<span id="currentTool">光源和物体</span></p>
+    </div>
+  </div>
+
+  <!-- 加载脚本 -->
+  <script src="js/light-engine.js"></script>
+  <script src="js/shadow-renderer.js"></script>
+  <script src="js/audio-manager.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

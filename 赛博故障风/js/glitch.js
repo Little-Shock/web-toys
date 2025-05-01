@@ -20,27 +20,74 @@ class GlitchEffect {
     };
     this.animationId = null;
     this.lastRender = 0;
+    this.quality = 'medium'; // 图像质量: 'low', 'medium', 'high'
+    this.maxImageSize = 2000; // 最大图像尺寸
+    this.processingScale = 1; // 处理时的缩放比例
+    this.originalImage = null; // 原始图像对象
+  }
+
+  // 设置图像质量
+  setQuality(quality) {
+    if (['low', 'medium', 'high'].includes(quality)) {
+      this.quality = quality;
+
+      // 如果已经加载了图像，重新应用质量设置
+      if (this.originalImage) {
+        this.applyQualitySettings();
+        this.render();
+      }
+    }
+  }
+
+  // 应用质量设置
+  applyQualitySettings() {
+    if (!this.originalImage) return;
+
+    // 根据质量设置确定处理比例
+    switch (this.quality) {
+      case 'low':
+        this.processingScale = Math.min(1, 800 / Math.max(this.originalImage.width, this.originalImage.height));
+        break;
+      case 'medium':
+        this.processingScale = Math.min(1, 1200 / Math.max(this.originalImage.width, this.originalImage.height));
+        break;
+      case 'high':
+        this.processingScale = 1; // 原始尺寸
+        break;
+    }
+
+    // 计算处理尺寸
+    const processWidth = Math.floor(this.originalImage.width * this.processingScale);
+    const processHeight = Math.floor(this.originalImage.height * this.processingScale);
+
+    // 调整canvas大小
+    this.width = processWidth;
+    this.height = processHeight;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+
+    // 绘制调整后的图像
+    this.ctx.drawImage(this.originalImage, 0, 0, this.width, this.height);
+
+    // 保存原始图像数据
+    this.originalImageData = this.ctx.getImageData(0, 0, this.width, this.height);
   }
 
   // 加载图像
   loadImage(imageSource) {
     return new Promise((resolve, reject) => {
       const img = new Image();
+
       img.onload = () => {
-        // 调整canvas大小以适应图像
-        this.width = img.width;
-        this.height = img.height;
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
-        
-        // 绘制原始图像
-        this.ctx.drawImage(img, 0, 0, this.width, this.height);
-        
-        // 保存原始图像数据
-        this.originalImageData = this.ctx.getImageData(0, 0, this.width, this.height);
-        
+        // 保存原始图像对象
+        this.originalImage = img;
+
+        // 应用质量设置
+        this.applyQualitySettings();
+
         resolve();
       };
+
       img.onerror = () => reject(new Error('图像加载失败'));
       img.src = imageSource;
     });
@@ -76,22 +123,36 @@ class GlitchEffect {
   // 主渲染函数
   render() {
     if (!this.originalImageData) return;
-    
+
     // 复制原始图像数据以进行处理
     const imageData = new ImageData(
       new Uint8ClampedArray(this.originalImageData.data),
       this.width,
       this.height
     );
-    
-    // 应用各种效果
-    this.applyRGBShift(imageData);
+
+    // 根据质量设置选择性应用效果
+    // 低质量模式下跳过某些计算密集型效果
+    if (this.quality !== 'low') {
+      this.applyRGBShift(imageData);
+    }
+
     this.applyScanLines(imageData);
-    this.applyNoise(imageData);
-    this.applyBlockGlitch(imageData);
-    this.applyWaveDistortion(imageData);
+
+    if (this.quality !== 'low' || Math.random() < 0.5) {
+      this.applyNoise(imageData);
+    }
+
+    if (this.quality !== 'low' || Math.random() < 0.3) {
+      this.applyBlockGlitch(imageData);
+    }
+
+    if (this.quality !== 'low') {
+      this.applyWaveDistortion(imageData);
+    }
+
     this.applyColorShift(imageData);
-    
+
     // 绘制处理后的图像
     this.ctx.putImageData(imageData, 0, 0);
   }
@@ -101,20 +162,33 @@ class GlitchEffect {
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
     }
-    
+
+    // 根据质量设置调整动画帧率
+    let frameInterval = 100; // 默认每100ms更新一次
+    if (this.quality === 'low') {
+      frameInterval = 200; // 低质量模式下降低帧率
+    } else if (this.quality === 'high') {
+      frameInterval = 80; // 高质量模式下提高帧率
+    }
+
     const animate = (timestamp) => {
-      if (timestamp - this.lastRender > 100) { // 每100ms更新一次
+      if (timestamp - this.lastRender > frameInterval) {
         this.lastRender = timestamp;
-        
+
         // 随机调整某些参数以创建动态效果
-        if (Math.random() < this.params.glitchIntensity * 0.3) {
+        // 根据设备性能和质量设置调整故障效果频率
+        const glitchProbability = this.quality === 'low' ?
+          this.params.glitchIntensity * 0.15 :
+          this.params.glitchIntensity * 0.3;
+
+        if (Math.random() < glitchProbability) {
           this.applyRandomGlitch();
         }
       }
-      
+
       this.animationId = requestAnimationFrame(animate);
     };
-    
+
     this.animationId = requestAnimationFrame(animate);
   }
 
@@ -129,19 +203,19 @@ class GlitchEffect {
   // 应用随机故障效果
   applyRandomGlitch() {
     const tempParams = { ...this.params };
-    
+
     // 临时增强某些效果
     if (Math.random() < 0.3) {
       tempParams.rgbShift *= 1.5;
     }
-    
+
     if (Math.random() < 0.2) {
       tempParams.blockGlitch *= 2;
     }
-    
+
     this.updateParams(tempParams);
     this.render();
-    
+
     // 短暂延迟后恢复原始参数
     setTimeout(() => {
       this.updateParams(this.params);
@@ -152,19 +226,19 @@ class GlitchEffect {
   // RGB通道偏移效果
   applyRGBShift(imageData) {
     if (this.params.rgbShift <= 0) return;
-    
+
     const data = imageData.data;
     const amount = Math.floor(this.params.rgbShift * 20);
     const temp = new Uint8ClampedArray(data);
-    
+
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const i = (y * this.width + x) * 4;
-        
+
         // 红色通道向左偏移
         const rOffset = ((y * this.width) + Math.max(0, x - amount)) * 4;
         data[i] = temp[rOffset];
-        
+
         // 蓝色通道向右偏移
         const bOffset = ((y * this.width) + Math.min(this.width - 1, x + amount)) * 4 + 2;
         data[i + 2] = temp[bOffset];
@@ -175,18 +249,18 @@ class GlitchEffect {
   // 扫描线效果
   applyScanLines(imageData) {
     if (this.params.scanLines <= 0) return;
-    
+
     const data = imageData.data;
     const intensity = this.params.scanLines * 0.8;
-    
+
     for (let y = 0; y < this.height; y++) {
       // 创建扫描线效果
       const lineFactor = Math.sin(y * 0.1) * 0.5 + 0.5;
       const scanIntensity = y % 2 === 0 ? intensity * lineFactor : 0;
-      
+
       for (let x = 0; x < this.width; x++) {
         const i = (y * this.width + x) * 4;
-        
+
         // 降低亮度以创建扫描线
         data[i] = data[i] * (1 - scanIntensity);
         data[i + 1] = data[i + 1] * (1 - scanIntensity);
@@ -198,10 +272,10 @@ class GlitchEffect {
   // 噪点效果
   applyNoise(imageData) {
     if (this.params.noiseAmount <= 0) return;
-    
+
     const data = imageData.data;
     const amount = this.params.noiseAmount;
-    
+
     for (let i = 0; i < data.length; i += 4) {
       if (Math.random() < amount * 0.1) {
         // 添加白噪点
@@ -216,26 +290,26 @@ class GlitchEffect {
   // 块状故障效果
   applyBlockGlitch(imageData) {
     if (this.params.blockGlitch <= 0) return;
-    
+
     const data = imageData.data;
     const blockSize = Math.floor(this.params.blockGlitch * 30) + 5;
     const numBlocks = Math.floor(this.params.blockGlitch * 10) + 1;
-    
+
     for (let n = 0; n < numBlocks; n++) {
       // 随机选择一个块
       const blockX = Math.floor(Math.random() * (this.width - blockSize));
       const blockY = Math.floor(Math.random() * (this.height - blockSize));
-      
+
       // 随机选择目标位置
       const targetX = Math.floor(Math.random() * (this.width - blockSize));
       const targetY = blockY; // 保持在同一行以创建水平滑动效果
-      
+
       // 复制块
       for (let y = 0; y < blockSize; y++) {
         for (let x = 0; x < blockSize; x++) {
           const sourceIdx = ((blockY + y) * this.width + (blockX + x)) * 4;
           const targetIdx = ((targetY + y) * this.width + (targetX + x)) * 4;
-          
+
           // 复制像素
           data[targetIdx] = data[sourceIdx];
           data[targetIdx + 1] = data[sourceIdx + 1];
@@ -248,29 +322,29 @@ class GlitchEffect {
   // 波浪扭曲效果
   applyWaveDistortion(imageData) {
     if (this.params.waveDistortion <= 0) return;
-    
+
     const temp = new ImageData(
       new Uint8ClampedArray(imageData.data),
       this.width,
       this.height
     );
-    
+
     const amplitude = this.params.waveDistortion * 20;
     const frequency = 0.1;
-    
+
     for (let y = 0; y < this.height; y++) {
       // 计算水平偏移
       const offsetX = Math.sin(y * frequency) * amplitude;
-      
+
       for (let x = 0; x < this.width; x++) {
         // 计算源坐标
         const sourceX = Math.floor(x + offsetX);
-        
+
         // 确保坐标在有效范围内
         if (sourceX >= 0 && sourceX < this.width) {
           const targetIdx = (y * this.width + x) * 4;
           const sourceIdx = (y * this.width + sourceX) * 4;
-          
+
           // 复制像素
           imageData.data[targetIdx] = temp.data[sourceIdx];
           imageData.data[targetIdx + 1] = temp.data[sourceIdx + 1];
@@ -284,10 +358,10 @@ class GlitchEffect {
   // 色彩偏移效果
   applyColorShift(imageData) {
     if (this.params.colorShift <= 0) return;
-    
+
     const data = imageData.data;
     const amount = this.params.colorShift;
-    
+
     for (let i = 0; i < data.length; i += 4) {
       // 增强某些颜色通道
       if (Math.random() < amount * 0.5) {
@@ -295,7 +369,7 @@ class GlitchEffect {
         const channel = Math.floor(Math.random() * 3);
         data[i + channel] = Math.min(255, data[i + channel] * (1 + amount));
       }
-      
+
       // 添加青色/洋红色调
       if (data[i] < data[i + 2]) {
         data[i] = Math.max(0, data[i] - amount * 20);

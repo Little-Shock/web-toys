@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>墨韵 · 流体墨水画布</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">返回主菜单</a>
+
+  <!-- 主界面 -->
+  <div class="container">
+    <!-- 画布容器 -->
+    <div class="canvas-container">
+      <canvas id="inkCanvas"></canvas>
+    </div>
+
+    <!-- 工具面板 -->
+    <div class="tools-panel">
+      <!-- 墨水类型选择 -->
+      <div class="ink-selector">
+        <div class="tool-group-title">墨色</div>
+        <div class="ink-options">
+          <button class="ink-option active" data-ink="black">
+            <span class="ink-preview" style="background-color: #000;"></span>
+            <span class="ink-name">玄墨</span>
+          </button>
+          <button class="ink-option" data-ink="blue">
+            <span class="ink-preview" style="background-color: #0047AB;"></span>
+            <span class="ink-name">青墨</span>
+          </button>
+          <button class="ink-option" data-ink="red">
+            <span class="ink-preview" style="background-color: #8B0000;"></span>
+            <span class="ink-name">朱砂</span>
+          </button>
+          <button class="ink-option" data-ink="green">
+            <span class="ink-preview" style="background-color: #006400;"></span>
+            <span class="ink-name">松烟</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 笔触选择 -->
+      <div class="brush-selector">
+        <div class="tool-group-title">笔触</div>
+        <div class="brush-options">
+          <button class="brush-option active" data-brush="soft">
+            <span class="brush-icon">🖌️</span>
+            <span class="brush-name">软笔</span>
+          </button>
+          <button class="brush-option" data-brush="hard">
+            <span class="brush-icon">✏️</span>
+            <span class="brush-name">硬笔</span>
+          </button>
+          <button class="brush-option" data-brush="splash">
+            <span class="brush-icon">💦</span>
+            <span class="brush-name">泼墨</span>
+          </button>
+          <button class="brush-option" data-brush="water">
+            <span class="brush-icon">💧</span>
+            <span class="brush-name">水滴</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 纸张选择 -->
+      <div class="paper-selector">
+        <div class="tool-group-title">纸质</div>
+        <div class="paper-options">
+          <button class="paper-option active" data-paper="rice">
+            <span class="paper-name">宣纸</span>
+          </button>
+          <button class="paper-option" data-paper="rough">
+            <span class="paper-name">粗纹</span>
+          </button>
+          <button class="paper-option" data-paper="smooth">
+            <span class="paper-name">细纹</span>
+          </button>
+          <button class="paper-option" data-paper="absorbent">
+            <span class="paper-name">吸水</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 控制按钮 -->
+      <div class="control-buttons">
+        <button id="clearButton" class="control-btn">清空画布</button>
+        <button id="saveButton" class="control-btn">保存作品</button>
+        <button id="settingsButton" class="control-btn">设置</button>
+      </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-header">
+        <h3>设置</h3>
+        <button id="closeSettings" class="close-btn">×</button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <label for="inkDensity">墨水浓度</label>
+          <input type="range" id="inkDensity" min="1" max="100" value="70">
+          <span class="value-display">70%</span>
+        </div>
+        <div class="setting-item">
+          <label for="inkDiffusion">扩散速度</label>
+          <input type="range" id="inkDiffusion" min="1" max="100" value="50">
+          <span class="value-display">50%</span>
+        </div>
+        <div class="setting-item">
+          <label for="brushSize">笔触大小</label>
+          <input type="range" id="brushSize" min="1" max="100" value="30">
+          <span class="value-display">30%</span>
+        </div>
+        <div class="setting-item">
+          <label for="paperAbsorption">纸张吸水性</label>
+          <input type="range" id="paperAbsorption" min="1" max="100" value="60">
+          <span class="value-display">60%</span>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="motionEnabled">启用设备倾斜控制</label>
+          <input type="checkbox" id="motionEnabled" checked>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="soundEnabled">启用音效</label>
+          <input type="checkbox" id="soundEnabled" checked>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载脚本 -->
+  <script src="js/fluid-simulation.js"></script>
+  <script src="js/audio-manager.js"></script>
+  <script src="js/ink-renderer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

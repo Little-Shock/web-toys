@@ -66,9 +66,21 @@ document.addEventListener('DOMContentLoaded', () => {
     ballImageUpload.addEventListener('change', handleBallImageUpload);
     
     // 确认弹球按钮
-    confirmBallBtn.addEventListener('click', () => {
+    confirmBallBtn.addEventListener('click', async () => {
       if (appState.customBallImage) {
-        gameEngine.setCustomBallImage(appState.customBallImage);
+        confirmBallBtn.textContent = '处理中...';
+        confirmBallBtn.disabled = true;
+        try {
+          await gameEngine.ballManager.setCustomBallImage(appState.customBallImage);
+          console.log("自定义弹球设置成功");
+        } catch (error) {
+          console.error("设置自定义弹球失败:", error);
+        } finally {
+          confirmBallBtn.textContent = '确认使用';
+          confirmBallBtn.disabled = false;
+        }
+      } else {
+        console.log("没有选择自定义弹球图片");
       }
     });
     
@@ -241,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /**
    * 启动游戏
    */
-  function startGame() {
+  async function startGame() {
     appState.started = true;
     
     // 隐藏开始屏幕
@@ -250,17 +262,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 显示游戏控制面板
     gameControls.style.display = 'flex';
     
-    // 设置自定义弹球图像
-    if (appState.customBallImage) {
-      gameEngine.setCustomBallImage(appState.customBallImage);
+    // 等待默认纹理就绪 (重要!)
+    try {
+      await gameEngine.ballManager.awaitDefaultTexture();
+      console.log("默认纹理已就绪或加载尝试完成");
+    } catch (error) {
+      // 如果 Promise 被 reject (当前未实现 rejection)
+      console.error("等待默认纹理时出错:", error);
+      // 可能需要在这里处理错误，比如显示提示
     }
     
-    // 开始游戏
+    // 开始游戏引擎运行
     gameEngine.start();
     
-    // 添加初始弹球
+    // 添加初始弹球 (此时纹理应该可用了)
     const canvas = document.getElementById('gameCanvas');
-    gameEngine.ballManager.addBall(
+    const initialBall = gameEngine.ballManager.addBall(
       canvas.width / 2,
       canvas.height / 2,
       {
@@ -268,6 +285,11 @@ document.addEventListener('DOMContentLoaded', () => {
         velocityY: (Math.random() - 0.5) * 10
       }
     );
+
+    if (!initialBall) {
+      console.error("无法添加初始弹球，可能是纹理问题。");
+      // 可以在此显示错误给用户
+    }
     
     // 应用初始物理参数
     updatePhysics();

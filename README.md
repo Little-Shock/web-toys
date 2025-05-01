@@ -23,6 +23,9 @@
 6. **赛博流麻 (Cyberpunk Glitch)** - 上传图片并应用可调节的赛博朋克风格故障艺术效果。
 7. **元素波纹 (Element Ripples)** - 触摸创造水、火、电、光元素的流动波纹，支持上传自定义背景图片，并配有互动音效。
 8. **量子弹球 (Quantum Pinball)** - 物理模拟的弹球游戏，可上传自定义图片作为弹球，创建各种障碍物和特殊区域，配有互动音效。
+9. **墨韵 (Ink Rhythm)** - 流体墨水画布，模拟墨水在纸上的扩散效果，支持多种墨色和笔触，可通过设备倾斜控制墨水流动。
+10. **光绘 (Light Painting)** - 光影剪影创作工具，可放置不同类型的光源和物体，创造独特的光影效果，支持保存高质量图像。
+11. **织梦 (Fabric Dreams)** - 虚拟织物模拟器，模拟不同织物的物理特性，支持拖拽、固定点、剪裁和风力交互，可自定义纹理和颜色。
 
 ## 项目结构
 
@@ -75,6 +78,40 @@ web-toys/
 │   └── assets/
 │       ├── sounds/           # 音效资源目录
 │       └── images/           # 图像资源目录
+├── 墨韵/                     # 流体墨水画布
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── fluid-simulation.js # 流体模拟核心
+│   │   ├── audio-manager.js  # 音频管理器
+│   │   ├── ink-renderer.js   # 墨水渲染器
+│   │   └── main.js           # 主控制脚本
+│   └── assets/
+│       └── images/           # 纸张纹理图像
+├── 光绘/                     # 光影剪影创作工具
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── light-engine.js   # 光源引擎
+│   │   ├── shadow-renderer.js # 阴影渲染器
+│   │   ├── audio-manager.js  # 音频管理器
+│   │   └── main.js           # 主控制脚本
+│   └── assets/
+│       └── images/           # 图像资源目录
+├── 织梦/                     # 虚拟织物模拟器
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── fabric-physics.js # 织物物理引擎
+│   │   ├── fabric-renderer.js # 织物渲染器
+│   │   ├── audio-manager.js  # 音频管理器
+│   │   └── main.js           # 主控制脚本
+│   └── assets/
+│       ├── images/           # 图像资源目录
+│       └── textures/         # 织物纹理目录
 └── 开发过程/                  # 开发文档目录
     └── ...
 ```
