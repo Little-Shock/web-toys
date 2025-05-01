@@ -1,6 +1,6 @@
-# Web Toys Collection (网页玩具合集)
+# Web Toys Collection (网页玩具合集) - Little Shock
 
-一个有趣的网页小玩具集合，每个玩具都是独立的交互式网页体验。
+一个由 Little Shock 团队创建的有趣网页小玩具集合，每个玩具都是独立的交互式网页体验。
 
 ## 项目简介
 
@@ -133,4 +133,4 @@ git push
 
 ## 许可证
 
-[待添加适当的许可证信息]
+["leave something shocking for the world" license]
