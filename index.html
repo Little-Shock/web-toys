@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>网页玩具合集</title>
+    <title>网页玩具合集 - Little Shock</title>
     <style>
         body {
             font-family: sans-serif;
@@ -15,32 +15,60 @@
         }
         .container {
             text-align: center;
+            padding: 2rem;
+        }
+        .team-name {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+        h1 {
+            margin-top: 0;
+            margin-bottom: 2rem;
+            color: #555;
+        }
+        .toys-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 2rem;
         }
         .button {
             display: inline-block;
             padding: 15px 30px;
-            margin: 10px;
+            margin: 5px;
             font-size: 18px;
             color: white;
             background-color: #007bff;
             border: none;
             border-radius: 5px;
             text-decoration: none;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .button:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="team-name">Little Shock</div>
         <h1>网页玩具合集</h1>
-        <a href="neuron/index.html" class="button">神经元模拟</a>
-        <a href="spiderweb/index.html" class="button">蜘蛛网效果</a>
-        <a href="Holofoil Card/index.html" class="button">闪卡-old</a>
-        <a href="赛博闪卡/index.html" class="button">赛博闪卡-new</a>
-        <!-- 如果未来有更多项目，在这里添加更多按钮 -->
+        <div class="toys-container">
+            <a href="neuron/index.html" class="button">神经元模拟</a>
+            <a href="spiderweb/index.html" class="button">蜘蛛网效果</a>
+            <a href="Holofoil Card/index.html" class="button">闪卡效果 (旧版)</a>
+            <a href="赛博闪卡/index.html" class="button">赛博闪卡 (新版)</a>
+            <a href="find_emoji/index.html" class="button">表情符号查找器</a>
+            <!-- 如果未来有更多项目，在这里添加更多按钮 -->
+        </div>
     </div>
 </body>
-</html> 
+</html>
