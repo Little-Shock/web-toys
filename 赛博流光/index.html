@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>赛博流光 · Cyberpunk Light Flow</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">
+    <i class="fas fa-arrow-left"></i> 返回主菜单
+  </a>
+
+  <!-- 加载指示器 -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">加载中...</div>
+  </div>
+
+  <!-- 主容器 -->
+  <div class="container">
+    <div class="header">
+      <h1 class="title">赛博流光</h1>
+      <p class="subtitle">光影流动 · 闪片效果 · 3D视觉差</p>
+    </div>
+
+    <!-- 3D场景容器 -->
+    <div class="scene-container" id="sceneContainer">
+      <!-- Three.js将在这里渲染 -->
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="controls-panel" id="controlsPanel">
+      <div class="controls-header">
+        <h3>效果控制</h3>
+        <button id="toggleControlsBtn" class="toggle-btn">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+      </div>
+
+      <div class="controls-content">
+        <!-- 图像上传 -->
+        <div class="upload-section">
+          <button id="uploadBtn" class="btn primary-btn">
+            <i class="fas fa-image"></i> 上传图片
+          </button>
+          <input type="file" id="imageUpload" accept="image/*" hidden>
+          <div class="preset-images">
+            <div class="preset-image" data-image="default">
+              <img src="assets/presets/default.jpg" alt="默认">
+            </div>
+            <div class="preset-image" data-image="cyberpunk">
+              <img src="assets/presets/cyberpunk.jpg" alt="赛博朋克">
+            </div>
+            <div class="preset-image" data-image="anime">
+              <img src="assets/presets/anime.jpg" alt="动漫">
+            </div>
+          </div>
+        </div>
+
+        <!-- 流体控制 -->
+        <div class="control-group">
+          <label for="fluidViscosity">流体粘度</label>
+          <div class="slider-container">
+            <input type="range" id="fluidViscosity" min="0" max="100" value="50" class="slider">
+            <span class="value-display">50%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="fluidSpeed">流动速度</label>
+          <div class="slider-container">
+            <input type="range" id="fluidSpeed" min="0" max="100" value="40" class="slider">
+            <span class="value-display">40%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="particleDensity">闪片密度</label>
+          <div class="slider-container">
+            <input type="range" id="particleDensity" min="0" max="100" value="60" class="slider">
+            <span class="value-display">60%</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="particleSize">闪片大小</label>
+          <div class="slider-container">
+            <input type="range" id="particleSize" min="0" max="100" value="30" class="slider">
+            <span class="value-display">30%</span>
+          </div>
+        </div>
+
+        <!-- 颜色控制 -->
+        <div class="color-controls">
+          <div class="color-option">
+            <label for="fluidColor">流体颜色</label>
+            <input type="color" id="fluidColor" value="#00a0ff">
+          </div>
+          <div class="color-option">
+            <label for="particleColor">闪片颜色</label>
+            <input type="color" id="particleColor" value="#ffffff">
+          </div>
+        </div>
+
+        <!-- 预设效果 -->
+        <div class="presets-container">
+          <h4>预设效果</h4>
+          <div class="preset-buttons">
+            <button class="preset-btn" data-preset="default">默认</button>
+            <button class="preset-btn" data-preset="ocean">海洋</button>
+            <button class="preset-btn" data-preset="galaxy">星云</button>
+            <button class="preset-btn" data-preset="lava">熔岩</button>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="buttons-row">
+          <button id="resetBtn" class="btn">
+            <i class="fas fa-undo"></i> 重置
+          </button>
+          <button id="exportGifBtn" class="btn">
+            <i class="fas fa-film"></i> 导出GIF
+          </button>
+          <button id="shareBtn" class="btn">
+            <i class="fas fa-share-alt"></i> 分享
+          </button>
+          <button id="fullscreenBtn" class="btn">
+            <i class="fas fa-expand"></i> 全屏
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 使用提示 -->
+    <div class="tips-container" id="tipsContainer">
+      <div class="tip">
+        <i class="fas fa-mobile-alt"></i>
+        <span>摇晃设备来与流体互动</span>
+      </div>
+      <div class="tip">
+        <i class="fas fa-hand-pointer"></i>
+        <span>拖动屏幕改变视角</span>
+      </div>
+      <button id="closeTipsBtn" class="close-btn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- 分享模态框 -->
+  <div id="shareModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3>分享你的作品</h3>
+      <div class="share-options">
+        <button class="share-btn" data-platform="wechat">
+          <i class="fab fa-weixin"></i> 微信
+        </button>
+        <button class="share-btn" data-platform="weibo">
+          <i class="fab fa-weibo"></i> 微博
+        </button>
+        <button class="share-btn" data-platform="qq">
+          <i class="fab fa-qq"></i> QQ
+        </button>
+        <button class="share-btn" data-platform="download">
+          <i class="fas fa-download"></i> 保存图片
+        </button>
+      </div>
+      <div class="qr-code-container" id="qrCodeContainer"></div>
+    </div>
+  </div>
+
+  <!-- 权限请求模态框 -->
+  <div id="permissionModal" class="modal">
+    <div class="modal-content">
+      <h3>需要访问设备方向</h3>
+      <p>为了获得最佳体验，我们需要访问您设备的方向传感器。这将允许您通过摇晃设备与流体互动。</p>
+      <button id="grantPermissionBtn" class="btn primary-btn">允许访问</button>
+      <button id="skipPermissionBtn" class="btn">跳过</button>
+    </div>
+  </div>
+
+  <!-- GIF导出模态框 -->
+  <div id="gifModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeGifModal">&times;</span>
+      <h3>导出GIF动画</h3>
+      <div class="gif-settings">
+        <div class="setting-group">
+          <label for="gifDuration">持续时间 (秒)</label>
+          <input type="range" id="gifDuration" min="1" max="5" value="3" class="slider">
+          <span class="value-display">3秒</span>
+        </div>
+        <div class="setting-group">
+          <label for="gifQuality">质量</label>
+          <select id="gifQuality" class="quality-select">
+            <option value="high">高 (较大文件)</option>
+            <option value="medium" selected>中</option>
+            <option value="low">低 (较小文件)</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label for="gifSize">尺寸</label>
+          <select id="gifSize" class="quality-select">
+            <option value="large">大 (500px)</option>
+            <option value="medium" selected>中 (300px)</option>
+            <option value="small">小 (200px)</option>
+          </select>
+        </div>
+      </div>
+      <div class="gif-preview-container" id="gifPreviewContainer">
+        <div class="gif-placeholder">
+          <i class="fas fa-film"></i>
+          <span>GIF预览</span>
+        </div>
+      </div>
+      <div class="gif-progress" id="gifProgress">
+        <div class="progress-bar" id="gifProgressBar"></div>
+        <div class="progress-text" id="gifProgressText">准备中...</div>
+      </div>
+      <div class="buttons-row">
+        <button id="startGifRecordingBtn" class="btn primary-btn">
+          <i class="fas fa-record-vinyl"></i> 开始录制
+        </button>
+        <button id="downloadGifBtn" class="btn" disabled>
+          <i class="fas fa-download"></i> 下载GIF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript 文件 -->
+  <script src="js/utils/math.js"></script>
+  <script src="js/utils/shaders.js"></script>
+  <script src="js/utils/controls.js"></script>
+  <script src="js/FluidSimulator.js"></script>
+  <script src="js/ParticleSystem.js"></script>
+  <script src="js/SceneManager.js"></script>
+  <script src="js/ImageProcessor.js"></script>
+  <script src="js/GifExporter.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

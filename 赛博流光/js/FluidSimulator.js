@@ -314,6 +314,37 @@ class FluidSimulator {
   }
 
   /**
+   * 创建波纹效果
+   * @param {number} x - 波纹中心x坐标 (-1到1)
+   * @param {number} y - 波纹中心y坐标 (-1到1)
+   * @param {number} strength - 波纹强度 (0到1)
+   */
+  createRipple(x, y, strength = 0.5) {
+    // 如果没有网格，则不处理
+    if (!this.mesh) return this;
+
+    // 将归一化坐标转换为网格坐标
+    const positionX = x * 2; // 转换到网格坐标系
+    const positionY = y * 2;
+
+    // 应用波纹力
+    const rippleForce = strength * 0.5;
+
+    // 创建向外扩散的力
+    // 这里我们使用一个简单的方法：在波纹中心施加一个脉冲力
+    this.applyForce(
+      positionX * rippleForce,
+      positionY * rippleForce,
+      rippleForce
+    );
+
+    // 添加一个额外的随机扰动，使波纹看起来更自然
+    this.material.uniforms.uTime.value += Math.random() * 0.01;
+
+    return this;
+  }
+
+  /**
    * 销毁流体模拟器
    */
   dispose() {

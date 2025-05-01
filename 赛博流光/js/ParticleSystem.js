@@ -112,27 +112,32 @@ class ParticleSystem {
     // 清除画布
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 创建闪片效果
-    // 方法1：星形闪片
-    if (Math.random() < 0.5) {
-      // 创建星形闪片
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const outerRadius = canvas.width / 2 - 4;
+    // 随机选择粒子形状
+    const shapeType = Math.random();
+
+    // 中心点和基本尺寸
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const baseSize = canvas.width / 2 - 4;
+
+    // 创建基本径向渐变
+    const gradient = context.createRadialGradient(
+      centerX, centerY, 0,
+      centerX, centerY, baseSize * 1.2
+    );
+
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.8)');
+    gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.3)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+    context.fillStyle = gradient;
+
+    // 形状1：星形闪片 (30% 概率)
+    if (shapeType < 0.3) {
+      const outerRadius = baseSize;
       const innerRadius = outerRadius * 0.4;
       const spikes = 5 + Math.floor(Math.random() * 3); // 5-7个尖角
-
-      // 创建径向渐变
-      const gradient = context.createRadialGradient(
-        centerX, centerY, innerRadius * 0.5,
-        centerX, centerY, outerRadius
-      );
-
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-      context.fillStyle = gradient;
 
       // 绘制星形
       context.beginPath();
@@ -162,25 +167,9 @@ class ParticleSystem {
         context.fill();
       }
     }
-    // 方法2：菱形闪片
-    else {
-      // 创建菱形闪片
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const size = canvas.width / 2 - 4;
-
-      // 创建径向渐变
-      const gradient = context.createRadialGradient(
-        centerX, centerY, 0,
-        centerX, centerY, size * 1.4
-      );
-
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)');
-      gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.3)');
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-      context.fillStyle = gradient;
+    // 形状2：菱形闪片 (30% 概率)
+    else if (shapeType < 0.6) {
+      const size = baseSize;
 
       // 绘制主菱形
       context.beginPath();
@@ -201,6 +190,85 @@ class ParticleSystem {
       context.lineTo(centerX - size * 0.7, centerY + size * 0.7);
       context.stroke();
     }
+    // 形状3：六边形闪片 (20% 概率)
+    else if (shapeType < 0.8) {
+      const size = baseSize * 0.9;
+      const sides = 6;
+
+      // 绘制六边形
+      context.beginPath();
+      for (let i = 0; i < sides; i++) {
+        const angle = (Math.PI * 2 * i) / sides;
+        const x = centerX + Math.cos(angle) * size;
+        const y = centerY + Math.sin(angle) * size;
+
+        if (i === 0) {
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      }
+      context.closePath();
+      context.fill();
+
+      // 添加内部图案
+      context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      context.lineWidth = 1;
+
+      // 绘制内部六边形
+      context.beginPath();
+      for (let i = 0; i < sides; i++) {
+        const angle = (Math.PI * 2 * i) / sides + Math.PI / 6;
+        const x = centerX + Math.cos(angle) * (size * 0.5);
+        const y = centerY + Math.sin(angle) * (size * 0.5);
+
+        if (i === 0) {
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      }
+      context.closePath();
+      context.stroke();
+    }
+    // 形状4：三角形闪片 (20% 概率)
+    else {
+      const size = baseSize;
+
+      // 绘制三角形
+      context.beginPath();
+      context.moveTo(centerX, centerY - size);
+      context.lineTo(centerX + size * 0.866, centerY + size * 0.5); // cos(30°), sin(30°)
+      context.lineTo(centerX - size * 0.866, centerY + size * 0.5);
+      context.closePath();
+      context.fill();
+
+      // 添加内部图案
+      context.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      context.lineWidth = 1;
+
+      // 绘制内部三角形
+      context.beginPath();
+      context.moveTo(centerX, centerY + size * 0.3);
+      context.lineTo(centerX - size * 0.5, centerY - size * 0.25);
+      context.lineTo(centerX + size * 0.5, centerY - size * 0.25);
+      context.closePath();
+      context.stroke();
+    }
+
+    // 添加光晕效果
+    const glowGradient = context.createRadialGradient(
+      centerX, centerY, baseSize * 0.5,
+      centerX, centerY, baseSize * 1.5
+    );
+
+    glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    glowGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
+    glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+    context.globalCompositeOperation = 'screen';
+    context.fillStyle = glowGradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
 
     // 创建纹理
     const texture = new THREE.Texture(canvas);
@@ -427,6 +495,11 @@ class ParticleSystem {
       this.forceZ = 0;
     }
 
+    // 更新爆发粒子
+    if (this.burstParticles && this.burstParticles.length > 0) {
+      this.updateBurstParticles();
+    }
+
     return this;
   }
 
@@ -470,6 +543,166 @@ class ParticleSystem {
   }
 
   /**
+   * 创建粒子爆发效果
+   * @param {number} x - 爆发中心x坐标 (-1到1)
+   * @param {number} y - 爆发中心y坐标 (-1到1)
+   * @param {number} count - 爆发粒子数量
+   */
+  createBurst(x, y, count = 20) {
+    // 如果没有粒子系统，则不处理
+    if (!this.particles) return this;
+
+    // 创建临时粒子
+    const burstParticles = [];
+
+    // 将归一化坐标转换为场景坐标
+    const positionX = x * 2; // 转换到场景坐标系
+    const positionY = y * 2;
+
+    // 创建爆发粒子
+    for (let i = 0; i < count; i++) {
+      // 随机角度
+      const angle = Math.random() * Math.PI * 2;
+      // 随机速度
+      const speed = Math.random() * 0.1 + 0.05;
+      // 随机大小
+      const size = Math.random() * this.params.size * 1.5 + 0.02;
+      // 随机寿命 (1-3秒)
+      const lifetime = Math.random() * 2000 + 1000;
+
+      // 计算速度向量
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed;
+      const vz = (Math.random() - 0.5) * 0.05;
+
+      // 创建粒子
+      burstParticles.push({
+        position: { x: positionX, y: positionY, z: 0 },
+        velocity: { x: vx, y: vy, z: vz },
+        size: size,
+        color: new THREE.Color(this.params.color),
+        createdAt: Date.now(),
+        lifetime: lifetime
+      });
+    }
+
+    // 添加到临时粒子数组
+    this.burstParticles = this.burstParticles || [];
+    this.burstParticles.push(...burstParticles);
+
+    // 创建或更新爆发粒子系统
+    this.updateBurstParticles();
+
+    return this;
+  }
+
+  /**
+   * 更新爆发粒子系统
+   */
+  updateBurstParticles() {
+    // 如果没有爆发粒子，则不处理
+    if (!this.burstParticles || this.burstParticles.length === 0) return;
+
+    // 当前时间
+    const now = Date.now();
+
+    // 过滤掉已经过期的粒子
+    this.burstParticles = this.burstParticles.filter(particle => {
+      return now - particle.createdAt < particle.lifetime;
+    });
+
+    // 如果没有粒子了，则清除爆发粒子系统
+    if (this.burstParticles.length === 0) {
+      if (this.burstParticlesSystem) {
+        this.scene.remove(this.burstParticlesSystem);
+        this.burstParticlesSystem = null;
+      }
+      return;
+    }
+
+    // 创建或更新几何体
+    const positions = new Float32Array(this.burstParticles.length * 3);
+    const sizes = new Float32Array(this.burstParticles.length);
+    const colors = new Float32Array(this.burstParticles.length * 3);
+    const angles = new Float32Array(this.burstParticles.length);
+
+    // 更新粒子属性
+    for (let i = 0; i < this.burstParticles.length; i++) {
+      const particle = this.burstParticles[i];
+      const i3 = i * 3;
+
+      // 更新位置
+      particle.position.x += particle.velocity.x;
+      particle.position.y += particle.velocity.y;
+      particle.position.z += particle.velocity.z;
+
+      // 添加重力效果
+      particle.velocity.y -= 0.001;
+
+      // 添加阻力
+      particle.velocity.x *= 0.98;
+      particle.velocity.y *= 0.98;
+      particle.velocity.z *= 0.98;
+
+      // 设置位置
+      positions[i3] = particle.position.x;
+      positions[i3 + 1] = particle.position.y;
+      positions[i3 + 2] = particle.position.z;
+
+      // 计算生命周期因子 (0-1)
+      const lifeFactor = 1 - (now - particle.createdAt) / particle.lifetime;
+
+      // 设置大小 (随生命周期减小)
+      sizes[i] = particle.size * lifeFactor;
+
+      // 设置颜色
+      colors[i3] = particle.color.r;
+      colors[i3 + 1] = particle.color.g;
+      colors[i3 + 2] = particle.color.b;
+
+      // 设置角度 (随机旋转)
+      angles[i] = Math.random() * Math.PI * 2;
+    }
+
+    // 创建或更新几何体
+    if (!this.burstGeometry) {
+      this.burstGeometry = new THREE.BufferGeometry();
+    }
+
+    this.burstGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    this.burstGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    this.burstGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    this.burstGeometry.setAttribute('angle', new THREE.BufferAttribute(angles, 1));
+
+    // 创建或更新材质
+    if (!this.burstMaterial) {
+      this.burstMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+          uSize: { value: 30 * window.devicePixelRatio },
+          uTexture: { value: this.createParticleTexture() }
+        },
+        vertexShader: this.getVertexShader(),
+        fragmentShader: this.getFragmentShader(),
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+    }
+
+    // 更新时间
+    this.burstMaterial.uniforms.uTime.value = this.time;
+
+    // 创建或更新粒子系统
+    if (!this.burstParticlesSystem) {
+      this.burstParticlesSystem = new THREE.Points(this.burstGeometry, this.burstMaterial);
+      if (this.particles && this.particles.parent) {
+        this.particles.parent.add(this.burstParticlesSystem);
+      }
+    }
+  }
+
+  /**
    * 销毁粒子系统
    */
   dispose() {
@@ -481,6 +714,17 @@ class ParticleSystem {
       this.material.dispose();
       if (this.material.uniforms.uTexture.value) {
         this.material.uniforms.uTexture.value.dispose();
+      }
+    }
+
+    if (this.burstGeometry) {
+      this.burstGeometry.dispose();
+    }
+
+    if (this.burstMaterial) {
+      this.burstMaterial.dispose();
+      if (this.burstMaterial.uniforms.uTexture.value) {
+        this.burstMaterial.uniforms.uTexture.value.dispose();
       }
     }
 
