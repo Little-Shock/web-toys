@@ -20,6 +20,9 @@
 3. **闪卡效果 (旧版)** - 上传图片创建具有全息效果的闪卡，支持设备晃动和鼠标悬停交互。
 4. **赛博闪卡 (新版)** - 闪卡效果的升级版本，提供更好的用户体验。
 5. **表情符号查找器 (Emoji Finder)** - 快速查找和复制表情符号的工具。
+6. **赛博流麻 (Cyberpunk Glitch)** - 上传图片并应用可调节的赛博朋克风格故障艺术效果。
+7. **元素波纹 (Element Ripples)** - 触摸创造水、火、电、光元素的流动波纹，支持上传自定义背景图片，并配有互动音效。
+8. **量子弹球 (Quantum Pinball)** - 物理模拟的弹球游戏，可上传自定义图片作为弹球，创建各种障碍物和特殊区域，配有互动音效。
 
 ## 项目结构
 
@@ -41,6 +44,37 @@ web-toys/
 │   ├── index.html
 │   ├── css/
 │   └── js/
+├── 赛博流麻/                  # 赛博流麻效果处理器
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       ├── glitch.js         # 流麻效果处理核心
+│       └── main.js           # 用户交互控制
+├── 元素波纹/                  # 元素波纹互动体验
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── audio-manager.js  # 音频管理器
+│   │   ├── ripple-renderer.js # 波纹渲染器
+│   │   └── main.js           # 主控制脚本
+│   └── assets/
+│       └── sounds/           # 音效资源目录
+├── 量子弹球/                  # 量子弹球游戏
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── matter.min.js     # 物理引擎库
+│   │   ├── audio-manager.js  # 音频管理器
+│   │   ├── ball-manager.js   # 弹球管理器
+│   │   ├── obstacle-manager.js # 障碍物管理器
+│   │   ├── game-engine.js    # 游戏引擎
+│   │   └── main.js           # 主控制脚本
+│   └── assets/
+│       ├── sounds/           # 音效资源目录
+│       └── images/           # 图像资源目录
 └── 开发过程/                  # 开发文档目录
     └── ...
 ```

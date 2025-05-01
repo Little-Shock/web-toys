@@ -1,0 +1,170 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+:root {
+	--circle-size: 0%; /* Set the initial size */
+}
+body {
+	font-family: sans-serif;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	font-family: "Inter", sans-serif;
+	background: hsla(186, 33%, 94%, 1);
+
+	background: linear-gradient(
+		90deg,
+		hsla(186, 33%, 94%, 1) 0%,
+		hsla(216, 41%, 79%, 1) 100%
+	);
+
+	background: -moz-linear-gradient(
+		90deg,
+		hsla(186, 33%, 94%, 1) 0%,
+		hsla(216, 41%, 79%, 1) 100%
+	);
+
+	background: -webkit-linear-gradient(
+		90deg,
+		hsla(186, 33%, 94%, 1) 0%,
+		hsla(216, 41%, 79%, 1) 100%
+	);
+
+	filter: progid: DXImageTransform.Microsoft.gradient( startColorstr="#EBF4F5", endColorstr="#B5C6E0", GradientType=1 );
+}
+.container {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	max-width: 1000px;
+	position: relative;
+}
+.card {
+	pointer: none;
+	width: 300px;
+	margin: 0;
+}
+
+#card1 img,
+#overlay img {
+	width: 90%;
+	height: 80%;
+	position: relative;
+	border-radius: 10px;
+	object-fit: cover;
+	object-position: center center;
+	margin: 0 auto;
+}
+h2 {
+	text-align: center;
+}
+.container-text {
+	padding: 2rem 1rem;
+	height: 40%;
+	background-color: white;
+}
+p {
+	text-align: left;
+}
+#card1,
+#overlay {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-content: center;
+	width: 100%;
+	height: 100%;
+	border-radius: 20px;
+	overflow: hidden;
+	box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+	backdrop-filter: blur(8.5px);
+	-webkit-backdrop-filter: blur(8.5px);
+}
+.firstPart {
+	display: flex;
+	justify-content: center;
+	align-content: center;
+	flex-flow: column;
+	padding: 0 0 2em 0;
+	height: 60%;
+}
+#rowOne h2 {
+	color: white;
+}
+#overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+	clip-path: circle(var(--circle-size) at var(--x) var(--y));
+	transition: clip-path 0.1s;
+	opacity: 0;
+}
+#rowOne {
+	background-color: #141312;
+}
+#rowTwo {
+	background: #0be477;
+}
+.btn {
+	display: flex;
+	justify-content: end;
+	height: 30px;
+}
+.read-more {
+	background-color: black;
+	padding: 0.5em;
+	border-radius: 30px;
+	align-self: center;
+}
+.svg_icon {
+	border-radius: 100%;
+	width: 15px;
+	height: 15px;
+	padding: 0.5em;
+}
+a {
+	text-decoration: none;
+	color: white;
+}
+.green {
+	background-color: #0be477;
+	fill: black;
+	color: black;
+}
+.black {
+	background-color: #141312;
+	color: white;
+	fill: white;
+}
+p {
+	padding: 0 0 1em 0;
+}
+
+.upload-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.upload-controls div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.upload-controls label {
+    font-weight: bold;
+    min-width: 120px; /* Align inputs */
+}
+
+.upload-controls input[type="file"] {
+    flex-grow: 1;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}

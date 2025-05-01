@@ -1,0 +1,357 @@
+/* 基础样式 */
+:root {
+  --primary-color: #00e5ff;
+  --fire-color: #ff5722;
+  --electric-color: #b388ff;
+  --light-color: #ffeb3b;
+  --bg-color: #121212;
+  --text-color: #ffffff;
+  --panel-bg: rgba(0, 0, 0, 0.7);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  height: 100vh;
+  width: 100vw;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 返回链接 */
+.back-link {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--text-color);
+  padding: 8px 15px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.back-link:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: var(--primary-color);
+}
+
+/* 开始屏幕 */
+.start-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-color);
+  z-index: 100;
+  padding: 20px;
+  text-align: center;
+}
+
+.title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(45deg, var(--primary-color), var(--fire-color), var(--electric-color), var(--light-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.8;
+}
+
+.upload-container {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upload-btn {
+  background: linear-gradient(45deg, var(--primary-color), var(--electric-color));
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+.upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 229, 255, 0.4);
+}
+
+.upload-hint {
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.start-btn {
+  background: linear-gradient(45deg, var(--fire-color), var(--light-color));
+  color: #000;
+  padding: 15px 40px;
+  border: none;
+  border-radius: 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.start-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(255, 87, 34, 0.5);
+}
+
+/* 主画布 */
+#rippleCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 控制面板 */
+.control-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+  padding: 0 20px;
+}
+
+.element-selector {
+  display: flex;
+  justify-content: center;
+  background: var(--panel-bg);
+  border-radius: 50px;
+  padding: 5px;
+  margin-bottom: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.element-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  padding: 10px 15px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0 5px;
+}
+
+.element-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.element-btn[data-element="water"].active {
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+}
+
+.element-btn[data-element="fire"].active {
+  box-shadow: 0 0 15px rgba(255, 87, 34, 0.5);
+}
+
+.element-btn[data-element="electric"].active {
+  box-shadow: 0 0 15px rgba(179, 136, 255, 0.5);
+}
+
+.element-btn[data-element="light"].active {
+  box-shadow: 0 0 15px rgba(255, 235, 59, 0.5);
+}
+
+.element-icon {
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+}
+
+.element-name {
+  font-size: 0.8rem;
+}
+
+/* 设置面板 */
+.settings-panel {
+  position: relative;
+  width: 100%;
+}
+
+.settings-toggle {
+  background: var(--panel-bg);
+  border: none;
+  color: var(--text-color);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0 auto;
+}
+
+.settings-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.settings-icon {
+  font-size: 1.5rem;
+}
+
+.settings-menu {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel-bg);
+  border-radius: 10px;
+  padding: 15px;
+  width: 100%;
+  max-width: 300px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  opacity: 1;
+  transform-origin: bottom center;
+}
+
+.settings-menu.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px) scale(0.9);
+  pointer-events: none;
+}
+
+.setting-item {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.setting-item label {
+  width: 60px;
+  font-size: 0.9rem;
+}
+
+.setting-item input[type="range"] {
+  flex: 1;
+  height: 5px;
+  -webkit-appearance: none;
+  background: linear-gradient(to right, var(--primary-color), var(--fire-color));
+  outline: none;
+  border-radius: 5px;
+}
+
+.setting-item input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--text-color);
+  cursor: pointer;
+  border: 2px solid var(--primary-color);
+}
+
+.setting-item.checkbox {
+  display: flex;
+  justify-content: space-between;
+}
+
+.setting-item.checkbox input {
+  width: 20px;
+  height: 20px;
+}
+
+.reset-btn, .upload-new-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-btn:hover, .upload-new-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 响应式调整 */
+@media (max-width: 600px) {
+  .title {
+    font-size: 2.5rem;
+  }
+  
+  .element-btn {
+    padding: 8px 12px;
+  }
+  
+  .element-icon {
+    font-size: 1.2rem;
+  }
+  
+  .element-name {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-height: 500px) {
+  .control-panel {
+    bottom: 10px;
+  }
+  
+  .element-selector {
+    margin-bottom: 10px;
+  }
+  
+  .settings-menu {
+    bottom: 50px;
+  }
+}

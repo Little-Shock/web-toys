@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>元素波纹 · Element Ripples</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">返回主菜单</a>
+
+  <!-- 主界面 -->
+  <div class="container">
+    <!-- 初始界面 -->
+    <div id="startScreen" class="start-screen">
+      <h1 class="title">元素波纹</h1>
+      <p class="subtitle">触摸屏幕，创造元素的流动与和谐</p>
+      
+      <div class="upload-container">
+        <label for="backgroundUpload" class="upload-btn">
+          上传背景图片
+          <input type="file" id="backgroundUpload" accept="image/*" hidden>
+        </label>
+        <p class="upload-hint">或直接开始使用默认背景</p>
+      </div>
+      
+      <button id="startButton" class="start-btn">开始体验</button>
+    </div>
+
+    <!-- 主画布 -->
+    <canvas id="rippleCanvas"></canvas>
+
+    <!-- 控制面板 -->
+    <div id="controlPanel" class="control-panel">
+      <div class="element-selector">
+        <button class="element-btn active" data-element="water">
+          <span class="element-icon">💧</span>
+          <span class="element-name">水</span>
+        </button>
+        <button class="element-btn" data-element="fire">
+          <span class="element-icon">🔥</span>
+          <span class="element-name">火</span>
+        </button>
+        <button class="element-btn" data-element="electric">
+          <span class="element-icon">⚡</span>
+          <span class="element-name">电</span>
+        </button>
+        <button class="element-btn" data-element="light">
+          <span class="element-icon">✨</span>
+          <span class="element-name">光</span>
+        </button>
+      </div>
+      
+      <div class="settings-panel">
+        <button id="settingsToggle" class="settings-toggle">
+          <span class="settings-icon">⚙️</span>
+        </button>
+        
+        <div id="settingsMenu" class="settings-menu hidden">
+          <div class="setting-item">
+            <label for="intensitySlider">强度</label>
+            <input type="range" id="intensitySlider" min="1" max="100" value="50">
+          </div>
+          
+          <div class="setting-item">
+            <label for="sizeSlider">大小</label>
+            <input type="range" id="sizeSlider" min="1" max="100" value="50">
+          </div>
+          
+          <div class="setting-item">
+            <label for="decaySlider">衰减</label>
+            <input type="range" id="decaySlider" min="1" max="100" value="50">
+          </div>
+          
+          <div class="setting-item">
+            <label for="volumeSlider">音量</label>
+            <input type="range" id="volumeSlider" min="0" max="100" value="70">
+          </div>
+          
+          <div class="setting-item checkbox">
+            <label for="multiElementToggle">元素混合</label>
+            <input type="checkbox" id="multiElementToggle" checked>
+          </div>
+          
+          <button id="resetButton" class="reset-btn">重置画布</button>
+          <button id="uploadNewButton" class="upload-new-btn">更换背景</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载脚本 -->
+  <script src="js/audio-manager.js"></script>
+  <script src="js/ripple-renderer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

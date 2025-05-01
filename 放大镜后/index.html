@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>放大镜效果</title>
+	<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+	<div class="upload-controls">
+		<div>
+			<label for="input-card1">选择底层图片:</label>
+			<input type="file" id="input-card1" accept="image/*">
+		</div>
+		<div>
+			<label for="input-overlay">选择放大镜图片:</label>
+			<input type="file" id="input-overlay" accept="image/*">
+		</div>
+	</div>
+	<div class="container">
+		<div class="card card-photo">
+			<div id="card1" class="card-photo">
+				<div id="rowOne" class="firstPart">
+					<h2>It Appears as One Card </h2>
+					<img id="img-card1" src="https://images.unsplash.com/photo-1498673394965-85cb14905c89?crop=entropy&cs=srgb&fm=jpg&ixid=M3wzMjM4NDZ8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NDU4NTM0OTd8&ixlib=rb-4.0.3&q=85" alt="底层图片" title="Photo by Cristian Escobar for Unsplash">
+				</div>
+				<div class="container-text">
+					<p>Simple magic tricks</p>
+					<div class="btn"> <a href="#" class="read-more black">Read more</a>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="svg_icon black">
+							<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+							<path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z" />
+						</svg>
+					</div>
+				</div>
+			</div>
+			<div id="overlay">
+				<div id="rowTwo" class="firstPart">
+					<h2>There's More Than Meets the Eye !</h2>
+					<img id="img-overlay" src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1827&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="放大镜图片" title="Photo by Cristian Escobar for Unsplash">
+				</div>
+				<div class="container-text">
+					<p>A little bit of front-end magic.</p>
+					<div class="btn"> <a href="#" class="read-more green">Read more</a>
+						<svg class="svg_icon green" viewBox="0 0 448 512">
+							<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+							<path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z" />
+						</svg>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+	<script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>赛博流麻 · Cyberpunk Glitch Effect</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">返回主菜单</a>
+
+  <div class="container">
+    <h1 class="title">赛博流麻</h1>
+    <p class="subtitle">上传图片，创造赛博朋克风格的故障艺术</p>
+
+    <!-- 上传区域 -->
+    <div class="upload-area" id="uploadArea">
+      <label for="imageUpload" class="upload-label">
+        <span class="upload-icon">+</span>
+        <span class="upload-text">点击上传图片</span>
+      </label>
+      <input type="file" id="imageUpload" accept="image/*" hidden>
+    </div>
+
+    <!-- 图片预览和效果区域 -->
+    <div class="preview-container" id="previewContainer" style="display: none;">
+      <div class="canvas-container">
+        <canvas id="glitchCanvas"></canvas>
+      </div>
+
+      <!-- 控制面板 -->
+      <div class="controls-panel">
+        <h3>效果调整</h3>
+        
+        <div class="control-group">
+          <label for="glitchIntensity">故障强度</label>
+          <input type="range" id="glitchIntensity" min="0" max="100" value="50" class="slider">
+          <span class="value-display">50%</span>
+        </div>
+        
+        <div class="control-group">
+          <label for="rgbShift">RGB偏移</label>
+          <input type="range" id="rgbShift" min="0" max="100" value="30" class="slider">
+          <span class="value-display">30%</span>
+        </div>
+        
+        <div class="control-group">
+          <label for="scanLines">扫描线</label>
+          <input type="range" id="scanLines" min="0" max="100" value="40" class="slider">
+          <span class="value-display">40%</span>
+        </div>
+        
+        <div class="control-group">
+          <label for="noiseAmount">噪点</label>
+          <input type="range" id="noiseAmount" min="0" max="100" value="20" class="slider">
+          <span class="value-display">20%</span>
+        </div>
+        
+        <div class="control-group">
+          <label for="blockGlitch">块状故障</label>
+          <input type="range" id="blockGlitch" min="0" max="100" value="30" class="slider">
+          <span class="value-display">30%</span>
+        </div>
+        
+        <div class="control-group">
+          <label for="waveDistortion">波浪扭曲</label>
+          <input type="range" id="waveDistortion" min="0" max="100" value="25" class="slider">
+          <span class="value-display">25%</span>
+        </div>
+        
+        <div class="control-group">
+          <label for="colorShift">色彩偏移</label>
+          <input type="range" id="colorShift" min="0" max="100" value="35" class="slider">
+          <span class="value-display">35%</span>
+        </div>
+
+        <div class="buttons-row">
+          <button id="randomizeBtn" class="btn">随机效果</button>
+          <button id="saveImageBtn" class="btn">保存图片</button>
+          <button id="resetBtn" class="btn">重置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/glitch.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

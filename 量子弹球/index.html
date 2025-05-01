@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>量子弹球 · Quantum Pinball</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">返回主菜单</a>
+
+  <!-- 主界面 -->
+  <div class="container">
+    <!-- 开始屏幕 -->
+    <div id="startScreen" class="start-screen">
+      <h1 class="title">量子弹球</h1>
+      <p class="subtitle">创造你的专属弹球世界</p>
+      
+      <div class="upload-container">
+        <label for="ballImageUpload" class="upload-btn">
+          上传弹球图片
+          <input type="file" id="ballImageUpload" accept="image/*" hidden>
+        </label>
+        <p class="upload-hint">选择你喜欢的角色或图片作为弹球</p>
+        <div id="previewContainer" class="preview-container" style="display: none;">
+          <img id="ballPreview" class="ball-preview" src="" alt="预览">
+          <button id="confirmBallBtn" class="confirm-btn">确认使用</button>
+        </div>
+      </div>
+      
+      <button id="startButton" class="start-btn">开始游戏</button>
+      <p class="start-note">也可以直接开始，使用默认弹球</p>
+    </div>
+
+    <!-- 游戏画布 -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 游戏控制面板 -->
+    <div id="gameControls" class="game-controls">
+      <div class="control-row">
+        <button id="addBallBtn" class="control-btn">添加弹球</button>
+        <button id="drawModeBtn" class="control-btn">绘制模式</button>
+        <button id="clearBtn" class="control-btn">清除障碍</button>
+      </div>
+      
+      <div id="drawTools" class="draw-tools">
+        <button data-tool="wall" class="tool-btn active">墙壁</button>
+        <button data-tool="bumper" class="tool-btn">弹射器</button>
+        <button data-tool="gravity" class="tool-btn">重力井</button>
+        <button data-tool="portal" class="tool-btn">传送门</button>
+        <button data-tool="eraser" class="tool-btn">橡皮擦</button>
+      </div>
+      
+      <div class="settings-panel">
+        <button id="settingsToggle" class="settings-toggle">
+          <span class="settings-icon">⚙️</span>
+        </button>
+        
+        <div id="settingsMenu" class="settings-menu hidden">
+          <div class="setting-item">
+            <label for="gravitySlider">重力</label>
+            <input type="range" id="gravitySlider" min="0" max="100" value="50">
+          </div>
+          
+          <div class="setting-item">
+            <label for="bounceSlider">弹性</label>
+            <input type="range" id="bounceSlider" min="0" max="100" value="70">
+          </div>
+          
+          <div class="setting-item">
+            <label for="frictionSlider">摩擦力</label>
+            <input type="range" id="frictionSlider" min="0" max="100" value="10">
+          </div>
+          
+          <div class="setting-item">
+            <label for="volumeSlider">音量</label>
+            <input type="range" id="volumeSlider" min="0" max="100" value="70">
+          </div>
+          
+          <div class="setting-item checkbox">
+            <label for="soundToggle">音效</label>
+            <input type="checkbox" id="soundToggle" checked>
+          </div>
+          
+          <button id="resetButton" class="reset-btn">重置游戏</button>
+          <button id="changeBallButton" class="change-ball-btn">更换弹球</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 绘制提示 -->
+    <div id="drawingInstructions" class="drawing-instructions hidden">
+      <p>点击并拖动来绘制<span id="currentTool">墙壁</span></p>
+      <button id="doneDrawingBtn" class="done-btn">完成绘制</button>
+    </div>
+  </div>
+
+  <!-- 加载脚本 -->
+  <script src="js/matter.min.js"></script>
+  <script src="js/audio-manager.js"></script>
+  <script src="js/ball-manager.js"></script>
+  <script src="js/obstacle-manager.js"></script>
+  <script src="js/game-engine.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
