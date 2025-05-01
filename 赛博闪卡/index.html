@@ -10,12 +10,17 @@
   #ui{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:10;color:#fff;font:15px/1.4 "SFMono-Regular",monospace;text-align:center}
   #pick{display:inline-block;padding:6px 10px;border:1px solid #fff;border-radius:6px;background:rgba(255,255,255,.08);cursor:pointer}
   input[type=file]{display:none}
+  .back-link{position:fixed;top:14px;right:14px;z-index:20;background:rgba(255,255,255,0.1);padding:6px 10px;border-radius:6px;color:#fff;text-decoration:none;font-size:14px;font-family:sans-serif;backdrop-filter:blur(3px);transition:background 0.3s}
+  .back-link:hover{background:rgba(255,255,255,0.2)}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
 </head>
 
 <body>
+
+<!-- 返回主菜单链接 -->
+<a href="../index.html" class="back-link">返回主菜单</a>
 
 <!-- 简洁 UI：中央一个上传按钮 -->
 <div id="ui">
@@ -77,14 +82,20 @@ let shaderProg, imgTex, gfx;
 let tilt   = {x:0,y:0}, target = {x:0,y:0};
 const SENS = 30;           // 倾斜灵敏度 (角度 → 范围 -1~1)
 
+// 不在preload中加载着色器，而是在setup中加载
 function preload(){
-  shaderProg = loadShader('vtx','frg');
+  // 预加载阶段不需要加载着色器
 }
 
 function setup(){
   createCanvas(windowWidth, windowHeight, WEBGL);
   noStroke();
   gfx = createGraphics(2048, 2048);
+
+  // 从DOM元素中获取着色器代码
+  const vertexShader = document.getElementById('vtx').textContent;
+  const fragmentShader = document.getElementById('frg').textContent;
+  shaderProg = createShader(vertexShader, fragmentShader);
 
   /* 监听上传 */
   select('#uploader').elt.onchange = e=>{
