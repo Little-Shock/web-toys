@@ -1,4 +1,4 @@
-/* 基础样式 */
+/* 基础样式 - 优化版本：提高移动端性能和用户体验 */
 :root {
   --primary-color: #00e5ff;
   --fire-color: #ff5722;
@@ -7,6 +7,10 @@
   --bg-color: #121212;
   --text-color: #ffffff;
   --panel-bg: rgba(0, 0, 0, 0.7);
+
+  /* 移动端优化变量 */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 20px);
 }
 
 * {
@@ -24,7 +28,10 @@ body {
   touch-action: none;
   user-select: none;
   height: 100vh;
+  height: calc(var(--vh, 1vh) * 100); /* 移动端高度修复 */
   width: 100vw;
+  overscroll-behavior: none; /* 防止下拉刷新 */
+  position: fixed; /* 防止iOS上的弹性滚动 */
 }
 
 .container {
@@ -142,12 +149,15 @@ body {
   width: 100%;
   height: 100%;
   z-index: 1;
+  display: block; /* 确保画布正确显示 */
+  touch-action: none; /* 防止浏览器默认触摸行为 */
+  will-change: transform; /* 性能优化提示 */
 }
 
 /* 控制面板 */
 .control-panel {
   position: absolute;
-  bottom: 20px;
+  bottom: calc(20px + var(--safe-area-inset-bottom)); /* 适配全面屏 */
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -157,6 +167,12 @@ body {
   width: 100%;
   max-width: 500px;
   padding: 0 20px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.control-panel.mobile {
+  max-width: 95%;
+  padding: 0 10px;
 }
 
 .element-selector {
@@ -167,7 +183,9 @@ body {
   padding: 5px;
   margin-bottom: 15px;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* Safari 支持 */
   border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .element-btn {
@@ -182,6 +200,28 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   margin: 0 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.element-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+  pointer-events: none;
+}
+
+.element-btn:active::after {
+  transform: translate(-50%, -50%) scale(2);
+  opacity: 1;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .element-btn.active {
@@ -207,6 +247,27 @@ body {
 .element-icon {
   font-size: 1.5rem;
   margin-bottom: 5px;
+  transition: transform 0.2s ease;
+}
+
+.element-btn:active .element-icon {
+  transform: scale(0.9);
+}
+
+.element-btn[data-element="water"] .element-icon {
+  text-shadow: 0 0 5px var(--primary-color);
+}
+
+.element-btn[data-element="fire"] .element-icon {
+  text-shadow: 0 0 5px var(--fire-color);
+}
+
+.element-btn[data-element="electric"] .element-icon {
+  text-shadow: 0 0 5px var(--electric-color);
+}
+
+.element-btn[data-element="light"] .element-icon {
+  text-shadow: 0 0 5px var(--light-color);
 }
 
 .element-name {
@@ -232,16 +293,50 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* Safari 支持 */
   border: 1px solid rgba(255, 255, 255, 0.1);
   margin: 0 auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.settings-toggle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+  pointer-events: none;
+}
+
+.settings-toggle:active::after {
+  transform: translate(-50%, -50%) scale(2);
+  opacity: 1;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .settings-toggle:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
+.settings-toggle.active {
+  background: linear-gradient(45deg, var(--primary-color), var(--electric-color));
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+}
+
 .settings-icon {
   font-size: 1.5rem;
+  transition: transform 0.2s ease;
+}
+
+.settings-toggle:active .settings-icon {
+  transform: scale(0.9);
 }
 
 .settings-menu {
@@ -250,21 +345,31 @@ body {
   left: 50%;
   transform: translateX(-50%);
   background: var(--panel-bg);
-  border-radius: 10px;
+  border-radius: 15px;
   padding: 15px;
   width: 100%;
   max-width: 300px;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* Safari 支持 */
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
   opacity: 1;
   transform-origin: bottom center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+.settings-menu.mobile {
+  max-width: 280px;
+  padding: 12px;
+  bottom: calc(60px + var(--safe-area-inset-bottom)); /* 适配全面屏 */
 }
 
 .settings-menu.hidden {
   opacity: 0;
   transform: translateX(-50%) translateY(20px) scale(0.9);
   pointer-events: none;
+  visibility: hidden;
 }
 
 .setting-item {
@@ -276,69 +381,224 @@ body {
 .setting-item label {
   width: 60px;
   font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .setting-item input[type="range"] {
   flex: 1;
-  height: 5px;
+  height: 10px; /* 增加高度，更易于触摸 */
   -webkit-appearance: none;
   background: linear-gradient(to right, var(--primary-color), var(--fire-color));
   outline: none;
-  border-radius: 5px;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .setting-item input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 15px;
-  height: 15px;
+  width: 22px; /* 增大滑块大小 */
+  height: 22px; /* 增大滑块大小 */
   border-radius: 50%;
   background: var(--text-color);
   cursor: pointer;
   border: 2px solid var(--primary-color);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.setting-item input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--text-color);
+  cursor: pointer;
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
 }
 
 .setting-item.checkbox {
   display: flex;
   justify-content: space-between;
+  padding: 5px 0;
 }
 
 .setting-item.checkbox input {
-  width: 20px;
-  height: 20px;
+  width: 24px; /* 增大复选框大小 */
+  height: 24px; /* 增大复选框大小 */
+  accent-color: var(--primary-color); /* 设置复选框颜色 */
 }
 
 .reset-btn, .upload-new-btn {
   width: 100%;
-  padding: 10px;
+  padding: 12px; /* 增大按钮高度 */
   margin-top: 10px;
   border: none;
-  border-radius: 5px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.2);
   color: var(--text-color);
   cursor: pointer;
   transition: all 0.3s ease;
+  font-weight: bold;
+  position: relative;
+  overflow: hidden;
+}
+
+.reset-btn::after, .upload-new-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+  pointer-events: none;
+}
+
+.reset-btn:active::after, .upload-new-btn:active::after {
+  transform: translate(-50%, -50%) scale(2);
+  opacity: 1;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .reset-btn:hover, .upload-new-btn:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.reset-btn:active, .upload-new-btn:active {
+  transform: scale(0.98);
+}
+
+/* 添加新的动态样式 */
+.toast {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  z-index: 1000;
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: bold;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.loading-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 1;
+  transition: opacity 0.5s;
+}
+
+.loading-indicator.fade-out {
+  opacity: 0;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.loading-text {
+  color: white;
+  font-size: 1.2rem;
+}
+
+.error-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 0, 0, 0.2);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 2000;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  max-width: 80%;
+}
+
+.retry-button {
+  margin-top: 15px;
+  padding: 8px 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.retry-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* 响应式调整 */
 @media (max-width: 600px) {
   .title {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
   }
-  
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
   .element-btn {
     padding: 8px 12px;
   }
-  
+
   .element-icon {
     font-size: 1.2rem;
   }
-  
+
   .element-name {
     font-size: 0.7rem;
+  }
+
+  .settings-toggle {
+    width: 45px;
+    height: 45px;
+  }
+
+  .settings-icon {
+    font-size: 1.3rem;
+  }
+
+  .setting-item label {
+    width: 50px;
+    font-size: 0.8rem;
   }
 }
 
@@ -346,12 +606,48 @@ body {
   .control-panel {
     bottom: 10px;
   }
-  
+
   .element-selector {
     margin-bottom: 10px;
   }
-  
+
   .settings-menu {
     bottom: 50px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
+/* 适配全面屏 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .control-panel {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .settings-menu {
+    padding-bottom: calc(env(safe-area-inset-bottom) / 2);
+  }
+}
+
+/* 暗色模式支持 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #121212;
+    --text-color: #ffffff;
+    --panel-bg: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  :root {
+    --primary-color: #00b8d4;
+    --fire-color: #ff7043;
+    --electric-color: #9575cd;
+    --light-color: #ffee58;
+  }
+
+  .element-btn.active {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
   }
 }

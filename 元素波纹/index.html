@@ -2,9 +2,41 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#121212">
+  <meta name="description" content="元素波纹 - 触摸屏幕，创造元素的流动与和谐">
   <title>元素波纹 · Element Ripples</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <script>
+    // 修复移动端100vh问题
+    function setVH() {
+      let vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('resize', setVH);
+    window.addEventListener('orientationchange', setVH);
+    setVH();
+
+    // 注册 Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(registration => {
+            console.log('Service Worker 注册成功:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Service Worker 注册失败:', error);
+          });
+      });
+    }
+  </script>
 </head>
 <body>
   <!-- 返回主菜单链接 -->
@@ -16,7 +48,7 @@
     <div id="startScreen" class="start-screen">
       <h1 class="title">元素波纹</h1>
       <p class="subtitle">触摸屏幕，创造元素的流动与和谐</p>
-      
+
       <div class="upload-container">
         <label for="backgroundUpload" class="upload-btn">
           上传背景图片
@@ -24,7 +56,7 @@
         </label>
         <p class="upload-hint">或直接开始使用默认背景</p>
       </div>
-      
+
       <button id="startButton" class="start-btn">开始体验</button>
     </div>
 
@@ -51,38 +83,38 @@
           <span class="element-name">光</span>
         </button>
       </div>
-      
+
       <div class="settings-panel">
         <button id="settingsToggle" class="settings-toggle">
           <span class="settings-icon">⚙️</span>
         </button>
-        
+
         <div id="settingsMenu" class="settings-menu hidden">
           <div class="setting-item">
             <label for="intensitySlider">强度</label>
             <input type="range" id="intensitySlider" min="1" max="100" value="50">
           </div>
-          
+
           <div class="setting-item">
             <label for="sizeSlider">大小</label>
             <input type="range" id="sizeSlider" min="1" max="100" value="50">
           </div>
-          
+
           <div class="setting-item">
             <label for="decaySlider">衰减</label>
             <input type="range" id="decaySlider" min="1" max="100" value="50">
           </div>
-          
+
           <div class="setting-item">
             <label for="volumeSlider">音量</label>
             <input type="range" id="volumeSlider" min="0" max="100" value="70">
           </div>
-          
+
           <div class="setting-item checkbox">
             <label for="multiElementToggle">元素混合</label>
             <input type="checkbox" id="multiElementToggle" checked>
           </div>
-          
+
           <button id="resetButton" class="reset-btn">重置画布</button>
           <button id="uploadNewButton" class="upload-new-btn">更换背景</button>
         </div>
