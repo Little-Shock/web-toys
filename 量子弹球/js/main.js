@@ -53,6 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   async function init() {
     try {
+      // 启用调试模式以激活性能监控
+      gameCore.debug = true;
+
       // 初始化游戏核心
       await gameCore.init();
 
@@ -67,10 +70,36 @@ document.addEventListener('DOMContentLoaded', () => {
       drawingInstructions.style.display = 'none';
       drawTools.style.display = 'none';
 
+      // 添加一些默认的障碍物，让游戏更有趣
+      addDefaultObstacles();
+
       console.log('应用初始化完成');
     } catch (error) {
       console.error('应用初始化失败:', error);
     }
+  }
+
+  /**
+   * 添加默认障碍物
+   */
+  function addDefaultObstacles() {
+    // 获取画布尺寸
+    const canvas = document.getElementById('gameCanvas');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // 添加几个弹射器
+    obstacleManager.createBumper(width * 0.25, height * 0.25, { color: '#FF5252' });
+    obstacleManager.createBumper(width * 0.75, height * 0.25, { color: '#448AFF' });
+    obstacleManager.createBumper(width * 0.25, height * 0.75, { color: '#69F0AE' });
+    obstacleManager.createBumper(width * 0.75, height * 0.75, { color: '#FFEA00' });
+
+    // 添加一个重力井
+    obstacleManager.createGravityWell(width * 0.5, height * 0.5);
+
+    // 添加两个传送门
+    obstacleManager.createPortal(width * 0.2, height * 0.5);
+    obstacleManager.createPortal(width * 0.8, height * 0.5);
   }
 
   /**
@@ -84,22 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
     ballImageUpload.addEventListener('change', handleBallImageUpload);
 
     // 确认弹球按钮
-    confirmBallBtn.addEventListener('click', async () => {
-      if (appState.customBallImage) {
-        confirmBallBtn.textContent = '处理中...';
-        confirmBallBtn.disabled = true;
-        try {
-          await ballManager.setCustomBallImage(appState.customBallImage);
-          console.log("自定义弹球设置成功");
-        } catch (error) {
-          console.error("设置自定义弹球失败:", error);
-        } finally {
-          confirmBallBtn.textContent = '确认使用';
-          confirmBallBtn.disabled = false;
-        }
-      } else {
-        console.log("没有选择自定义弹球图片");
-      }
+    confirmBallBtn.addEventListener('click', () => {
+      // 隐藏预览容器
+      previewContainer.style.display = 'none';
+
+      // 显示提示
+      alert('已应用纯色弹球样式');
+
+      // 更新所有现有弹球的颜色
+      ballManager.updateBallTextures();
     });
 
     // 添加弹球按钮
@@ -191,18 +213,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = e.target.files[0];
 
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
+      // 显示预览
+      previewContainer.style.display = 'flex';
 
-      reader.onload = function(event) {
-        // 显示预览
-        ballPreview.src = event.target.result;
-        previewContainer.style.display = 'flex';
+      // 使用纯色圆形作为预览
+      const canvas = document.createElement('canvas');
+      canvas.width = 100;
+      canvas.height = 100;
+      const ctx = canvas.getContext('2d');
 
-        // 保存图像
-        appState.customBallImage = event.target.result;
-      };
+      // 绘制渐变圆形
+      const gradient = ctx.createRadialGradient(50, 50, 0, 50, 50, 50);
+      gradient.addColorStop(0, '#6200ea');
+      gradient.addColorStop(0.7, '#00b0ff');
+      gradient.addColorStop(1, '#ff4081');
 
-      reader.readAsDataURL(file);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(50, 50, 50, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 设置预览图像
+      ballPreview.src = canvas.toDataURL();
+
+      // 显示提示
+      alert('为提高性能，当前版本使用纯色弹球，不支持自定义图像');
     }
   }
 
@@ -277,6 +312,183 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
+   * 创建分数显示
+   */
+  function createScoreDisplay() {
+    // 创建分数容器
+    const scoreContainer = document.createElement('div');
+    scoreContainer.id = 'scoreContainer';
+    scoreContainer.style.position = 'absolute';
+    scoreContainer.style.top = '10px';
+    scoreContainer.style.left = '10px';
+    scoreContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    scoreContainer.style.color = 'white';
+    scoreContainer.style.padding = '10px 15px';
+    scoreContainer.style.borderRadius = '20px';
+    scoreContainer.style.fontSize = '18px';
+    scoreContainer.style.fontWeight = 'bold';
+    scoreContainer.style.zIndex = '100';
+    scoreContainer.style.display = 'flex';
+    scoreContainer.style.flexDirection = 'column';
+    scoreContainer.style.gap = '5px';
+
+    // 分数显示
+    const scoreDisplay = document.createElement('div');
+    scoreDisplay.id = 'scoreDisplay';
+    scoreDisplay.textContent = '分数: 0';
+
+    // 连击显示
+    const comboDisplay = document.createElement('div');
+    comboDisplay.id = 'comboDisplay';
+    comboDisplay.textContent = '连击: 0';
+    comboDisplay.style.fontSize = '14px';
+    comboDisplay.style.opacity = '0.8';
+
+    // 添加到容器
+    scoreContainer.appendChild(scoreDisplay);
+    scoreContainer.appendChild(comboDisplay);
+
+    // 添加到页面
+    document.body.appendChild(scoreContainer);
+
+    // 初始化分数
+    window.gameScore = {
+      score: 0,
+      combo: 0,
+      lastHitTime: 0,
+
+      // 增加分数
+      addScore: function(points) {
+        const now = performance.now();
+        const timeSinceLastHit = now - this.lastHitTime;
+
+        // 如果在1秒内连续得分，增加连击
+        if (timeSinceLastHit < 1000) {
+          this.combo++;
+        } else {
+          this.combo = 1;
+        }
+
+        // 根据连击计算分数
+        const comboBonus = Math.min(5, this.combo); // 最高5倍
+        const finalPoints = points * comboBonus;
+
+        this.score += finalPoints;
+        this.lastHitTime = now;
+
+        // 更新显示
+        this.updateDisplay();
+
+        // 显示得分动画
+        this.showScoreAnimation(finalPoints, comboBonus > 1);
+      },
+
+      // 更新显示
+      updateDisplay: function() {
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const comboDisplay = document.getElementById('comboDisplay');
+
+        if (scoreDisplay) {
+          scoreDisplay.textContent = `分数: ${this.score}`;
+        }
+
+        if (comboDisplay) {
+          comboDisplay.textContent = `连击: ${this.combo}`;
+
+          // 连击高亮
+          if (this.combo > 1) {
+            comboDisplay.style.color = '#FFEA00';
+            comboDisplay.style.fontSize = '16px';
+            comboDisplay.style.opacity = '1';
+          } else {
+            comboDisplay.style.color = 'white';
+            comboDisplay.style.fontSize = '14px';
+            comboDisplay.style.opacity = '0.8';
+          }
+        }
+      },
+
+      // 显示得分动画
+      showScoreAnimation: function(points, isCombo) {
+        // 创建浮动分数元素
+        const floatingScore = document.createElement('div');
+        floatingScore.textContent = `+${points}`;
+        floatingScore.style.position = 'absolute';
+        floatingScore.style.left = `${Math.random() * 50 + 25}%`;
+        floatingScore.style.top = `${Math.random() * 30 + 35}%`;
+        floatingScore.style.color = isCombo ? '#FFEA00' : 'white';
+        floatingScore.style.fontSize = isCombo ? '24px' : '20px';
+        floatingScore.style.fontWeight = 'bold';
+        floatingScore.style.textShadow = '0 0 5px rgba(0,0,0,0.7)';
+        floatingScore.style.zIndex = '200';
+        floatingScore.style.opacity = '1';
+        floatingScore.style.transition = 'all 1s ease-out';
+
+        // 添加到页面
+        document.body.appendChild(floatingScore);
+
+        // 动画效果
+        setTimeout(() => {
+          floatingScore.style.transform = 'translateY(-50px)';
+          floatingScore.style.opacity = '0';
+        }, 10);
+
+        // 移除元素
+        setTimeout(() => {
+          document.body.removeChild(floatingScore);
+        }, 1000);
+      }
+    };
+  }
+
+  /**
+   * 添加特殊障碍物按钮
+   */
+  function addSpecialObstacleButton() {
+    // 创建特殊障碍物按钮
+    const addSpecialBtn = document.createElement('button');
+    addSpecialBtn.className = 'control-btn special-btn';
+    addSpecialBtn.textContent = '添加特殊障碍';
+    addSpecialBtn.style.backgroundColor = '#7C4DFF';
+    addSpecialBtn.style.marginTop = '10px';
+    addSpecialBtn.style.padding = '8px 15px';
+    addSpecialBtn.style.borderRadius = '20px';
+    addSpecialBtn.style.border = 'none';
+    addSpecialBtn.style.color = 'white';
+    addSpecialBtn.style.fontWeight = 'bold';
+    addSpecialBtn.style.cursor = 'pointer';
+
+    // 添加到控制面板
+    const controlPanel = document.querySelector('.game-controls');
+    controlPanel.appendChild(addSpecialBtn);
+
+    // 添加点击事件
+    addSpecialBtn.addEventListener('click', () => {
+      // 随机选择要添加的障碍物类型
+      const obstacleTypes = ['bumper', 'gravity', 'portal'];
+      const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+
+      // 获取画布尺寸
+      const canvas = document.getElementById('gameCanvas');
+
+      // 随机位置
+      const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1; // 避开边缘
+      const y = Math.random() * canvas.height * 0.8 + canvas.height * 0.1; // 避开边缘
+
+      // 根据类型添加不同的障碍物
+      if (type === 'bumper') {
+        obstacleManager.createBumper(x, y, {
+          color: `hsl(${Math.floor(Math.random() * 360)}, 100%, 60%)`
+        });
+      } else if (type === 'gravity') {
+        obstacleManager.createGravityWell(x, y);
+      } else if (type === 'portal') {
+        obstacleManager.createPortal(x, y);
+      }
+    });
+  }
+
+  /**
    * 启动游戏
    */
   async function startGame() {
@@ -288,13 +500,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 显示游戏控制面板
     gameControls.style.display = 'flex';
 
-    // 等待纹理就绪
-    try {
-      await ballManager.awaitTexture();
-      console.log("纹理已就绪");
-    } catch (error) {
-      console.error("等待纹理时出错:", error);
-    }
+    // 添加特殊障碍物按钮
+    addSpecialObstacleButton();
+
+    // 创建分数显示
+    createScoreDisplay();
+
+    // 不再等待纹理，直接使用纯色渲染
+    console.log("使用纯色渲染，无需等待纹理");
 
     // 开始游戏引擎运行
     gameCore.start();
@@ -304,21 +517,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 添加初始弹球
     const canvas = document.getElementById('gameCanvas');
-    const initialBall = ballManager.addBall(
-      canvas.width / 2,
-      canvas.height / 2,
-      {
-        velocityX: (Math.random() - 0.5) * 5,
-        velocityY: (Math.random() - 0.5) * 5
-      }
-    );
 
-    if (!initialBall) {
-      console.error("无法添加初始弹球");
+    // 检测是否为移动设备
+    const isMobile = gameCore.state.isMobile;
+    console.log(`设备类型: ${isMobile ? '移动设备' : '桌面设备'}`);
+
+    // 更高的初始速度，扩大随机区间
+    const minSpeedFactor = isMobile ? 8 : 12;
+    const maxSpeedFactor = isMobile ? 15 : 20;
+
+    // 添加更多初始弹球，增加游戏趣味性
+    const ballCount = isMobile ? 8 : 12;
+
+    // 创建弹球的函数
+    const createBall = (x, y, vx, vy) => {
+      return ballManager.addBall(x, y, {
+        velocityX: vx,
+        velocityY: vy
+      });
+    };
+
+    // 添加随机位置的弹球
+    for (let i = 0; i < ballCount; i++) {
+      // 随机位置 - 分散在整个画布上
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+
+      // 随机速度 - 更快更有活力，扩大随机区间
+      const angle = Math.random() * Math.PI * 2;
+      // 在最小和最大速度因子之间随机选择
+      const randomSpeedFactor = minSpeedFactor + Math.random() * (maxSpeedFactor - minSpeedFactor);
+      const speed = randomSpeedFactor;
+
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed;
+
+      const ball = createBall(x, y, vx, vy);
+
+      if (!ball && i === 0) {
+        console.error("无法添加初始弹球");
+      }
     }
+
+    // 添加一些特殊的弹球组合
+    // 1. 对撞的两个球 - 使用最大速度
+    createBall(canvas.width * 0.3, canvas.height * 0.5, maxSpeedFactor, 0);
+    createBall(canvas.width * 0.7, canvas.height * 0.5, -maxSpeedFactor, 0);
+
+    // 2. 从上方落下的球 - 使用最大速度
+    createBall(canvas.width * 0.5, canvas.height * 0.1, 0, maxSpeedFactor);
 
     // 应用初始物理参数
     updatePhysics();
+
+    // 显示移动设备提示 (如果是移动设备)
+    if (isMobile) {
+      // 创建提示元素
+      const mobileHint = document.createElement('div');
+      mobileHint.className = 'mobile-hint';
+      mobileHint.textContent = '提示: 双击屏幕可以一次添加多个弹球';
+      mobileHint.style.position = 'absolute';
+      mobileHint.style.top = '70px';
+      mobileHint.style.left = '50%';
+      mobileHint.style.transform = 'translateX(-50%)';
+      mobileHint.style.background = 'rgba(0, 0, 0, 0.7)';
+      mobileHint.style.color = '#fff';
+      mobileHint.style.padding = '8px 15px';
+      mobileHint.style.borderRadius = '20px';
+      mobileHint.style.fontSize = '0.85rem';
+      mobileHint.style.zIndex = '100';
+      document.body.appendChild(mobileHint);
+
+      // 3秒后自动隐藏
+      setTimeout(() => {
+        mobileHint.style.opacity = '0';
+        mobileHint.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => {
+          document.body.removeChild(mobileHint);
+        }, 500);
+      }, 3000);
+    }
   }
 
   // 初始化应用

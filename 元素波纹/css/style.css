@@ -1,5 +1,6 @@
-/* 基础样式 - 优化版本：提高移动端性能和用户体验 */
+/* 基础样式 - 优化版本2.0：大幅提高移动端性能和用户体验 */
 :root {
+  /* 主题颜色 */
   --primary-color: #00e5ff;
   --fire-color: #ff5722;
   --electric-color: #b388ff;
@@ -11,33 +12,96 @@
   /* 移动端优化变量 */
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 20px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+
+  /* 性能优化变量 */
+  --animation-duration-fast: 0.2s;
+  --animation-duration-normal: 0.3s;
+  --animation-duration-slow: 0.5s;
+  --blur-radius: 10px;
+  --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 15px rgba(0, 0, 0, 0.2);
+  --shadow-heavy: 0 8px 30px rgba(0, 0, 0, 0.3);
+
+  /* 响应式设计变量 */
+  --spacing-small: 5px;
+  --spacing-medium: 10px;
+  --spacing-large: 20px;
+  --border-radius-small: 5px;
+  --border-radius-medium: 10px;
+  --border-radius-large: 20px;
+  --border-radius-circle: 50%;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+  -webkit-touch-callout: none; /* 禁用iOS长按菜单 */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+  user-select: none; /* 标准语法 */
+}
+
+html {
+  font-size: 16px; /* 基础字体大小 */
+  line-height: 1.5;
+  height: 100%;
+  width: 100%;
 }
 
 body {
-  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
   overflow: hidden;
-  touch-action: none;
-  user-select: none;
+  touch-action: none; /* 禁用浏览器默认触摸行为 */
   height: 100vh;
   height: calc(var(--vh, 1vh) * 100); /* 移动端高度修复 */
   width: 100vw;
   overscroll-behavior: none; /* 防止下拉刷新 */
   position: fixed; /* 防止iOS上的弹性滚动 */
+
+  /* 性能优化 */
+  will-change: transform; /* 提示浏览器优化渲染 */
+  backface-visibility: hidden; /* 减少复合层 */
+  -webkit-font-smoothing: antialiased; /* 字体平滑 */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* 添加渐变背景 */
+  background-image: radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(255, 87, 34, 0.05) 0%, transparent 40%);
 }
 
+/* 容器样式 */
 .container {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* 添加淡入淡出动画 */
+.fade-in {
+  animation: fadeIn var(--animation-duration-normal) ease forwards;
+}
+
+.fade-out {
+  animation: fadeOut var(--animation-duration-normal) ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* 返回链接 */
@@ -567,6 +631,10 @@ body {
 
 /* 响应式调整 */
 @media (max-width: 600px) {
+  html {
+    font-size: 14px; /* 小屏幕上减小基础字体大小 */
+  }
+
   .title {
     font-size: 2.2rem;
   }
@@ -577,6 +645,7 @@ body {
 
   .element-btn {
     padding: 8px 12px;
+    min-width: 60px; /* 确保按钮有足够的触摸区域 */
   }
 
   .element-icon {
@@ -600,8 +669,59 @@ body {
     width: 50px;
     font-size: 0.8rem;
   }
+
+  /* 增强移动端触摸体验 */
+  .setting-item input[type="range"] {
+    height: 20px; /* 更大的滑块区域 */
+  }
+
+  .setting-item input[type="range"]::-webkit-slider-thumb {
+    width: 28px; /* 更大的滑块 */
+    height: 28px;
+  }
+
+  .setting-item input[type="range"]::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* 增加按钮间距，防止误触 */
+  .element-selector {
+    gap: 5px;
+  }
+
+  /* 优化移动端动画性能 */
+  .element-btn::after,
+  .settings-toggle::after,
+  .reset-btn::after,
+  .upload-new-btn::after {
+    display: none; /* 移动端禁用复杂动画效果 */
+  }
 }
 
+/* 小屏幕手机 */
+@media (max-width: 360px) {
+  .element-btn {
+    padding: 6px 8px;
+    min-width: 50px;
+  }
+
+  .element-icon {
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+  }
+
+  .element-name {
+    font-size: 0.6rem;
+  }
+
+  .settings-menu {
+    max-width: 250px;
+    padding: 10px;
+  }
+}
+
+/* 横屏模式优化 */
 @media (max-height: 500px) {
   .control-panel {
     bottom: 10px;
@@ -609,12 +729,41 @@ body {
 
   .element-selector {
     margin-bottom: 10px;
+    flex-wrap: wrap; /* 允许按钮换行 */
+    justify-content: center;
   }
 
   .settings-menu {
     bottom: 50px;
     max-height: 70vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+  }
+
+  /* 横屏模式下调整开始屏幕布局 */
+  .start-screen {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+  }
+
+  .title {
+    width: 100%;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    width: 100%;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .upload-container {
+    margin-bottom: 1rem;
+    margin-right: 1rem;
   }
 }
 
@@ -627,6 +776,17 @@ body {
   .settings-menu {
     padding-bottom: calc(env(safe-area-inset-bottom) / 2);
   }
+
+  /* 适配刘海屏 */
+  .back-link {
+    top: calc(15px + var(--safe-area-inset-top));
+    right: calc(15px + var(--safe-area-inset-right));
+  }
+
+  /* 适配底部手势区域 */
+  .start-btn, .upload-btn {
+    margin-bottom: calc(var(--spacing-medium) + var(--safe-area-inset-bottom));
+  }
 }
 
 /* 暗色模式支持 */
@@ -635,6 +795,25 @@ body {
     --bg-color: #121212;
     --text-color: #ffffff;
     --panel-bg: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* 亮色模式支持 */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-color: #f5f5f5;
+    --text-color: #121212;
+    --panel-bg: rgba(255, 255, 255, 0.7);
+  }
+
+  .element-btn, .settings-toggle, .settings-menu, .reset-btn, .upload-new-btn {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .toast, .loading-indicator {
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #121212;
+    border: 1px solid rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -650,4 +829,59 @@ body {
   .element-btn.active {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
   }
+
+  /* 增强对比度 */
+  .element-btn, .settings-toggle, .reset-btn, .upload-new-btn {
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .setting-item label {
+    font-weight: bold;
+  }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .element-btn::after,
+  .settings-toggle::after,
+  .reset-btn::after,
+  .upload-new-btn::after {
+    display: none;
+  }
+}
+
+/* 添加全屏按钮样式 */
+.fullscreen-button {
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  border-radius: var(--border-radius-circle);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  cursor: pointer;
+  margin-left: var(--spacing-medium);
+  backdrop-filter: blur(var(--blur-radius));
+  -webkit-backdrop-filter: blur(var(--blur-radius));
+  transition: background var(--animation-duration-normal);
+  box-shadow: var(--shadow-light);
+}
+
+.fullscreen-button:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.fullscreen-button:active {
+  transform: scale(0.95);
+}
+
+.fullscreen-button i {
+  font-size: 24px;
 }

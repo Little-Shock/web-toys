@@ -164,21 +164,99 @@ class ObstacleManager {
    * @param {Object} options - 额外选项
    */
   createBumper(x, y, options = {}) {
-    const radius = options.radius || 30;
+    const radius = options.radius || 25; // 更小的弹射器
 
+    // 创建弹射器
     const bumper = this.Bodies.circle(x, y, radius, {
       isStatic: true,
       label: 'bumper',
-      restitution: 1.5, // 高弹性
+      restitution: 2.0, // 更高的弹性
       render: {
-        fillStyle: options.color || '#ff4081'
+        fillStyle: options.color || '#ff4081',
+        strokeStyle: '#ffffff',
+        lineWidth: 2
       }
     });
+
+    // 添加脉动动画效果
+    bumper.pulseEffect = {
+      active: true,
+      baseRadius: radius,
+      phase: Math.random() * Math.PI * 2 // 随机初始相位
+    };
 
     this.World.add(this.engine.world, bumper);
     this.obstacles.bumpers.push(bumper);
 
     return bumper;
+  }
+
+  /**
+   * 创建重力井
+   * @param {number} x - X坐标
+   * @param {number} y - Y坐标
+   * @param {Object} options - 额外选项
+   */
+  createGravityWell(x, y, options = {}) {
+    const radius = options.radius || 40;
+
+    // 创建重力井
+    const gravityWell = this.Bodies.circle(x, y, radius, {
+      isStatic: true,
+      label: 'gravity',
+      isSensor: true, // 不产生物理碰撞，只触发事件
+      render: {
+        fillStyle: 'rgba(100, 100, 255, 0.3)',
+        strokeStyle: '#6464ff',
+        lineWidth: 2
+      }
+    });
+
+    // 添加到世界和障碍物集合
+    this.World.add(this.engine.world, gravityWell);
+
+    // 如果obstacles对象中没有gravityWells数组，创建它
+    if (!this.obstacles.gravityWells) {
+      this.obstacles.gravityWells = [];
+    }
+
+    this.obstacles.gravityWells.push(gravityWell);
+
+    return gravityWell;
+  }
+
+  /**
+   * 创建传送门
+   * @param {number} x - X坐标
+   * @param {number} y - Y坐标
+   * @param {Object} options - 额外选项
+   */
+  createPortal(x, y, options = {}) {
+    const radius = options.radius || 30;
+
+    // 创建传送门
+    const portal = this.Bodies.circle(x, y, radius, {
+      isStatic: true,
+      label: 'portal',
+      isSensor: true, // 不产生物理碰撞，只触发事件
+      render: {
+        fillStyle: 'rgba(255, 100, 255, 0.3)',
+        strokeStyle: '#ff64ff',
+        lineWidth: 2
+      }
+    });
+
+    // 添加到世界和障碍物集合
+    this.World.add(this.engine.world, portal);
+
+    // 如果obstacles对象中没有portals数组，创建它
+    if (!this.obstacles.portals) {
+      this.obstacles.portals = [];
+    }
+
+    this.obstacles.portals.push(portal);
+
+    return portal;
   }
 
 
@@ -218,6 +296,73 @@ class ObstacleManager {
       this.World.remove(this.engine.world, bumper);
     });
     this.obstacles.bumpers = [];
+
+    // 移除所有重力井
+    if (this.obstacles.gravityWells) {
+      this.obstacles.gravityWells.forEach(well => {
+        this.World.remove(this.engine.world, well);
+      });
+      this.obstacles.gravityWells = [];
+    }
+
+    // 移除所有传送门
+    if (this.obstacles.portals) {
+      this.obstacles.portals.forEach(portal => {
+        this.World.remove(this.engine.world, portal);
+      });
+      this.obstacles.portals = [];
+    }
+  }
+
+  /**
+   * 更新障碍物动画效果
+   * 在游戏循环中调用
+   */
+  updateObstacleEffects() {
+    const time = performance.now();
+
+    // 更新弹射器脉动效果
+    this.obstacles.bumpers.forEach(bumper => {
+      if (bumper.pulseEffect && bumper.pulseEffect.active) {
+        // 使用正弦波创建脉动效果
+        const phase = bumper.pulseEffect.phase || 0;
+        const baseRadius = bumper.pulseEffect.baseRadius || 25;
+        const pulseFactor = Math.sin(time / 300 + phase) * 0.1 + 1;
+
+        // 更新渲染属性
+        bumper.render.lineWidth = 2 + Math.sin(time / 200 + phase) * 1;
+
+        // 随时间变化颜色
+        const hue = (time / 50) % 360;
+        bumper.render.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+      }
+    });
+
+    // 更新重力井效果
+    if (this.obstacles.gravityWells) {
+      this.obstacles.gravityWells.forEach(well => {
+        // 脉动透明度
+        const alpha = 0.2 + Math.sin(time / 500) * 0.1;
+        well.render.fillStyle = `rgba(100, 100, 255, ${alpha})`;
+
+        // 旋转线条效果
+        const angle = (time / 1000) % (Math.PI * 2);
+        well.angle = angle;
+      });
+    }
+
+    // 更新传送门效果
+    if (this.obstacles.portals) {
+      this.obstacles.portals.forEach(portal => {
+        // 脉动透明度
+        const alpha = 0.2 + Math.sin(time / 300) * 0.1;
+        portal.render.fillStyle = `rgba(255, 100, 255, ${alpha})`;
+
+        // 旋转线条效果
+        const angle = (time / 800) % (Math.PI * 2);
+        portal.angle = -angle; // 反方向旋转
+      });
+    }
   }
 
   /**
