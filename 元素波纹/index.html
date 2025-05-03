@@ -89,6 +89,11 @@
           <span class="settings-icon">⚙️</span>
         </button>
 
+        <!-- 音频开关按钮 - 移动设备上快速切换音频 -->
+        <button id="audioToggle" class="audio-toggle">
+          <span class="audio-icon">🔊</span>
+        </button>
+
         <div id="settingsMenu" class="settings-menu hidden">
           <div class="setting-item">
             <label for="intensitySlider">强度</label>
@@ -113,6 +118,16 @@
           <div class="setting-item checkbox">
             <label for="multiElementToggle">元素混合</label>
             <input type="checkbox" id="multiElementToggle" checked>
+          </div>
+
+          <div class="setting-item checkbox">
+            <label for="audioEnabledToggle">启用音效</label>
+            <input type="checkbox" id="audioEnabledToggle" checked>
+          </div>
+
+          <div class="setting-item checkbox">
+            <label for="qualityToggle">高质量模式</label>
+            <input type="checkbox" id="qualityToggle">
           </div>
 
           <button id="resetButton" class="reset-btn">重置画布</button>

@@ -553,8 +553,13 @@ class AudioManager {
     }
 
     // 节流控制，防止音效播放过于频繁
+    // 移动设备上增加节流时间以减少音频处理
     const now = performance.now();
-    if (now - this.lastPlayTime < this.playThrottleTime) {
+    const throttleTime = this.isMobile ?
+                        (this.isLowEndDevice ? this.playThrottleTime * 2 : this.playThrottleTime * 1.5) :
+                        this.playThrottleTime;
+
+    if (now - this.lastPlayTime < throttleTime) {
       return false;
     }
     this.lastPlayTime = now;
@@ -580,8 +585,11 @@ class AudioManager {
         return false;
       }
 
-      // 随机选择一个变体
-      const buffer = buffers[Math.floor(Math.random() * buffers.length)];
+      // 随机选择一个变体 - 移动设备上减少随机性以提高性能
+      const bufferIndex = this.isMobile ?
+                         (Math.floor(Math.random() * Math.min(2, buffers.length))) :
+                         (Math.floor(Math.random() * buffers.length));
+      const buffer = buffers[bufferIndex];
       if (!buffer) return false;
 
       // 创建音源
@@ -589,10 +597,23 @@ class AudioManager {
       source.buffer = buffer;
 
       // 根据强度和位置调整音高，但限制范围以避免极端值
-      const pitchVariation = Math.max(0.7, Math.min(1.5,
-        0.8 + (intensity * 0.4) + ((1 - y) * this.pitchRange * 0.5) +
-        (Math.random() * this.pitchRange * 0.5 - this.pitchRange * 0.25)
-      ));
+      // 移动设备上减少音高变化以提高性能
+      let pitchVariation;
+      if (this.isMobile && this.isLowEndDevice) {
+        // 低端移动设备使用最简单的音高计算
+        pitchVariation = Math.max(0.8, Math.min(1.2, 0.9 + intensity * 0.3));
+      } else if (this.isMobile) {
+        // 移动设备使用简化的音高计算
+        pitchVariation = Math.max(0.75, Math.min(1.3,
+          0.85 + (intensity * 0.3) + ((1 - y) * this.pitchRange * 0.3)
+        ));
+      } else {
+        // 桌面设备使用完整的音高计算
+        pitchVariation = Math.max(0.7, Math.min(1.5,
+          0.8 + (intensity * 0.4) + ((1 - y) * this.pitchRange * 0.5) +
+          (Math.random() * this.pitchRange * 0.5 - this.pitchRange * 0.25)
+        ));
+      }
       source.playbackRate.value = pitchVariation;
 
       // 创建音量控制
@@ -604,8 +625,9 @@ class AudioManager {
       // 根据设备性能选择不同的处理链
       let panner = null;
 
-      if (this.isLowEndDevice) {
-        // 低端设备使用简化的音频处理链
+      // 移动设备和低端设备使用简化的音频处理链
+      if (this.isMobile || this.isLowEndDevice) {
+        // 简化的音频处理链
         source.connect(gainNode);
         gainNode.connect(this.masterGain);
       } else {
@@ -629,15 +651,24 @@ class AudioManager {
       }
 
       // 跟踪活动音效 - 在开始播放前添加，以便在出错时可以清理
-      const soundObj = {
-        source,
-        gainNode,
-        panner,
-        startTime: this.audioContext.currentTime,
-        element,
-        intensity,
-        duration: buffer.duration
-      };
+      // 移动设备上简化音效对象以减少内存使用
+      const soundObj = this.isMobile ?
+        {
+          source,
+          gainNode,
+          startTime: this.audioContext.currentTime,
+          element,
+          intensity
+        } :
+        {
+          source,
+          gainNode,
+          panner,
+          startTime: this.audioContext.currentTime,
+          element,
+          intensity,
+          duration: buffer.duration
+        };
 
       this.activeSounds.push(soundObj);
 
@@ -700,56 +731,78 @@ class AudioManager {
   limitActiveSounds() {
     try {
       // 根据设备类型和性能调整最大同时播放的音效数量
-      const maxSounds = this.isLowEndDevice ? 3 : (this.isMobile ? 5 : 8);
+      // 移动设备上进一步限制音效数量
+      const maxSounds = this.isLowEndDevice ? 2 :
+                       (this.isMobile ? 3 : 6);
 
       if (this.activeSounds.length > maxSounds) {
-        // 按优先级排序：保留强度高的和最近播放的音效
-        this.activeSounds.sort((a, b) => {
-          // 首先按强度排序
-          const intensityDiff = b.intensity - a.intensity;
-          if (Math.abs(intensityDiff) > 0.2) {
-            return intensityDiff;
-          }
-          // 强度相近时按时间排序
-          return a.startTime - b.startTime;
-        });
+        // 移动设备上使用更简单的方法来选择要移除的音效
+        if (this.isMobile && this.isLowEndDevice) {
+          // 低端移动设备上直接移除最老的音效，不进行排序
+          const soundsToRemove = this.activeSounds.splice(0, this.activeSounds.length - maxSounds);
 
-        // 淡出多余的音效
-        const soundsToRemove = this.activeSounds.splice(maxSounds);
-
-        // 批量处理需要移除的音效
-        soundsToRemove.forEach(sound => {
-          try {
-            // 淡出音效
-            if (sound.gainNode && sound.gainNode.gain) {
-              const now = this.audioContext.currentTime;
-              const fadeOutTime = 0.1; // 100毫秒淡出
-
-              sound.gainNode.gain.setValueAtTime(sound.gainNode.gain.value, now);
-              sound.gainNode.gain.linearRampToValueAtTime(0, now + fadeOutTime);
-
-              // 设置定时器在淡出后停止音源
-              setTimeout(() => {
-                try {
-                  sound.source.stop();
-                  // 断开连接以释放资源
-                  if (sound.gainNode) sound.gainNode.disconnect();
-                  if (sound.panner) sound.panner.disconnect();
-                } catch (e) {
-                  // 忽略已停止的音源错误
-                }
-              }, fadeOutTime * 1000);
-            } else {
-              // 如果没有增益节点，直接停止
+          // 批量处理需要移除的音效 - 直接停止，不使用淡出
+          soundsToRemove.forEach(sound => {
+            try {
               sound.source.stop();
               // 断开连接以释放资源
               if (sound.gainNode) sound.gainNode.disconnect();
               if (sound.panner) sound.panner.disconnect();
+            } catch (error) {
+              // 忽略已停止的音源错误
             }
-          } catch (error) {
-            console.warn('停止音效失败:', error);
-          }
-        });
+          });
+        } else {
+          // 按优先级排序：保留强度高的和最近播放的音效
+          this.activeSounds.sort((a, b) => {
+            // 首先按强度排序
+            const intensityDiff = b.intensity - a.intensity;
+            if (Math.abs(intensityDiff) > 0.2) {
+              return intensityDiff;
+            }
+            // 强度相近时按时间排序
+            return a.startTime - b.startTime;
+          });
+
+          // 淡出多余的音效
+          const soundsToRemove = this.activeSounds.splice(maxSounds);
+
+          // 批量处理需要移除的音效
+          // 移动设备上使用更短的淡出时间
+          const fadeOutTime = this.isMobile ? 0.05 : 0.1; // 移动设备上50毫秒淡出，桌面设备100毫秒
+
+          soundsToRemove.forEach(sound => {
+            try {
+              // 淡出音效
+              if (sound.gainNode && sound.gainNode.gain) {
+                const now = this.audioContext.currentTime;
+
+                sound.gainNode.gain.setValueAtTime(sound.gainNode.gain.value, now);
+                sound.gainNode.gain.linearRampToValueAtTime(0, now + fadeOutTime);
+
+                // 设置定时器在淡出后停止音源
+                setTimeout(() => {
+                  try {
+                    sound.source.stop();
+                    // 断开连接以释放资源
+                    if (sound.gainNode) sound.gainNode.disconnect();
+                    if (sound.panner) sound.panner.disconnect();
+                  } catch (e) {
+                    // 忽略已停止的音源错误
+                  }
+                }, fadeOutTime * 1000);
+              } else {
+                // 如果没有增益节点，直接停止
+                sound.source.stop();
+                // 断开连接以释放资源
+                if (sound.gainNode) sound.gainNode.disconnect();
+                if (sound.panner) sound.panner.disconnect();
+              }
+            } catch (error) {
+              console.warn('停止音效失败:', error);
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('限制音效数量失败:', error);
@@ -786,6 +839,35 @@ class AudioManager {
       this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
       this.masterGain.gain.linearRampToValueAtTime(muted ? 0 : this.volume, now + 0.1);
     }
+  }
+
+  /**
+   * 设置音频启用状态
+   * @param {boolean} enabled - 是否启用音频
+   */
+  setAudioEnabled(enabled) {
+    this.audioEnabled = enabled;
+
+    // 如果禁用音频，停止所有当前播放的音效
+    if (!enabled) {
+      this.stopAllSounds();
+
+      // 如果音频上下文正在运行，暂停它
+      if (this.audioContext && this.audioContext.state === 'running') {
+        this.audioContext.suspend().catch(err => {
+          console.warn('暂停音频上下文失败:', err);
+        });
+      }
+    } else {
+      // 如果启用音频，恢复音频上下文
+      if (this.audioContext && this.audioContext.state === 'suspended') {
+        this.audioContext.resume().catch(err => {
+          console.warn('恢复音频上下文失败:', err);
+        });
+      }
+    }
+
+    return this.audioEnabled;
   }
 
   /**

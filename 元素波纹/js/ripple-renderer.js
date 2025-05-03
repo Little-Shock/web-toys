@@ -1,7 +1,7 @@
 /**
  * 波纹渲染器
  * 负责处理所有与波纹效果相关的渲染
- * 优化版本2.0：大幅提高移动端性能，改善视觉效果
+ * 优化版本3.0：完全重写以提高移动端性能，简化渲染逻辑
  */
 class RippleRenderer {
   constructor(canvas) {
@@ -16,7 +16,7 @@ class RippleRenderer {
     // 波纹数组 - 使用对象池模式以减少GC
     this.ripples = [];
     this.ripplePool = [];
-    this.maxPoolSize = 100;
+    this.maxPoolSize = 50; // 减小对象池大小以节省内存
 
     // 背景图像
     this.backgroundImage = null;
@@ -27,6 +27,9 @@ class RippleRenderer {
     // 检测设备性能并设置初始参数
     const performanceLevel = this.detectPerformance();
 
+    // 移动设备检测
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
     // 渲染参数
     this.params = {
       intensity: 0.5,    // 波纹强度
@@ -35,10 +38,10 @@ class RippleRenderer {
       multiElement: true, // 是否允许元素混合
       quality: performanceLevel, // 根据设备性能自动调整质量
       maxRipples: this.getMaxRipplesForQuality(performanceLevel), // 根据质量级别设置最大波纹数
-      useSimplifiedEffects: performanceLevel === 'low' // 低端设备使用简化效果
+      useSimplifiedEffects: performanceLevel === 'low' || this.isMobile // 移动设备默认使用简化效果
     };
 
-    // 元素颜色配置
+    // 元素颜色配置 - 使用更简单的颜色格式以提高性能
     this.elementColors = {
       water: {
         primary: 'rgba(0, 229, 255, 0.7)',
@@ -69,17 +72,22 @@ class RippleRenderer {
     this.animationFrameId = null;
     this.isAnimating = false;
 
-    // 性能监控
+    // 性能监控 - 简化性能监控逻辑
     this.lastFrameTime = 0;
     this.frameCount = 0;
     this.fps = 0;
-    this.fpsUpdateInterval = 500; // 每500ms更新一次FPS
+    this.fpsUpdateInterval = 1000; // 每秒更新一次FPS
     this.lastFpsUpdate = 0;
     this.lowFpsCount = 0; // 连续低帧率计数
     this.highFpsCount = 0; // 连续高帧率计数
 
+    // 渲染优化标志
+    this.needsBackgroundRedraw = true;
+    this.lastQualityAdjustTime = 0;
+    this.qualityAdjustInterval = 3000; // 每3秒最多调整一次质量
+
     // 绑定事件处理
-    this.resizeHandler = this.throttle(this.resize.bind(this), 200);
+    this.resizeHandler = this.throttle(this.resize.bind(this), 300); // 增加节流时间
     window.addEventListener('resize', this.resizeHandler);
     window.addEventListener('orientationchange', this.resizeHandler);
 
@@ -93,11 +101,14 @@ class RippleRenderer {
    * @returns {number} 最大波纹数量
    */
   getMaxRipplesForQuality(quality) {
+    // 移动设备上进一步限制波纹数量
+    const mobileFactor = this.isMobile ? 0.6 : 1;
+
     switch(quality) {
-      case 'low': return 20;
-      case 'medium': return 40;
-      case 'high': return 60;
-      default: return 30;
+      case 'low': return Math.floor(15 * mobileFactor);
+      case 'medium': return Math.floor(30 * mobileFactor);
+      case 'high': return Math.floor(45 * mobileFactor);
+      default: return Math.floor(20 * mobileFactor);
     }
   }
 
@@ -108,14 +119,22 @@ class RippleRenderer {
    * @returns {Function} 节流后的函数
    */
   throttle(func, limit) {
-    let inThrottle;
+    let lastFunc;
+    let lastRan;
     return function() {
-      const args = arguments;
       const context = this;
-      if (!inThrottle) {
+      const args = arguments;
+      if (!lastRan) {
         func.apply(context, args);
-        inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
+        lastRan = Date.now();
+      } else {
+        clearTimeout(lastFunc);
+        lastFunc = setTimeout(function() {
+          if ((Date.now() - lastRan) >= limit) {
+            func.apply(context, args);
+            lastRan = Date.now();
+          }
+        }, limit - (Date.now() - lastRan));
       }
     };
   }
@@ -129,49 +148,65 @@ class RippleRenderer {
       // 检查是否为移动设备
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-      // 检查设备像素比
-      const pixelRatio = window.devicePixelRatio || 1;
-
-      // 检查屏幕尺寸
-      const screenSize = Math.max(window.innerWidth, window.innerHeight);
-
-      // 检查设备内存 (如果可用)
-      let memoryLimited = false;
-      if (navigator.deviceMemory) {
-        memoryLimited = navigator.deviceMemory < 4; // 小于4GB内存视为受限
-      }
-
-      // 检查处理器核心数 (如果可用)
-      let cpuLimited = false;
-      if (navigator.hardwareConcurrency) {
-        cpuLimited = navigator.hardwareConcurrency < 4; // 小于4核视为受限
-      }
-
-      // 检查是否为低端设备
-      const isLowEndDevice = memoryLimited || cpuLimited;
-
-      // 检查是否为省电模式 (如果可用)
-      let isPowerSaveMode = false;
-      if (window.matchMedia) {
-        isPowerSaveMode = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      }
-
-      // 根据设备特性确定质量级别
+      // 移动设备默认使用低质量设置
       if (isMobile) {
-        if (isLowEndDevice || isPowerSaveMode || screenSize < 768) {
-          return 'low';
-        } else if (pixelRatio > 2 && screenSize > 1000 && !isPowerSaveMode) {
-          return 'medium';
-        } else {
+        // 检查是否为iOS设备
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        // iOS设备默认使用低质量
+        if (isIOS) {
           return 'low';
         }
+
+        // 检查屏幕尺寸 - 小屏幕使用低质量
+        const screenSize = Math.min(window.innerWidth, window.innerHeight);
+        if (screenSize < 400) {
+          return 'low';
+        }
+
+        // 检查设备内存 (如果可用)
+        if (navigator.deviceMemory && navigator.deviceMemory < 4) {
+          return 'low';
+        }
+
+        // 检查处理器核心数 (如果可用)
+        if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
+          return 'low';
+        }
+
+        // 检查是否为省电模式
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          return 'low';
+        }
+
+        // 其他移动设备默认使用中等质量
+        return 'medium';
       } else {
-        if (isLowEndDevice || isPowerSaveMode) {
+        // 桌面设备检查
+
+        // 检查是否为低端设备
+        let isLowEndDevice = false;
+
+        // 检查设备内存 (如果可用)
+        if (navigator.deviceMemory && navigator.deviceMemory < 4) {
+          isLowEndDevice = true;
+        }
+
+        // 检查处理器核心数 (如果可用)
+        if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
+          isLowEndDevice = true;
+        }
+
+        // 检查是否为省电模式
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           return 'medium';
-        } else if (pixelRatio > 1 && screenSize > 1200) {
-          return 'high';
+        }
+
+        // 根据设备性能返回质量级别
+        if (isLowEndDevice) {
+          return 'medium';
         } else {
-          return 'medium';
+          return 'high';
         }
       }
     } catch (error) {
@@ -185,21 +220,46 @@ class RippleRenderer {
    */
   resize() {
     try {
-      // 获取设备像素比以支持高DPI屏幕
+      // 获取设备像素比
       const pixelRatio = window.devicePixelRatio || 1;
 
       // 获取显示尺寸
       const displayWidth = window.innerWidth;
       const displayHeight = window.innerHeight;
 
-      // 设置画布尺寸，考虑设备像素比和性能设置
-      let scaleFactor = 1;
-      if (this.params.quality === 'low') {
-        scaleFactor = 0.6; // 低质量模式下大幅降低分辨率
-      } else if (this.params.quality === 'medium') {
-        scaleFactor = pixelRatio > 1 ? 0.75 : 0.9; // 中等质量模式下根据像素比调整
+      // 根据设备和质量设置缩放因子
+      let scaleFactor;
+
+      if (this.isMobile) {
+        // 移动设备使用更激进的缩放以提高性能
+        switch(this.params.quality) {
+          case 'low':
+            scaleFactor = 0.5; // 低质量模式下大幅降低分辨率
+            break;
+          case 'medium':
+            scaleFactor = 0.7; // 中等质量
+            break;
+          case 'high':
+            scaleFactor = Math.min(pixelRatio, 1.5); // 高质量但限制最大值
+            break;
+          default:
+            scaleFactor = 0.6;
+        }
       } else {
-        scaleFactor = Math.min(pixelRatio, 2); // 高质量模式使用设备像素比，但最大为2
+        // 桌面设备使用更高的分辨率
+        switch(this.params.quality) {
+          case 'low':
+            scaleFactor = 0.7;
+            break;
+          case 'medium':
+            scaleFactor = Math.min(pixelRatio, 1.5);
+            break;
+          case 'high':
+            scaleFactor = Math.min(pixelRatio, 2);
+            break;
+          default:
+            scaleFactor = 1;
+        }
       }
 
       // 设置画布尺寸 - 确保尺寸为整数以避免模糊
@@ -219,12 +279,15 @@ class RippleRenderer {
       this.displayHeight = displayHeight;
       this.scaleFactor = scaleFactor;
 
-      // 更新背景
-      this.updateBackgroundCache();
+      // 标记需要重绘背景
+      this.needsBackgroundRedraw = true;
 
       // 重新绘制
       if (this.isAnimating) {
         this.render();
+      } else {
+        // 如果没有动画，至少更新背景
+        this.updateBackgroundCache();
       }
 
       console.log(`Canvas resized: ${this.width}x${this.height}, Quality: ${this.params.quality}, Scale: ${scaleFactor}`);
@@ -235,6 +298,13 @@ class RippleRenderer {
       this.canvas.height = window.innerHeight;
       this.width = this.canvas.width;
       this.height = this.canvas.height;
+
+      // 确保背景画布也有正确的尺寸
+      this.backgroundCanvas.width = this.width;
+      this.backgroundCanvas.height = this.height;
+
+      // 标记需要重绘背景
+      this.needsBackgroundRedraw = true;
     }
   }
 
@@ -300,31 +370,36 @@ class RippleRenderer {
    * 将背景绘制到单独的缓存画布中以提高性能
    */
   updateBackgroundCache() {
+    // 如果不需要重绘背景，直接返回
+    if (!this.needsBackgroundRedraw) {
+      return;
+    }
+
     const ctx = this.backgroundCtx;
 
     // 清除背景画布
     ctx.clearRect(0, 0, this.width, this.height);
 
     if (this.hasCustomBackground && this.backgroundImage) {
-      // 绘制自定义背景图像，保持纵横比并填充整个画布
-      const imgRatio = this.backgroundImage.width / this.backgroundImage.height;
-      const canvasRatio = this.width / this.height;
-
-      let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-
-      if (canvasRatio > imgRatio) {
-        // 画布比图像更宽
-        drawWidth = this.width;
-        drawHeight = this.width / imgRatio;
-        offsetY = (this.height - drawHeight) / 2;
-      } else {
-        // 画布比图像更高
-        drawHeight = this.height;
-        drawWidth = this.height * imgRatio;
-        offsetX = (this.width - drawWidth) / 2;
-      }
-
       try {
+        // 绘制自定义背景图像，保持纵横比并填充整个画布
+        const imgRatio = this.backgroundImage.width / this.backgroundImage.height;
+        const canvasRatio = this.width / this.height;
+
+        let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+
+        if (canvasRatio > imgRatio) {
+          // 画布比图像更宽
+          drawWidth = this.width;
+          drawHeight = this.width / imgRatio;
+          offsetY = (this.height - drawHeight) / 2;
+        } else {
+          // 画布比图像更高
+          drawHeight = this.height;
+          drawWidth = this.height * imgRatio;
+          offsetX = (this.width - drawWidth) / 2;
+        }
+
         ctx.drawImage(this.backgroundImage, offsetX, offsetY, drawWidth, drawHeight);
 
         // 添加暗色叠加层，使波纹更明显
@@ -337,6 +412,9 @@ class RippleRenderer {
     } else {
       this.drawDefaultBackground();
     }
+
+    // 重置标志
+    this.needsBackgroundRedraw = false;
   }
 
   /**
@@ -345,7 +423,7 @@ class RippleRenderer {
   drawDefaultBackground() {
     const ctx = this.backgroundCtx;
 
-    // 绘制默认渐变背景
+    // 绘制简单的渐变背景
     const gradient = ctx.createRadialGradient(
       this.width / 2, this.height / 2, 0,
       this.width / 2, this.height / 2, Math.max(this.width, this.height) / 1.5
@@ -357,59 +435,114 @@ class RippleRenderer {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, this.width, this.height);
 
-    // 添加一些随机星星
-    this.drawStars(ctx);
+    // 根据质量级别决定是否绘制星星
+    if (this.params.quality !== 'low' || !this.isMobile) {
+      this.drawStars(ctx);
+    } else {
+      // 低质量模式下只绘制少量星星
+      this.drawSimpleStars(ctx);
+    }
   }
 
   /**
    * 绘制背景到主画布
    */
   drawBackground() {
+    // 确保背景已更新
+    if (this.needsBackgroundRedraw) {
+      this.updateBackgroundCache();
+    }
+
     // 直接从缓存画布复制背景
     this.ctx.drawImage(this.backgroundCanvas, 0, 0);
+  }
+
+  /**
+   * 绘制简化版星星背景 (用于低端设备)
+   * @param {CanvasRenderingContext2D} ctx - 绘制上下文
+   */
+  drawSimpleStars(ctx) {
+    // 大幅减少星星数量
+    const starCount = Math.floor(this.width * this.height / 20000);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+
+    // 批量绘制简单的星星点
+    for (let i = 0; i < starCount; i++) {
+      const x = Math.random() * this.width;
+      const y = Math.random() * this.height;
+
+      ctx.beginPath();
+      ctx.rect(x, y, 1, 1); // 使用矩形代替圆形，提高性能
+      ctx.fill();
+    }
+
+    ctx.restore();
   }
 
   /**
    * 绘制星星背景
    * @param {CanvasRenderingContext2D} ctx - 绘制上下文
    */
-  drawStars(ctx = this.ctx) {
+  drawStars(ctx) {
     // 根据质量级别和画布大小调整星星数量
-    let density = 5000;
-    if (this.params.quality === 'low') {
-      density = 8000;
-    } else if (this.params.quality === 'high') {
-      density = 3000;
+    let density;
+
+    if (this.isMobile) {
+      density = this.params.quality === 'low' ? 15000 : 10000;
+    } else {
+      density = this.params.quality === 'low' ? 10000 :
+               (this.params.quality === 'medium' ? 6000 : 4000);
     }
 
     const starCount = Math.floor(this.width * this.height / density);
 
     ctx.save();
 
-    // 使用批处理方式绘制星星以提高性能
+    // 批量绘制普通星星
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.beginPath();
+
     for (let i = 0; i < starCount; i++) {
       const x = Math.random() * this.width;
       const y = Math.random() * this.height;
-      const radius = Math.random() * 1.5;
-      const opacity = Math.random() * 0.8 + 0.2;
+      const radius = Math.random() * 1.2 + 0.3;
 
-      // 添加一些大一点的星星
-      if (Math.random() < 0.05) {
-        // 绘制发光的大星星
-        const glow = ctx.createRadialGradient(x, y, 0, x, y, radius * 4);
+      // 使用移动到位置+圆弧+移动到下一个位置的方式批量绘制
+      ctx.moveTo(x + radius, y);
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+    }
+
+    ctx.fill();
+
+    // 只在中高质量模式下添加发光星星
+    if (this.params.quality !== 'low') {
+      // 添加少量发光星星
+      const glowStarCount = Math.floor(starCount * 0.03);
+
+      for (let i = 0; i < glowStarCount; i++) {
+        const x = Math.random() * this.width;
+        const y = Math.random() * this.height;
+        const radius = Math.random() * 1.5 + 0.5;
+        const opacity = Math.random() * 0.5 + 0.3;
+
+        // 绘制发光效果
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, radius * 3);
         glow.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
         glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
         ctx.beginPath();
-        ctx.arc(x, y, radius * 4, 0, Math.PI * 2);
         ctx.fillStyle = glow;
+        ctx.arc(x, y, radius * 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 绘制星星中心
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
       }
-
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-      ctx.fill();
     }
 
     ctx.restore();
@@ -423,7 +556,21 @@ class RippleRenderer {
     if (this.ripplePool.length > 0) {
       return this.ripplePool.pop();
     }
-    return {};
+    // 创建一个新的空对象
+    return {
+      x: 0,
+      y: 0,
+      size: 0,
+      element: '',
+      intensity: 0,
+      opacity: 0,
+      age: 0,
+      decay: 0,
+      speed: 0,
+      rotation: 0,
+      rotationSpeed: 0,
+      elementProps: {}
+    };
   }
 
   /**
@@ -431,13 +578,26 @@ class RippleRenderer {
    * @param {Object} ripple - 波纹对象
    */
   returnRippleToPool(ripple) {
-    // 清空对象属性以便重用
-    for (const prop in ripple) {
-      if (typeof ripple[prop] === 'object' && ripple[prop] !== null) {
-        ripple[prop] = {};
-      } else if (typeof ripple[prop] !== 'function') {
-        ripple[prop] = null;
+    // 重置基本属性
+    ripple.x = 0;
+    ripple.y = 0;
+    ripple.size = 0;
+    ripple.element = '';
+    ripple.intensity = 0;
+    ripple.opacity = 0;
+    ripple.age = 0;
+    ripple.decay = 0;
+    ripple.speed = 0;
+    ripple.rotation = 0;
+    ripple.rotationSpeed = 0;
+
+    // 清空元素特定属性
+    if (ripple.elementProps) {
+      for (const prop in ripple.elementProps) {
+        delete ripple.elementProps[prop];
       }
+    } else {
+      ripple.elementProps = {};
     }
 
     // 限制池大小以防内存泄漏
@@ -455,9 +615,8 @@ class RippleRenderer {
    */
   addRipple(x, y, element, intensity = 1) {
     try {
-      // 如果波纹数量已达最大值，不再添加新波纹
+      // 如果波纹数量已达最大值，移除最老的波纹
       if (this.ripples.length >= this.params.maxRipples) {
-        // 移除最老的波纹
         const oldRipple = this.ripples.shift();
         this.returnRippleToPool(oldRipple);
       }
@@ -466,22 +625,32 @@ class RippleRenderer {
       x = x * this.scaleFactor;
       y = y * this.scaleFactor;
 
-      // 计算实际大小 (根据质量级别调整)
-      let sizeMultiplier = 1;
-      if (this.params.quality === 'low') {
-        sizeMultiplier = 0.7; // 低质量模式下减小波纹大小
-      } else if (this.params.quality === 'high') {
-        sizeMultiplier = 1.2; // 高质量模式下增大波纹大小
+      // 计算实际大小 (根据质量级别和设备类型调整)
+      let sizeMultiplier;
+
+      if (this.isMobile) {
+        // 移动设备上使用更小的波纹
+        sizeMultiplier = this.params.quality === 'low' ? 0.6 :
+                        (this.params.quality === 'medium' ? 0.8 : 1.0);
+      } else {
+        // 桌面设备上使用更大的波纹
+        sizeMultiplier = this.params.quality === 'low' ? 0.8 :
+                        (this.params.quality === 'medium' ? 1.0 : 1.2);
       }
 
-      const baseSize = (50 + this.params.size * 100) * sizeMultiplier;
-      const size = baseSize * (0.8 + Math.random() * 0.4) * (0.7 + intensity * 0.6);
+      // 计算基础大小
+      const baseSize = (40 + this.params.size * 80) * sizeMultiplier;
+
+      // 添加一些随机变化，但减少变化范围以提高性能
+      const randomFactor = this.isMobile ? 0.2 : 0.4;
+      const size = baseSize * (0.9 + Math.random() * randomFactor) * (0.8 + intensity * 0.4);
 
       // 计算实际强度
       const actualIntensity = this.params.intensity * intensity;
 
-      // 计算衰减速度
-      const decay = 0.01 + this.params.decay * 0.04;
+      // 计算衰减速度 - 移动设备上使用更快的衰减
+      const decayBase = this.isMobile ? 0.015 : 0.01;
+      const decay = decayBase + this.params.decay * 0.03;
 
       // 从对象池获取波纹对象
       const ripple = this.getRippleFromPool();
@@ -495,9 +664,15 @@ class RippleRenderer {
       ripple.opacity = 0.8;
       ripple.age = 0;
       ripple.decay = decay;
-      ripple.speed = 0.8 + Math.random() * 0.4;
+      ripple.speed = 0.8 + Math.random() * 0.3; // 减少随机范围
       ripple.rotation = Math.random() * Math.PI * 2;
-      ripple.rotationSpeed = (Math.random() - 0.5) * 0.02;
+
+      // 移动设备上减少旋转速度以提高性能
+      ripple.rotationSpeed = this.isMobile ?
+                            (Math.random() - 0.5) * 0.01 :
+                            (Math.random() - 0.5) * 0.02;
+
+      // 获取元素特定属性
       ripple.elementProps = this.getElementSpecificProps(element);
 
       // 添加到波纹数组
@@ -518,26 +693,36 @@ class RippleRenderer {
    * @returns {Object} 元素特定的属性
    */
   getElementSpecificProps(element) {
+    // 根据设备类型和质量级别调整属性
+    const qualityFactor = this.params.quality === 'low' ? 0.6 :
+                         (this.params.quality === 'medium' ? 0.8 : 1.0);
+
+    // 移动设备上进一步减少复杂度
+    const mobileFactor = this.isMobile ? 0.7 : 1.0;
+
+    // 组合因子
+    const factor = qualityFactor * mobileFactor;
+
     switch (element) {
       case 'water':
         return {
-          waveCount: 2 + Math.floor(Math.random() * 2),
-          waveSpeed: 0.05 + Math.random() * 0.05
+          waveCount: 1 + Math.floor(Math.random() * 2 * factor),
+          waveSpeed: 0.05 + Math.random() * 0.03
         };
       case 'fire':
         return {
-          particleCount: 8 + Math.floor(Math.random() * 8),
-          flickerRate: 0.1 + Math.random() * 0.2
+          particleCount: 4 + Math.floor(Math.random() * 6 * factor),
+          flickerRate: 0.1 + Math.random() * 0.1
         };
       case 'electric':
         return {
-          boltCount: 4 + Math.floor(Math.random() * 4),
-          jitterFactor: 0.3 + Math.random() * 0.5
+          boltCount: 2 + Math.floor(Math.random() * 3 * factor),
+          jitterFactor: 0.3 + Math.random() * 0.3
         };
       case 'light':
         return {
-          rayCount: 6 + Math.floor(Math.random() * 6),
-          pulseRate: 0.05 + Math.random() * 0.1
+          rayCount: 4 + Math.floor(Math.random() * 4 * factor),
+          pulseRate: 0.05 + Math.random() * 0.05
         };
       default:
         return {};
@@ -555,6 +740,19 @@ class RippleRenderer {
       this.lastFrameTime = now;
       this.frameCount++;
 
+      // 更新FPS显示 - 减少更新频率以提高性能
+      if (now - this.lastFpsUpdate > this.fpsUpdateInterval) {
+        this.fps = Math.round((this.frameCount * 1000) / (now - this.lastFpsUpdate));
+        this.lastFpsUpdate = now;
+        this.frameCount = 0;
+
+        // 根据FPS动态调整质量 - 但不要太频繁
+        if (now - this.lastQualityAdjustTime > this.qualityAdjustInterval) {
+          this.adjustQualityBasedOnFps();
+          this.lastQualityAdjustTime = now;
+        }
+      }
+
       // 如果帧率过低，增加低帧率计数
       if (deltaTime > 50) { // 小于20fps
         this.lowFpsCount++;
@@ -562,36 +760,26 @@ class RippleRenderer {
       } else if (deltaTime < 20) { // 大于50fps
         this.highFpsCount++;
         this.lowFpsCount = 0;
-      } else {
-        this.lowFpsCount = 0;
-        this.highFpsCount = 0;
-      }
-
-      // 更新FPS显示
-      if (now - this.lastFpsUpdate > this.fpsUpdateInterval) {
-        this.fps = Math.round((this.frameCount * 1000) / (now - this.lastFpsUpdate));
-        this.lastFpsUpdate = now;
-        this.frameCount = 0;
-
-        // 根据FPS动态调整质量
-        this.adjustQualityBasedOnFps();
       }
 
       // 批量更新波纹以提高性能
-      const ripplesToRemove = [];
+      let ripplesToRemove = [];
 
-      // 更新所有波纹
-      for (let i = 0; i < this.ripples.length; i++) {
+      // 更新所有波纹 - 使用更高效的循环
+      const len = this.ripples.length;
+      for (let i = 0; i < len; i++) {
         const ripple = this.ripples[i];
 
         // 增加年龄
-        ripple.age += ripple.speed;
+        ripple.age += ripple.speed * (deltaTime / 16.67); // 基于实际帧时间调整速度
 
         // 减少不透明度
-        ripple.opacity -= ripple.decay;
+        ripple.opacity -= ripple.decay * (deltaTime / 16.67);
 
-        // 更新旋转
-        ripple.rotation += ripple.rotationSpeed;
+        // 更新旋转 - 只在非移动设备或中高质量模式下更新旋转
+        if (!this.isMobile || this.params.quality !== 'low') {
+          ripple.rotation += ripple.rotationSpeed * (deltaTime / 16.67);
+        }
 
         // 如果波纹完全透明，标记为移除
         if (ripple.opacity <= 0) {
@@ -599,11 +787,14 @@ class RippleRenderer {
         }
       }
 
-      // 从后向前移除波纹，以避免索引问题
-      for (let i = ripplesToRemove.length - 1; i >= 0; i--) {
-        const index = ripplesToRemove[i];
-        const ripple = this.ripples.splice(index, 1)[0];
-        this.returnRippleToPool(ripple);
+      // 如果有波纹需要移除
+      if (ripplesToRemove.length > 0) {
+        // 从后向前移除波纹，以避免索引问题
+        for (let i = ripplesToRemove.length - 1; i >= 0; i--) {
+          const index = ripplesToRemove[i];
+          const ripple = this.ripples.splice(index, 1)[0];
+          this.returnRippleToPool(ripple);
+        }
       }
 
       // 如果没有波纹且不是首次渲染，停止动画循环以节省资源
@@ -620,8 +811,13 @@ class RippleRenderer {
    */
   adjustQualityBasedOnFps() {
     try {
+      // 移动设备上更激进地降低质量
+      const lowFpsThreshold = this.isMobile ? 3 : 5;
+      const highFpsThreshold = this.isMobile ? 8 : 10;
+      const targetFps = this.isMobile ? 30 : 45;
+
       // 连续多次低帧率才降低质量，避免临时性能波动导致频繁切换
-      if (this.lowFpsCount > 5 && this.params.quality !== 'low') {
+      if (this.lowFpsCount > lowFpsThreshold && this.params.quality !== 'low') {
         const oldQuality = this.params.quality;
         this.params.quality = 'low';
         this.params.maxRipples = this.getMaxRipplesForQuality('low');
@@ -635,9 +831,11 @@ class RippleRenderer {
 
         // 重置计数器
         this.lowFpsCount = 0;
+        this.highFpsCount = 0;
       }
-      // 连续多次高帧率才提高质量
-      else if (this.highFpsCount > 10 && this.params.quality === 'low' && this.fps > 45) {
+      // 连续多次高帧率才提高质量 - 移动设备上更保守
+      else if (!this.isMobile && this.highFpsCount > highFpsThreshold &&
+               this.params.quality === 'low' && this.fps > targetFps) {
         const oldQuality = this.params.quality;
         this.params.quality = 'medium';
         this.params.maxRipples = this.getMaxRipplesForQuality('medium');
@@ -650,6 +848,7 @@ class RippleRenderer {
         }
 
         // 重置计数器
+        this.lowFpsCount = 0;
         this.highFpsCount = 0;
       }
     } catch (error) {
@@ -673,8 +872,20 @@ class RippleRenderer {
         return;
       }
 
-      // 根据质量级别决定渲染策略
-      const skipFactor = this.params.quality === 'low' && this.ripples.length > 15 ? 2 : 1;
+      // 根据质量级别和设备类型决定渲染策略
+      let skipFactor = 1;
+
+      // 移动设备上更激进地跳过波纹
+      if (this.isMobile) {
+        if (this.params.quality === 'low' && this.ripples.length > 10) {
+          skipFactor = 2;
+        } else if (this.ripples.length > 20) {
+          skipFactor = 2;
+        }
+      } else if (this.params.quality === 'low' && this.ripples.length > 15) {
+        skipFactor = 2;
+      }
+
       const simplifiedRendering = this.params.useSimplifiedEffects;
 
       // 使用批处理方式绘制波纹以提高性能
@@ -683,9 +894,13 @@ class RippleRenderer {
       // 按元素类型分组绘制，减少状态切换
       const elementGroups = {};
 
-      // 将波纹分组
-      for (let i = 0; i < this.ripples.length; i += skipFactor) {
+      // 将波纹分组 - 使用更高效的循环
+      const len = this.ripples.length;
+      for (let i = 0; i < len; i += skipFactor) {
         const ripple = this.ripples[i];
+        // 跳过不可见的波纹
+        if (ripple.opacity < 0.05) continue;
+
         if (!elementGroups[ripple.element]) {
           elementGroups[ripple.element] = [];
         }
@@ -695,7 +910,13 @@ class RippleRenderer {
       // 按元素类型批量绘制
       for (const element in elementGroups) {
         const ripples = elementGroups[element];
-        for (let i = 0; i < ripples.length; i++) {
+        const rippleLen = ripples.length;
+
+        // 优化：预先设置绘制状态
+        this.ctx.lineWidth = 2;
+        this.ctx.lineCap = 'round';
+
+        for (let i = 0; i < rippleLen; i++) {
           this.drawRipple(ripples[i], simplifiedRendering);
         }
       }
@@ -717,12 +938,13 @@ class RippleRenderer {
   drawDebugInfo() {
     this.ctx.save();
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    this.ctx.fillRect(10, 10, 150, 60);
+    this.ctx.fillRect(10, 10, 160, 80);
     this.ctx.fillStyle = 'white';
     this.ctx.font = '12px monospace';
     this.ctx.fillText(`FPS: ${this.fps}`, 20, 30);
     this.ctx.fillText(`Quality: ${this.params.quality}`, 20, 50);
     this.ctx.fillText(`Ripples: ${this.ripples.length}/${this.params.maxRipples}`, 20, 70);
+    this.ctx.fillText(`Mobile: ${this.isMobile ? 'Yes' : 'No'}`, 20, 90);
     this.ctx.restore();
   }
 
@@ -745,15 +967,19 @@ class RippleRenderer {
 
     // 移动到波纹中心并旋转
     this.ctx.translate(x, y);
-    this.ctx.rotate(rotation);
+
+    // 只在非移动设备或中高质量模式下应用旋转
+    if (!this.isMobile || this.params.quality !== 'low') {
+      this.ctx.rotate(rotation);
+    }
 
     // 根据质量级别决定是否绘制光晕
-    if (!simplified && this.params.quality !== 'low') {
-      // 绘制外部光晕
+    if (!simplified && this.params.quality !== 'low' && !this.isMobile) {
+      // 绘制外部光晕 - 只在高质量模式下
       const glowSize = size * (1 + age * 0.1);
       const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
 
-      gradient.addColorStop(0, colors.glow.replace('0.2', opacity.toString()));
+      gradient.addColorStop(0, colors.glow.replace('0.2', (opacity * 0.8).toString()));
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       this.ctx.beginPath();
@@ -764,23 +990,28 @@ class RippleRenderer {
 
     // 根据元素类型绘制不同的波纹效果
     try {
+      // 移动设备上始终使用简化渲染
+      const useSimplified = simplified || (this.isMobile && this.params.quality === 'low');
+
       switch (element) {
         case 'water':
-          this.drawWaterRipple(size, age, opacity, colors, intensity, elementProps, simplified);
+          this.drawWaterRipple(size, age, opacity, colors, intensity, elementProps, useSimplified);
           break;
         case 'fire':
-          this.drawFireRipple(size, age, opacity, colors, intensity, elementProps, simplified);
+          this.drawFireRipple(size, age, opacity, colors, intensity, elementProps, useSimplified);
           break;
         case 'electric':
-          this.drawElectricRipple(size, age, opacity, colors, intensity, elementProps, simplified);
+          this.drawElectricRipple(size, age, opacity, colors, intensity, elementProps, useSimplified);
           break;
         case 'light':
-          this.drawLightRipple(size, age, opacity, colors, intensity, elementProps, simplified);
+          this.drawLightRipple(size, age, opacity, colors, intensity, elementProps, useSimplified);
           break;
+        default:
+          // 未知元素类型使用后备渲染
+          this.drawFallbackRipple(size, opacity, colors);
       }
     } catch (error) {
       // 出错时使用简单圆形作为后备
-      console.warn(`绘制${element}元素波纹失败，使用后备渲染:`, error);
       this.drawFallbackRipple(size, opacity, colors);
     }
 
@@ -794,8 +1025,9 @@ class RippleRenderer {
    * @param {Object} colors - 颜色对象
    */
   drawFallbackRipple(size, opacity, colors) {
+    // 使用最简单的圆形作为后备
     this.ctx.beginPath();
-    this.ctx.arc(0, 0, size * 0.5, 0, Math.PI * 2);
+    this.ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
     this.ctx.fillStyle = colors.primary.replace('0.7', (opacity * 0.7).toString());
     this.ctx.fill();
   }
@@ -893,12 +1125,17 @@ class RippleRenderer {
   drawFireRipple(size, age, opacity, colors, intensity, props = {}, simplified = false) {
     const { particleCount = 12, flickerRate = 0.2 } = props;
 
-    // 简化渲染模式
-    if (simplified) {
-      // 只绘制几个主要粒子和中心火球
-      const simpleParticleCount = 4;
+    // 移动设备上始终使用简化渲染
+    const useSimplified = simplified || (this.isMobile && this.params.quality === 'low');
 
-      // 绘制简化的火焰粒子
+    // 简化渲染模式
+    if (useSimplified) {
+      // 只绘制几个主要粒子和中心火球
+      const simpleParticleCount = this.isMobile ? 3 : 4;
+
+      // 绘制简化的火焰粒子 - 使用批处理方式提高性能
+      this.ctx.fillStyle = colors.primary.replace('0.7', (opacity * 0.8).toString());
+
       for (let i = 0; i < simpleParticleCount; i++) {
         const angle = (i / simpleParticleCount) * Math.PI * 2 + age * 0.2;
         const flicker = 1 + Math.sin(age * flickerRate * 10 + i) * 0.3;
@@ -913,7 +1150,6 @@ class RippleRenderer {
 
         this.ctx.beginPath();
         this.ctx.arc(x, y, particleSize, 0, Math.PI * 2);
-        this.ctx.fillStyle = colors.primary.replace('0.7', (opacity * 0.8).toString());
         this.ctx.fill();
       }
 
@@ -930,14 +1166,21 @@ class RippleRenderer {
     }
 
     // 标准渲染模式
-    // 根据质量级别调整粒子数量
+    // 根据质量级别和设备类型调整粒子数量
     let actualParticleCount = Math.floor(particleCount * intensity);
-    if (this.params.quality === 'low') {
+
+    if (this.isMobile) {
+      // 移动设备上大幅减少粒子数量
+      actualParticleCount = Math.floor(actualParticleCount * 0.5);
+    } else if (this.params.quality === 'low') {
       actualParticleCount = Math.floor(actualParticleCount * 0.6);
     }
 
     // 使用伪随机数生成器以提高性能
     const pseudoRandom = (i) => (Math.sin(i * 12.9898 + age * 78.233) * 43758.5453) % 1;
+
+    // 预设填充样式以减少状态切换
+    this.ctx.fillStyle = colors.primary.replace('0.7', (opacity * 0.8).toString());
 
     // 绘制火焰粒子
     for (let i = 0; i < actualParticleCount; i++) {
@@ -955,15 +1198,14 @@ class RippleRenderer {
 
       this.ctx.beginPath();
       this.ctx.arc(x, y, particleSize, 0, Math.PI * 2);
-      this.ctx.fillStyle = colors.primary.replace('0.7', (opacity * 0.8).toString());
-      this.ctx.fill();
+      this.ctx.fill(); // 使用预设的填充样式
     }
 
     // 绘制中心火球
     const coreSize = size * 0.3 * (1 - age * 0.03);
     if (coreSize > 0) {
-      // 根据质量级别决定是否使用渐变
-      if (this.params.quality === 'low') {
+      // 根据质量级别和设备类型决定是否使用渐变
+      if (this.params.quality === 'low' || this.isMobile) {
         this.ctx.beginPath();
         this.ctx.arc(0, 0, coreSize, 0, Math.PI * 2);
         this.ctx.fillStyle = colors.secondary.replace('0.4', opacity.toString());
@@ -995,10 +1237,13 @@ class RippleRenderer {
   drawElectricRipple(size, age, opacity, colors, intensity, props = {}, simplified = false) {
     const { boltCount = 6, jitterFactor = 0.5 } = props;
 
+    // 移动设备上始终使用简化渲染
+    const useSimplified = simplified || (this.isMobile && this.params.quality === 'low');
+
     // 简化渲染模式
-    if (simplified) {
+    if (useSimplified) {
       // 只绘制几条主要闪电和中心电球
-      const simpleBoltCount = 3;
+      const simpleBoltCount = this.isMobile ? 2 : 3;
 
       this.ctx.lineWidth = 2 + intensity * 2;
       this.ctx.lineCap = 'round';
@@ -1044,12 +1289,17 @@ class RippleRenderer {
     }
 
     // 标准渲染模式
-    // 根据质量级别调整闪电数量
+    // 根据质量级别和设备类型调整闪电数量
     let actualBoltCount = Math.floor(boltCount + intensity * 4);
-    if (this.params.quality === 'low') {
+
+    if (this.isMobile) {
+      // 移动设备上大幅减少闪电数量
+      actualBoltCount = Math.floor(actualBoltCount * 0.5);
+    } else if (this.params.quality === 'low') {
       actualBoltCount = Math.floor(actualBoltCount * 0.7);
     }
 
+    // 设置线条样式
     this.ctx.lineWidth = 2 + intensity * 2;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
@@ -1067,8 +1317,16 @@ class RippleRenderer {
       this.ctx.moveTo(0, 0);
 
       let x = 0, y = 0;
-      // 根据质量级别调整分段数
-      const segments = this.params.quality === 'low' ? 3 : (4 + Math.floor(intensity * 3));
+
+      // 根据质量级别和设备类型调整分段数
+      let segments;
+      if (this.isMobile) {
+        segments = 2; // 移动设备上使用最少的分段
+      } else if (this.params.quality === 'low') {
+        segments = 3;
+      } else {
+        segments = 4 + Math.floor(intensity * 2);
+      }
 
       for (let j = 0; j < segments; j++) {
         const segmentLength = length / segments;
@@ -1090,8 +1348,9 @@ class RippleRenderer {
     // 绘制中心电球
     const coreSize = size * 0.2 * (1 - age * 0.02);
     if (coreSize > 0) {
-      // 添加闪烁效果
-      const pulseEffect = 0.8 + Math.sin(age * 15) * 0.2;
+      // 添加闪烁效果 - 在移动设备上减少闪烁频率
+      const pulseRate = this.isMobile ? 10 : 15;
+      const pulseEffect = 0.8 + Math.sin(age * pulseRate) * 0.2;
 
       this.ctx.beginPath();
       this.ctx.arc(0, 0, coreSize * pulseEffect, 0, Math.PI * 2);
@@ -1113,11 +1372,19 @@ class RippleRenderer {
   drawLightRipple(size, age, opacity, colors, intensity, props = {}, simplified = false) {
     const { rayCount = 8, pulseRate = 0.1 } = props;
 
+    // 移动设备上始终使用简化渲染
+    const useSimplified = simplified || (this.isMobile && this.params.quality === 'low');
+
     // 简化渲染模式
-    if (simplified) {
+    if (useSimplified) {
       // 只绘制几条主要光线和中心光球
-      const simpleRayCount = 4;
+      const simpleRayCount = this.isMobile ? 3 : 4;
       const maxRayLength = size * 0.6;
+
+      // 使用批处理方式绘制光芒以提高性能
+      this.ctx.beginPath();
+      this.ctx.lineWidth = 2 + intensity * 2;
+      this.ctx.strokeStyle = colors.primary.replace('0.7', (opacity * 0.7).toString());
 
       // 绘制简化的光芒
       for (let i = 0; i < simpleRayCount; i++) {
@@ -1128,13 +1395,12 @@ class RippleRenderer {
         const x = Math.cos(angle) * rayLength;
         const y = Math.sin(angle) * rayLength;
 
-        this.ctx.beginPath();
         this.ctx.moveTo(0, 0);
         this.ctx.lineTo(x, y);
-        this.ctx.lineWidth = 2 + intensity * 2;
-        this.ctx.strokeStyle = colors.primary.replace('0.7', (opacity * 0.7).toString());
-        this.ctx.stroke();
       }
+
+      // 一次性绘制所有光线
+      this.ctx.stroke();
 
       // 绘制简化的中心光球
       const coreSize = size * 0.2 * (1 - age * 0.01);
@@ -1151,9 +1417,13 @@ class RippleRenderer {
     }
 
     // 标准渲染模式
-    // 根据质量级别调整光线数量
+    // 根据质量级别和设备类型调整光线数量
     let actualRayCount = Math.floor(rayCount + intensity * 6);
-    if (this.params.quality === 'low') {
+
+    if (this.isMobile) {
+      // 移动设备上大幅减少光线数量
+      actualRayCount = Math.floor(actualRayCount * 0.5);
+    } else if (this.params.quality === 'low') {
       actualRayCount = Math.floor(actualRayCount * 0.6);
     }
 
@@ -1167,8 +1437,9 @@ class RippleRenderer {
     // 绘制光芒
     for (let i = 0; i < actualRayCount; i++) {
       const angle = (i / actualRayCount) * Math.PI * 2;
-      // 使用pulseRate创建脉动效果
-      const pulse = 0.5 + 0.5 * Math.sin(age * pulseRate * 10 + i * 0.7);
+      // 使用pulseRate创建脉动效果 - 在移动设备上减少脉动频率
+      const pulseFrequency = this.isMobile ? 5 : 10;
+      const pulse = 0.5 + 0.5 * Math.sin(age * pulseRate * pulseFrequency + i * 0.7);
       const rayLength = maxRayLength * pulse;
 
       const x = Math.cos(angle) * rayLength;
@@ -1184,12 +1455,13 @@ class RippleRenderer {
     // 绘制中心光球
     const coreSize = size * 0.25 * (1 - age * 0.01);
     if (coreSize > 0) {
-      // 添加脉动效果
-      const pulseEffect = 0.8 + Math.sin(age * pulseRate * 15) * 0.2;
+      // 添加脉动效果 - 在移动设备上减少脉动频率
+      const pulseFrequency = this.isMobile ? 10 : 15;
+      const pulseEffect = 0.8 + Math.sin(age * pulseRate * pulseFrequency) * 0.2;
       const adjustedCoreSize = coreSize * pulseEffect;
 
-      // 根据质量级别决定是否使用渐变
-      if (this.params.quality === 'low') {
+      // 根据质量级别和设备类型决定是否使用渐变
+      if (this.params.quality === 'low' || this.isMobile) {
         this.ctx.beginPath();
         this.ctx.arc(0, 0, adjustedCoreSize, 0, Math.PI * 2);
         this.ctx.fillStyle = colors.secondary.replace('0.4', (opacity * 0.8).toString());
@@ -1206,8 +1478,8 @@ class RippleRenderer {
         this.ctx.fillStyle = coreGradient;
         this.ctx.fill();
 
-        // 高质量模式下添加额外的光晕效果
-        if (this.params.quality === 'high') {
+        // 只在高质量模式下且非移动设备上添加额外的光晕效果
+        if (this.params.quality === 'high' && !this.isMobile) {
           const glareSize = adjustedCoreSize * 1.5;
           const glareGradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, glareSize);
 

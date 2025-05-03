@@ -78,33 +78,106 @@ document.addEventListener('DOMContentLoaded', () => {
     const info = {
       isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
       isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
+      isAndroid: /Android/i.test(navigator.userAgent),
       hasTouchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
       isLowEndDevice: false,
-      browserInfo: getBrowserInfo()
+      browserInfo: getBrowserInfo(),
+      screenSize: Math.min(window.screen.width, window.screen.height),
+      pixelRatio: window.devicePixelRatio || 1
     };
 
-    // 检测低端设备
-    // 检查设备内存 (如果可用)
-    if (navigator.deviceMemory && navigator.deviceMemory < 4) {
-      info.isLowEndDevice = true;
-    }
+    // 检测低端设备 - 移动设备使用更严格的标准
+    if (info.isMobile) {
+      // 移动设备上默认将更多设备视为低端设备
 
-    // 检查处理器核心数 (如果可用)
-    if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
-      info.isLowEndDevice = true;
-    }
+      // 检查设备内存 (如果可用)
+      if (navigator.deviceMemory) {
+        if (navigator.deviceMemory < 4) {
+          info.isLowEndDevice = true;
+        }
+      } else {
+        // 如果无法检测内存，使用屏幕尺寸作为参考
+        if (info.screenSize < 400) {
+          info.isLowEndDevice = true;
+        }
+      }
 
-    // 检查是否为省电模式 (如果可用)
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      info.isLowEndDevice = true;
-    }
+      // 检查处理器核心数 (如果可用)
+      if (navigator.hardwareConcurrency) {
+        if (navigator.hardwareConcurrency < 4) {
+          info.isLowEndDevice = true;
+        }
+      }
 
-    // 检查是否为旧版iOS设备
-    if (info.isIOS) {
-      const match = navigator.userAgent.match(/OS (\d+)_/);
-      if (match && parseInt(match[1], 10) < 13) { // iOS 13以下视为低端设备
+      // 检查是否为省电模式 (如果可用)
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         info.isLowEndDevice = true;
       }
+
+      // 检查是否为旧版iOS设备
+      if (info.isIOS) {
+        const match = navigator.userAgent.match(/OS (\d+)_/);
+        if (match) {
+          const version = parseInt(match[1], 10);
+          if (version < 14) { // iOS 14以下视为低端设备
+            info.isLowEndDevice = true;
+          }
+        }
+      }
+
+      // 检查是否为旧版Android设备
+      if (info.isAndroid) {
+        const match = navigator.userAgent.match(/Android (\d+)\.(\d+)/);
+        if (match) {
+          const version = parseFloat(match[1] + '.' + match[2]);
+          if (version < 9.0) { // Android 9.0以下视为低端设备
+            info.isLowEndDevice = true;
+          }
+        }
+      }
+
+      // 检查像素比 - 某些低端设备有较低的像素比
+      if (info.pixelRatio < 2) {
+        info.isLowEndDevice = true;
+      }
+    } else {
+      // 桌面设备使用更宽松的标准
+
+      // 检查设备内存 (如果可用)
+      if (navigator.deviceMemory && navigator.deviceMemory < 4) {
+        info.isLowEndDevice = true;
+      }
+
+      // 检查处理器核心数 (如果可用)
+      if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 2) {
+        info.isLowEndDevice = true;
+      }
+
+      // 检查是否为省电模式 (如果可用)
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        info.isLowEndDevice = true;
+      }
+    }
+
+    // 添加性能测试结果
+    try {
+      // 简单的性能测试 - 测量1000次数学运算的时间
+      const startTime = performance.now();
+      let result = 0;
+      for (let i = 0; i < 10000; i++) {
+        result += Math.sin(i) * Math.cos(i);
+      }
+      const endTime = performance.now();
+      const testTime = endTime - startTime;
+
+      // 如果性能测试时间过长，标记为低端设备
+      if (testTime > 50) { // 50ms以上视为低端设备
+        info.isLowEndDevice = true;
+      }
+
+      info.performanceTestTime = testTime;
+    } catch (e) {
+      console.warn('性能测试失败:', e);
     }
 
     return info;
@@ -433,12 +506,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // 设置菜单切换
     settingsToggle.addEventListener('click', toggleSettings);
 
+    // 音频开关按钮
+    const audioToggle = document.getElementById('audioToggle');
+    if (audioToggle) {
+      audioToggle.addEventListener('click', toggleAudio);
+    }
+
+    // 音频启用切换
+    const audioEnabledToggle = document.getElementById('audioEnabledToggle');
+    if (audioEnabledToggle) {
+      audioEnabledToggle.addEventListener('change', () => {
+        audioManager.setAudioEnabled(audioEnabledToggle.checked);
+        // 同步更新音频按钮状态
+        updateAudioToggleState();
+      });
+    }
+
+    // 质量切换
+    const qualityToggle = document.getElementById('qualityToggle');
+    if (qualityToggle) {
+      // 根据设备性能设置初始状态
+      qualityToggle.checked = rippleRenderer.params.quality !== 'low';
+
+      qualityToggle.addEventListener('change', () => {
+        const quality = qualityToggle.checked ?
+                      (isLowEndDevice ? 'medium' : 'high') :
+                      'low';
+        rippleRenderer.updateParams({
+          quality: quality,
+          useSimplifiedEffects: quality === 'low'
+        });
+        showToast(`已切换到${quality === 'low' ? '低' : (quality === 'medium' ? '中' : '高')}质量模式`, 1500);
+      });
+    }
+
     // 滑块控制 - 使用节流函数减少更新频率
     intensitySlider.addEventListener('input', throttle(updateSettings, 100));
     sizeSlider.addEventListener('input', throttle(updateSettings, 100));
     decaySlider.addEventListener('input', throttle(updateSettings, 100));
     volumeSlider.addEventListener('input', throttle(() => {
       audioManager.setVolume(volumeSlider.value / 100);
+      // 同步更新音频按钮状态
+      updateAudioToggleState();
     }, 100));
 
     // 多元素切换
@@ -659,51 +768,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const rect = rippleCanvas.getBoundingClientRect();
 
     // 限制同时处理的触摸点数量，提高性能
-    const maxTouchesToProcess = isMobile ? 3 : 5;
+    // 移动设备上进一步限制触摸点数量
+    const maxTouchesToProcess = isMobile ?
+                               (isLowEndDevice ? 1 : 2) :
+                               (isLowEndDevice ? 2 : 4);
     const touchesToProcess = Math.min(e.changedTouches.length, maxTouchesToProcess);
 
-    for (let i = 0; i < touchesToProcess; i++) {
-      const touch = e.changedTouches[i];
-      // 计算相对于画布的坐标
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
+    // 使用requestAnimationFrame批量处理波纹生成，避免阻塞UI
+    requestAnimationFrame(() => {
+      for (let i = 0; i < touchesToProcess; i++) {
+        const touch = e.changedTouches[i];
+        // 计算相对于画布的坐标
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
 
-      // 确定元素类型
-      let element = currentElement;
+        // 确定元素类型
+        let element = currentElement;
 
-      // 如果启用了多元素模式，随机选择不同元素
-      if (rippleRenderer.params.multiElement && Math.random() < 0.3) {
-        const elements = Object.keys(rippleRenderer.elementColors);
-        element = elements[Math.floor(Math.random() * elements.length)];
-      }
+        // 如果启用了多元素模式，随机选择不同元素
+        // 移动设备上减少随机性以提高性能
+        if (rippleRenderer.params.multiElement && Math.random() < (isMobile ? 0.2 : 0.3)) {
+          const elements = Object.keys(rippleRenderer.elementColors);
+          element = elements[Math.floor(Math.random() * elements.length)];
+        }
 
-      // 添加波纹
-      rippleRenderer.addRipple(x, y, element, 1.0);
+        // 添加波纹
+        rippleRenderer.addRipple(x, y, element, 1.0);
 
-      // 播放音效 - 使用异步方式避免阻塞UI
-      setTimeout(() => {
-        audioManager.playElementSound(
+        // 播放音效 - 使用异步方式避免阻塞UI
+        // 移动设备上减少音频处理以提高性能
+        if (!isLowEndDevice) {
+          setTimeout(() => {
+            audioManager.playElementSound(
+              element,
+              x / rect.width,
+              y / rect.height,
+              1.0
+            );
+          }, 0);
+        }
+
+        // 记录触摸 - 简化触摸数据以减少内存使用
+        touches.set(touch.identifier, {
+          id: touch.identifier,
+          x,
+          y,
           element,
-          x / rect.width,
-          y / rect.height,
-          1.0
-        );
-      }, 0);
-
-      // 记录触摸
-      touches.set(touch.identifier, {
-        id: touch.identifier,
-        x,
-        y,
-        element,
-        lastRipple: now,
-        lastX: x,
-        lastY: y,
-        velocityX: 0,
-        velocityY: 0,
-        pressure: touch.force || 1.0 // 使用压力感应（如果可用）
-      });
-    }
+          lastRipple: now,
+          lastX: x,
+          lastY: y,
+          velocityX: 0,
+          velocityY: 0,
+          // 只在支持压力感应的设备上使用
+          pressure: touch.force !== undefined ? touch.force : 1.0
+        });
+      }
+    });
   }
 
   /**
@@ -752,15 +872,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!appState.started || appState.isScrolling) return;
 
-    // 节流控制，防止过于频繁的触发
+    // 节流控制，防止过于频繁的触发 - 移动设备上增加节流时间
     const now = Date.now();
-    if (now - appState.lastInteractionTime < appState.interactionThrottle) return;
+    const throttleTime = isMobile ?
+                        (isLowEndDevice ? appState.interactionThrottle * 2 : appState.interactionThrottle * 1.5) :
+                        appState.interactionThrottle;
+
+    if (now - appState.lastInteractionTime < throttleTime) return;
     appState.lastInteractionTime = now;
 
     const rect = rippleCanvas.getBoundingClientRect();
 
     // 限制同时处理的触摸点数量，提高性能
-    const maxTouchesToProcess = isMobile ? 2 : 4;
+    // 移动设备上进一步限制触摸点数量
+    const maxTouchesToProcess = isMobile ?
+                               (isLowEndDevice ? 1 : 2) :
+                               (isLowEndDevice ? 2 : 3);
     const touchesToProcess = Math.min(e.changedTouches.length, maxTouchesToProcess);
 
     // 使用requestAnimationFrame批量处理波纹生成，避免阻塞UI
@@ -778,13 +905,19 @@ document.addEventListener('DOMContentLoaded', () => {
           const dy = y - touchData.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          // 计算速度
+          // 计算速度 - 简化计算以提高性能
           const timeDelta = now - touchData.lastRipple;
           if (timeDelta > 0) {
-            // 使用指数移动平均值平滑速度计算
-            const alpha = 0.3; // 平滑因子
-            touchData.velocityX = alpha * (dx / timeDelta) + (1 - alpha) * (touchData.velocityX || 0);
-            touchData.velocityY = alpha * (dy / timeDelta) + (1 - alpha) * (touchData.velocityY || 0);
+            // 移动设备上使用更简单的速度计算
+            if (isMobile && isLowEndDevice) {
+              touchData.velocityX = dx / timeDelta;
+              touchData.velocityY = dy / timeDelta;
+            } else {
+              // 使用指数移动平均值平滑速度计算
+              const alpha = 0.3; // 平滑因子
+              touchData.velocityX = alpha * (dx / timeDelta) + (1 - alpha) * (touchData.velocityX || 0);
+              touchData.velocityY = alpha * (dy / timeDelta) + (1 - alpha) * (touchData.velocityY || 0);
+            }
           }
 
           // 更新位置
@@ -799,12 +932,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           // 根据设备类型和性能调整触发阈值
+          // 移动设备上增加阈值以减少波纹生成频率
           const distanceThreshold = isMobile ?
-            (rippleRenderer.params.quality === 'low' ? 25 : 15) :
+            (isLowEndDevice ? 35 : (rippleRenderer.params.quality === 'low' ? 30 : 20)) :
             (rippleRenderer.params.quality === 'low' ? 20 : 12);
 
           const timeThreshold = isMobile ?
-            (rippleRenderer.params.quality === 'low' ? 120 : 80) :
+            (isLowEndDevice ? 150 : (rippleRenderer.params.quality === 'low' ? 120 : 80)) :
             (rippleRenderer.params.quality === 'low' ? 100 : 60);
 
           // 如果移动足够远且时间间隔足够，添加新波纹
@@ -813,7 +947,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let element = touchData.element;
 
             // 如果启用了多元素模式，有机会改变元素
-            if (rippleRenderer.params.multiElement && Math.random() < 0.1) {
+            // 移动设备上减少随机性以提高性能
+            if (rippleRenderer.params.multiElement && Math.random() < (isMobile ? 0.05 : 0.1)) {
               const elements = Object.keys(rippleRenderer.elementColors);
               element = elements[Math.floor(Math.random() * elements.length)];
               touchData.element = element;
@@ -828,14 +963,17 @@ document.addEventListener('DOMContentLoaded', () => {
             rippleRenderer.addRipple(x, y, element, intensity);
 
             // 播放音效 - 使用异步方式避免阻塞UI
-            setTimeout(() => {
-              audioManager.playElementSound(
-                element,
-                x / rect.width,
-                y / rect.height,
-                intensity
-              );
-            }, 0);
+            // 移动设备上减少音频处理以提高性能
+            if (!isLowEndDevice) {
+              setTimeout(() => {
+                audioManager.playElementSound(
+                  element,
+                  x / rect.width,
+                  y / rect.height,
+                  intensity
+                );
+              }, 0);
+            }
 
             // 更新最后波纹时间
             touchData.lastRipple = now;
@@ -856,7 +994,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 使用requestAnimationFrame批量处理，避免阻塞UI
     requestAnimationFrame(() => {
-      for (let i = 0; i < e.changedTouches.length; i++) {
+      // 限制同时处理的触摸点数量，提高性能
+      const maxTouchesToProcess = isMobile ?
+                                (isLowEndDevice ? 1 : 2) :
+                                (isLowEndDevice ? 2 : 3);
+      const touchesToProcess = Math.min(e.changedTouches.length, maxTouchesToProcess);
+
+      for (let i = 0; i < touchesToProcess; i++) {
         const touch = e.changedTouches[i];
         const touchData = touches.get(touch.identifier);
 
@@ -876,8 +1020,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // 长按结束时添加更大的波纹
             const intensity = Math.min(1.0, 0.6 + touchDuration / 5000); // 最大强度为1.0
 
-            // 添加3个不同大小的波纹，创造爆发效果
-            for (let j = 0; j < 3; j++) {
+            // 添加多个波纹创造爆发效果 - 移动设备上减少波纹数量
+            const burstCount = isMobile ?
+                             (isLowEndDevice ? 1 : 2) : 3;
+
+            for (let j = 0; j < burstCount; j++) {
+              // 移动设备上减少延迟以提高响应性
+              const delay = isMobile ? j * 30 : j * 50;
+
               setTimeout(() => {
                 rippleRenderer.addRipple(
                   touchData.x,
@@ -885,31 +1035,35 @@ document.addEventListener('DOMContentLoaded', () => {
                   touchData.element,
                   intensity * (1 - j * 0.2)
                 );
-              }, j * 50);
+              }, delay);
             }
 
-            // 播放音效
-            audioManager.playElementSound(
-              touchData.element,
-              touchData.x / rippleCanvas.width,
-              touchData.y / rippleCanvas.height,
-              intensity
-            );
-          }
-          // 快速滑动结束
-          else if (velocity > 0.2) {
-            const intensity = Math.min(1.0, 0.3 + velocity * 0.1);
-            rippleRenderer.addRipple(touchData.x, touchData.y, touchData.element, intensity);
-
-            // 播放音效
-            setTimeout(() => {
+            // 播放音效 - 移动设备上减少音频处理以提高性能
+            if (!isLowEndDevice) {
               audioManager.playElementSound(
                 touchData.element,
                 touchData.x / rippleCanvas.width,
                 touchData.y / rippleCanvas.height,
                 intensity
               );
-            }, 0);
+            }
+          }
+          // 快速滑动结束
+          else if (velocity > 0.2) {
+            const intensity = Math.min(1.0, 0.3 + velocity * 0.1);
+            rippleRenderer.addRipple(touchData.x, touchData.y, touchData.element, intensity);
+
+            // 播放音效 - 移动设备上减少音频处理以提高性能
+            if (!isLowEndDevice) {
+              setTimeout(() => {
+                audioManager.playElementSound(
+                  touchData.element,
+                  touchData.x / rippleCanvas.width,
+                  touchData.y / rippleCanvas.height,
+                  intensity
+                );
+              }, 0);
+            }
           }
 
           // 删除触摸数据
@@ -1227,6 +1381,57 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
+   * 切换音频状态
+   */
+  function toggleAudio() {
+    const audioToggle = document.getElementById('audioToggle');
+    const audioEnabledToggle = document.getElementById('audioEnabledToggle');
+
+    if (!audioManager.initialized) return;
+
+    // 切换静音状态
+    const newMutedState = !audioManager.muted;
+    audioManager.setMuted(newMutedState);
+
+    // 更新UI
+    audioToggle.classList.toggle('muted', newMutedState);
+    audioToggle.querySelector('.audio-icon').textContent = newMutedState ? '🔇' : '🔊';
+
+    // 同步复选框状态
+    if (audioEnabledToggle) {
+      audioEnabledToggle.checked = !newMutedState && audioManager.audioEnabled;
+    }
+
+    // 添加触觉反馈（如果支持）
+    if (window.navigator.vibrate) {
+      window.navigator.vibrate(50);
+    }
+
+    // 显示提示
+    showToast(newMutedState ? '已静音' : '已开启声音', 1000);
+  }
+
+  /**
+   * 更新音频按钮状态
+   */
+  function updateAudioToggleState() {
+    const audioToggle = document.getElementById('audioToggle');
+    const audioEnabledToggle = document.getElementById('audioEnabledToggle');
+
+    if (!audioManager.initialized || !audioToggle) return;
+
+    // 更新音频按钮状态
+    const isMuted = audioManager.muted || !audioManager.audioEnabled || audioManager.volume === 0;
+    audioToggle.classList.toggle('muted', isMuted);
+    audioToggle.querySelector('.audio-icon').textContent = isMuted ? '🔇' : '🔊';
+
+    // 同步复选框状态
+    if (audioEnabledToggle) {
+      audioEnabledToggle.checked = audioManager.audioEnabled && !audioManager.muted;
+    }
+  }
+
+  /**
    * 更新设置
    */
   function updateSettings() {
@@ -1293,6 +1498,22 @@ document.addEventListener('DOMContentLoaded', () => {
       sizeSlider.value = rippleRenderer.params.size * 100;
       decaySlider.value = rippleRenderer.params.decay * 100;
       multiElementToggle.checked = rippleRenderer.params.multiElement;
+
+      // 初始化音频按钮状态
+      const audioEnabledToggle = document.getElementById('audioEnabledToggle');
+      if (audioEnabledToggle) {
+        // 低端移动设备默认关闭音频以提高性能
+        if (isMobile && isLowEndDevice) {
+          audioManager.setAudioEnabled(false);
+          audioManager.setMuted(true);
+          audioEnabledToggle.checked = false;
+        } else {
+          audioEnabledToggle.checked = audioManager.audioEnabled && !audioManager.muted;
+        }
+      }
+
+      // 更新音频按钮状态
+      updateAudioToggleState();
 
       // 添加欢迎波纹效果
       addWelcomeEffect();
@@ -1449,6 +1670,38 @@ document.addEventListener('DOMContentLoaded', () => {
         rippleRenderer.addRipple(centerX, centerY, element, 1.0);
       }, index * 200);
     });
+  }
+
+  /**
+   * 显示提示信息
+   * @param {string} message - 提示信息
+   * @param {number} duration - 显示时间（毫秒）
+   */
+  function showToast(message, duration = 2000) {
+    // 移除现有的提示
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    // 创建新提示
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // 显示提示
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+
+    // 设置定时器移除提示
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, duration);
   }
 
   /**

@@ -342,9 +342,12 @@ body {
 .settings-panel {
   position: relative;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
 }
 
-.settings-toggle {
+.settings-toggle, .audio-toggle {
   background: var(--panel-bg);
   border: none;
   color: var(--text-color);
@@ -359,13 +362,12 @@ body {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px); /* Safari 支持 */
   border: 1px solid rgba(255, 255, 255, 0.1);
-  margin: 0 auto;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
 
-.settings-toggle::after {
+.settings-toggle::after, .audio-toggle::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -379,13 +381,13 @@ body {
   pointer-events: none;
 }
 
-.settings-toggle:active::after {
+.settings-toggle:active::after, .audio-toggle:active::after {
   transform: translate(-50%, -50%) scale(2);
   opacity: 1;
   transition: transform 0.2s, opacity 0.2s;
 }
 
-.settings-toggle:hover {
+.settings-toggle:hover, .audio-toggle:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
@@ -394,13 +396,28 @@ body {
   box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
 }
 
-.settings-icon {
+.audio-toggle.muted {
+  background: linear-gradient(45deg, #ff5722, #ff9800);
+  box-shadow: 0 0 15px rgba(255, 87, 34, 0.3);
+}
+
+.settings-icon, .audio-icon {
   font-size: 1.5rem;
   transition: transform 0.2s ease;
 }
 
-.settings-toggle:active .settings-icon {
+.settings-toggle:active .settings-icon, .audio-toggle:active .audio-icon {
   transform: scale(0.9);
+}
+
+/* 音频静音图标 */
+.audio-toggle.muted .audio-icon::after {
+  content: '🔇';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
 }
 
 .settings-menu {

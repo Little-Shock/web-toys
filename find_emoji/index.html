@@ -2,19 +2,46 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>找不动的Emoji</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 </head>
 <body>
     <div id="game-container">
-        <div id="game-info">
-            <div id="score">得分: 0</div>
-            <div id="timer">剩余时间: 60秒</div>
+        <!-- Start Screen -->
+        <div id="start-screen">
+            <h1>找不动的Emoji</h1>
+            <p>在移动的emoji中找出唯一一个静止不动的emoji</p>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn" data-difficulty="easy">简单</button>
+                <button class="difficulty-btn" data-difficulty="medium">中等</button>
+                <button class="difficulty-btn" data-difficulty="hard">困难</button>
+            </div>
+            <button id="start-btn">开始游戏</button>
         </div>
-        <div id="emoji-container"></div>
-        <div id="message"></div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" style="display: none;">
+            <div id="game-info">
+                <div id="score">得分: 0</div>
+                <div id="timer">剩余时间: 60秒</div>
+                <div id="level">难度: 简单</div>
+            </div>
+            <div id="emoji-container"></div>
+            <div id="message"></div>
+            <button id="pause-btn">暂停</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" style="display: none;">
+            <h2>游戏结束!</h2>
+            <div id="final-score">最终得分: 0</div>
+            <button id="restart-btn">再玩一次</button>
+            <button id="home-btn">返回主页</button>
+        </div>
     </div>
+
     <script src="js/game.js"></script>
 </body>
 </html>
