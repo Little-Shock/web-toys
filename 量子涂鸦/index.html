@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>量子涂鸦 - Quantum Doodle</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>量子涂鸦 <span class="subtitle">Quantum Doodle</span></h1>
+            <p class="description">简单涂鸦，量子演变，创造奇妙艺术</p>
+        </header>
+
+        <div class="canvas-container">
+            <canvas id="drawingCanvas"></canvas>
+            <canvas id="effectCanvas"></canvas>
+        </div>
+
+        <div class="tips">
+            <h3>创作指南</h3>
+            <ul>
+                <li>在画布上绘制简单线条，系统会自动演变为量子风格艺术</li>
+                <li>长按屏幕可以创造更强的量子效果，线条会产生更丰富的变化</li>
+                <li>双指手势可以控制演变方向，创造独特的量子流动效果</li>
+                <li>尝试不同的笔刷类型和色彩方案，探索更多可能性</li>
+                <li>保存GIF可以捕捉作品的动态演变过程，记录量子艺术的流动之美</li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>© 2024 Little Shock 团队 | <a href="../index.html">返回主页</a></p>
+        </footer>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="controls-panel" id="controlsPanel">
+        <div class="panel-header">
+            <div class="panel-title">量子涂鸦控制面板</div>
+            <button class="panel-close" id="closePanel">&times;</button>
+        </div>
+
+        <div class="control-group">
+            <label for="brushType">笔刷类型</label>
+            <select id="brushType">
+                <option value="quantum">量子笔刷</option>
+                <option value="wave">波函数笔刷</option>
+                <option value="entangle">纠缠笔刷</option>
+                <option value="particle">粒子笔刷</option>
+                <option value="flow">流光笔刷</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="brushSize">笔刷大小</label>
+            <input type="range" id="brushSize" min="1" max="50" value="15">
+        </div>
+
+        <div class="control-group">
+            <label for="evolutionSpeed">演变速度</label>
+            <input type="range" id="evolutionSpeed" min="0" max="100" value="30">
+        </div>
+
+        <div class="control-group">
+            <label for="particleLife">粒子寿命</label>
+            <input type="range" id="particleLife" min="50" max="500" value="200">
+        </div>
+
+        <div class="control-group">
+            <label for="colorScheme">色彩方案</label>
+            <select id="colorScheme">
+                <option value="quantum">量子色彩</option>
+                <option value="elegant">优雅色调</option>
+                <option value="pastel">柔和色彩</option>
+                <option value="monochrome">单色调</option>
+                <option value="aurora">极光色彩</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="blendMode">混合模式</label>
+            <select id="blendMode">
+                <option value="lighter">发光模式</option>
+                <option value="screen">屏幕模式</option>
+                <option value="overlay">叠加模式</option>
+                <option value="source-over">正常模式</option>
+            </select>
+        </div>
+
+        <div class="button-group">
+            <button id="clearBtn" class="btn">清除画布</button>
+            <button id="saveGifBtn" class="btn">保存GIF</button>
+            <button id="saveBtn" class="btn primary">保存作品</button>
+        </div>
+    </div>
+
+    <!-- 浮动工具按钮 -->
+    <div class="floating-tools">
+        <button class="tool-btn" id="undoBtn" title="撤销"><i class="fas fa-undo"></i></button>
+        <button class="tool-btn" id="clearBtn2" title="清除"><i class="fas fa-trash-alt"></i></button>
+    </div>
+
+    <!-- 控制面板切换按钮 -->
+    <button class="controls-toggle" id="controlsToggle">
+        <i class="fas fa-sliders-h"></i>
+    </button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
