@@ -1,0 +1,11 @@
+{
+    "title": "闪卡效果 (旧版)",
+    "description": "早期版本的全息闪卡效果，已被新版赛博闪卡替代。",
+    "tags": [
+        "光效",
+        "旧版本"
+    ],
+    "status": "deprecated",
+    "category": "归档项目",
+    "order": 1
+}

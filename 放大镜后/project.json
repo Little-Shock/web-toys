@@ -1,0 +1,11 @@
+{
+    "title": "放大镜",
+    "description": "网页内容放大工具，帮助查看细节或辅助阅读。",
+    "tags": [
+        "辅助工具",
+        "阅读助手"
+    ],
+    "status": "stable",
+    "category": "实用工具",
+    "order": 2
+}

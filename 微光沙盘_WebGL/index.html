@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>微光沙盘 · Luminous Sandbox</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="../index.html" class="back-link">
+    <i class="fas fa-arrow-left"></i> 返回主菜单
+  </a>
+
+  <!-- 加载指示器 -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">加载中...</div>
+  </div>
+
+  <!-- 主界面 -->
+  <div class="container">
+    <!-- 画布容器 -->
+    <div class="canvas-container">
+      <canvas id="sandCanvas"></canvas>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <div class="tool-group">
+        <button class="tool-btn active" data-tool="pour" id="pourTool">
+          <i class="fas fa-fill-drip"></i>
+          <span>倾倒</span>
+        </button>
+        <button class="tool-btn" data-tool="dig" id="digTool">
+          <i class="fas fa-shovel"></i>
+          <span>挖掘</span>
+        </button>
+        <button class="tool-btn" data-tool="smooth" id="smoothTool">
+          <i class="fas fa-hand-paper"></i>
+          <span>平滑</span>
+        </button>
+        <button class="tool-btn" data-tool="shake" id="shakeTool">
+          <i class="fas fa-wave-square"></i>
+          <span>震动</span>
+        </button>
+      </div>
+
+      <div class="color-group">
+        <button class="color-btn active" data-color="gold" style="background: radial-gradient(#ffea00, #ff9500)"></button>
+        <button class="color-btn" data-color="blue" style="background: radial-gradient(#00d2ff, #0066ff)"></button>
+        <button class="color-btn" data-color="green" style="background: radial-gradient(#00ff9d, #00cc66)"></button>
+        <button class="color-btn" data-color="purple" style="background: radial-gradient(#d400ff, #6600ff)"></button>
+        <button class="color-btn" data-color="red" style="background: radial-gradient(#ff3a3a, #ff0000)"></button>
+      </div>
+
+      <div class="action-group">
+        <button class="action-btn" id="clearBtn">
+          <i class="fas fa-trash-alt"></i>
+          <span>清空</span>
+        </button>
+        <button class="action-btn" id="saveBtn">
+          <i class="fas fa-save"></i>
+          <span>保存</span>
+        </button>
+        <button class="action-btn" id="settingsBtn">
+          <i class="fas fa-cog"></i>
+          <span>设置</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <h3>设置</h3>
+        <button class="close-btn" id="closeSettingsBtn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <label for="particleCountSlider">粒子数量</label>
+          <input type="range" id="particleCountSlider" min="1000" max="10000" step="1000" value="5000">
+          <span class="setting-value" id="particleCountValue">5000</span>
+        </div>
+        <div class="setting-item">
+          <label for="particleSizeSlider">粒子大小</label>
+          <input type="range" id="particleSizeSlider" min="1" max="5" step="0.5" value="2.5">
+          <span class="setting-value" id="particleSizeValue">2.5</span>
+        </div>
+        <div class="setting-item">
+          <label for="glowIntensitySlider">发光强度</label>
+          <input type="range" id="glowIntensitySlider" min="0" max="100" value="80">
+          <span class="setting-value" id="glowIntensityValue">80%</span>
+        </div>
+        <div class="setting-item">
+          <label for="gravitySlider">重力强度</label>
+          <input type="range" id="gravitySlider" min="0" max="100" value="50">
+          <span class="setting-value" id="gravityValue">50%</span>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="motionControlToggle">设备倾斜控制</label>
+          <input type="checkbox" id="motionControlToggle" checked>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="vibrationToggle">振动反馈</label>
+          <input type="checkbox" id="vibrationToggle" checked>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="bloomToggle">高级光晕效果</label>
+          <input type="checkbox" id="bloomToggle" checked>
+        </div>
+        <div class="setting-item">
+          <label for="qualitySelect">渲染质量</label>
+          <select id="qualitySelect">
+            <option value="high">高 (耗电较多)</option>
+            <option value="medium" selected>中 (平衡)</option>
+            <option value="low">低 (省电模式)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作提示 -->
+    <div id="instructionsPanel" class="instructions-panel">
+      <p>选择工具并触摸屏幕进行交互，倾斜设备改变重力方向</p>
+    </div>
+  </div>
+
+  <!-- 权限请求模态框 -->
+  <div id="permissionModal" class="modal">
+    <div class="modal-content">
+      <h3>需要访问设备方向</h3>
+      <p>为了获得最佳体验，我们需要访问您设备的方向传感器。这将允许您通过倾斜设备控制沙子的流动。</p>
+      <button id="grantPermissionBtn" class="btn primary-btn">允许访问</button>
+      <button id="skipPermissionBtn" class="btn">跳过</button>
+    </div>
+  </div>
+
+  <!-- 保存模态框 -->
+  <div id="saveModal" class="modal">
+    <div class="modal-content">
+      <h3>保存您的沙盘</h3>
+      <div class="save-preview">
+        <img id="savePreviewImage" alt="预览">
+      </div>
+      <div class="save-options">
+        <button id="downloadImageBtn" class="btn primary-btn">
+          <i class="fas fa-image"></i> 保存图片
+        </button>
+        <button id="shareImageBtn" class="btn">
+          <i class="fas fa-share-alt"></i> 分享
+        </button>
+      </div>
+      <button id="closeSaveModalBtn" class="btn">关闭</button>
+    </div>
+  </div>
+
+  <!-- 提示消息 -->
+  <div id="toast" class="toast"></div>
+
+  <!-- 引入Three.js库 -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/shaders/LuminosityHighPassShader.js"></script>
+
+  <!-- JavaScript 文件 -->
+  <script src="js/utils.js"></script>
+  <script src="js/SandParticleSystem.js"></script>
+  <script src="js/SandRenderer.js"></script>
+  <script src="js/ToolManager.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

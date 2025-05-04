@@ -1,0 +1,11 @@
+{
+    "title": "微光沙盘 WebGL",
+    "description": "高性能WebGL版微光沙盘，使用GPU加速渲染，提供更流畅的体验和更清晰的视觉效果。",
+    "tags": [
+        "WebGL",
+        "高性能"
+    ],
+    "status": "stable",
+    "category": "视觉互动",
+    "order": 7
+}
