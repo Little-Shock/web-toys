@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>三体模拟 - Three-Body Simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/lib/three.min.js"></script>
+  <script>
+    // 创建一个简单的OrbitControls替代品
+    THREE.OrbitControls = function(camera, domElement) {
+      this.camera = camera;
+      this.domElement = domElement;
+      this.enabled = true;
+      this.target = new THREE.Vector3();
+      this.enableDamping = false;
+      this.dampingFactor = 0.05;
+      this.enableZoom = true;
+      this.zoomSpeed = 1.0;
+      this.rotateSpeed = 1.0;
+      this.panSpeed = 1.0;
+
+      // 简单的更新方法
+      this.update = function() {
+        // 实现简单的相机控制
+        return true;
+      };
+
+      // 空的处置方法
+      this.dispose = function() {};
+
+      // 箭头辅助方法
+      this.setDirection = function() {};
+      this.setLength = function() {};
+
+      // 添加基本的鼠标事件
+      const scope = this;
+
+      // 阻止右键菜单
+      this.domElement.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+      // 鼠标拖动旋转
+      this.domElement.addEventListener('mousedown', function(e) {
+        if (!scope.enabled) return;
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+
+        const onMouseMove = function(e) {
+          const deltaX = e.clientX - startX;
+          const deltaY = e.clientY - startY;
+
+          // 简单的相机旋转
+          scope.camera.position.x += deltaX * 0.01;
+          scope.camera.position.y -= deltaY * 0.01;
+          scope.camera.lookAt(scope.target);
+        };
+
+        const onMouseUp = function() {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+
+      // 鼠标滚轮缩放
+      this.domElement.addEventListener('wheel', function(e) {
+        if (!scope.enabled || !scope.enableZoom) return;
+        e.preventDefault();
+
+        // 简单的相机缩放
+        scope.camera.position.z += e.deltaY * 0.01;
+
+        // 限制缩放范围
+        if (scope.camera.position.z < 5) scope.camera.position.z = 5;
+        if (scope.camera.position.z > 50) scope.camera.position.z = 50;
+      });
+    };
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 返回主菜单链接 -->
+    <a href="../index.html" class="back-link">返回主菜单</a>
+
+    <!-- 主画布 -->
+    <div id="canvas-container"></div>
+
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <div class="panel-header">
+        <h2>三体模拟控制面板</h2>
+        <button id="toggle-panel" class="toggle-button">
+          <span class="toggle-icon"></span>
+        </button>
+      </div>
+
+      <div class="panel-content">
+        <!-- 预设选择 -->
+        <div class="control-group">
+          <label>预设场景</label>
+          <select id="preset-select">
+            <option value="figure8">8字形稳定轨道</option>
+            <option value="chaotic">混沌轨道</option>
+            <option value="binary">双星系统+单星</option>
+            <option value="collision">碰撞路径</option>
+            <option value="random">随机配置</option>
+          </select>
+        </div>
+
+        <!-- 模拟控制 -->
+        <div class="control-group">
+          <label>模拟控制</label>
+          <div class="button-group">
+            <button id="play-pause" class="control-button">暂停</button>
+            <button id="reset" class="control-button">重置</button>
+          </div>
+        </div>
+
+        <!-- 模拟速度 -->
+        <div class="control-group">
+          <label>模拟速度: <span id="speed-value">1.0</span>x</label>
+          <input type="range" id="speed-slider" min="0.1" max="5" step="0.1" value="1">
+        </div>
+
+        <!-- 轨迹显示 -->
+        <div class="control-group">
+          <label>轨迹长度: <span id="trail-value">500</span></label>
+          <input type="range" id="trail-slider" min="0" max="2000" step="50" value="500">
+        </div>
+
+        <!-- 显示选项 -->
+        <div class="control-group">
+          <label>显示选项</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="show-trails" checked>
+              显示轨迹
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="show-grid">
+              显示网格
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="show-vectors">
+              显示速度向量
+            </label>
+          </div>
+        </div>
+
+        <!-- 恒星参数 -->
+        <div class="control-group">
+          <label>恒星参数</label>
+          <div class="star-params">
+            <!-- 恒星1 -->
+            <div class="star-param-group">
+              <h4>恒星1 <span class="star-color" style="background-color: #4e79ff;"></span></h4>
+              <label>质量: <span id="star1-mass-value">1.0</span></label>
+              <input type="range" id="star1-mass" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <!-- 恒星2 -->
+            <div class="star-param-group">
+              <h4>恒星2 <span class="star-color" style="background-color: #ff4e4e;"></span></h4>
+              <label>质量: <span id="star2-mass-value">1.0</span></label>
+              <input type="range" id="star2-mass" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <!-- 恒星3 -->
+            <div class="star-param-group">
+              <h4>恒星3 <span class="star-color" style="background-color: #4eff7e;"></span></h4>
+              <label>质量: <span id="star3-mass-value">1.0</span></label>
+              <input type="range" id="star3-mass" min="0.1" max="5" step="0.1" value="1">
+            </div>
+          </div>
+        </div>
+
+        <!-- 信息显示 -->
+        <div class="info-display">
+          <p>三体问题是天体力学中的经典问题，描述三个天体在相互引力作用下的运动。</p>
+          <p>由于系统的混沌性质，即使初始条件的微小变化也会导致完全不同的轨道演化。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 移动端控制提示 -->
+    <div class="mobile-controls-hint">
+      <p>拖动: 旋转视角 | 双指: 缩放 | 三指: 平移</p>
+    </div>
+  </div>
+
+  <!-- 加载脚本 -->
+  <script src="js/utils/math.js"></script>
+  <script src="js/utils/colors.js"></script>
+  <script src="js/CelestialBody.js"></script>
+  <script src="js/OrbitTracer.js"></script>
+  <script src="js/ThreeBodySystem.js"></script>
+  <script src="js/SceneManager.js"></script>
+  <script src="js/UI.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

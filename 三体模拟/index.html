@@ -4,84 +4,383 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>三体模拟 - Three-Body Simulation</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/lib/three.min.js"></script>
-  <script>
-    // 创建一个简单的OrbitControls替代品
-    THREE.OrbitControls = function(camera, domElement) {
-      this.camera = camera;
-      this.domElement = domElement;
-      this.enabled = true;
-      this.target = new THREE.Vector3();
-      this.enableDamping = false;
-      this.dampingFactor = 0.05;
-      this.enableZoom = true;
-      this.zoomSpeed = 1.0;
-      this.rotateSpeed = 1.0;
-      this.panSpeed = 1.0;
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+  <style>
+    /* 基础样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      // 简单的更新方法
-      this.update = function() {
-        // 实现简单的相机控制
-        return true;
-      };
+    body {
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      background-color: #000;
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
 
-      // 空的处置方法
-      this.dispose = function() {};
+    /* 容器 */
+    .app-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
 
-      // 箭头辅助方法
-      this.setDirection = function() {};
-      this.setLength = function() {};
+    /* 返回链接 */
+    .back-link {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 14px;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-      // 添加基本的鼠标事件
-      const scope = this;
+    .back-link:hover {
+      background-color: rgba(0, 0, 0, 0.7);
+    }
 
-      // 阻止右键菜单
-      this.domElement.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    /* 画布容器 */
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
 
-      // 鼠标拖动旋转
-      this.domElement.addEventListener('mousedown', function(e) {
-        if (!scope.enabled) return;
+    /* 控制面板 */
+    .control-panel {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      width: 280px;
+      background-color: rgba(30, 30, 40, 0.85);
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      max-height: calc(100vh - 30px);
+      display: flex;
+      flex-direction: column;
+    }
 
-        const startX = e.clientX;
-        const startY = e.clientY;
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        const onMouseMove = function(e) {
-          const deltaX = e.clientX - startX;
-          const deltaY = e.clientY - startY;
+    .panel-header h2 {
+      font-size: 18px;
+      font-weight: 500;
+      margin: 0;
+    }
 
-          // 简单的相机旋转
-          scope.camera.position.x += deltaX * 0.01;
-          scope.camera.position.y -= deltaY * 0.01;
-          scope.camera.lookAt(scope.target);
-        };
+    .toggle-button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
 
-        const onMouseUp = function() {
-          document.removeEventListener('mousemove', onMouseMove);
-          document.removeEventListener('mouseup', onMouseUp);
-        };
+    .toggle-icon {
+      position: relative;
+      width: 18px;
+      height: 2px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
 
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-      });
+    .toggle-icon::before,
+    .toggle-icon::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 2px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
 
-      // 鼠标滚轮缩放
-      this.domElement.addEventListener('wheel', function(e) {
-        if (!scope.enabled || !scope.enableZoom) return;
-        e.preventDefault();
+    .toggle-icon::before {
+      transform: translateY(-6px);
+    }
 
-        // 简单的相机缩放
-        scope.camera.position.z += e.deltaY * 0.01;
+    .toggle-icon::after {
+      transform: translateY(6px);
+    }
 
-        // 限制缩放范围
-        if (scope.camera.position.z < 5) scope.camera.position.z = 5;
-        if (scope.camera.position.z > 50) scope.camera.position.z = 50;
-      });
-    };
-  </script>
+    .panel-collapsed .toggle-icon {
+      background-color: transparent;
+    }
+
+    .panel-collapsed .toggle-icon::before {
+      transform: rotate(45deg);
+    }
+
+    .panel-collapsed .toggle-icon::after {
+      transform: rotate(-45deg);
+    }
+
+    .panel-content {
+      padding: 15px 20px;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+
+    /* 控制组 */
+    .control-group {
+      margin-bottom: 20px;
+    }
+
+    .control-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* 选择器 */
+    select {
+      width: 100%;
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      cursor: pointer;
+    }
+
+    /* 按钮组 */
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .control-button {
+      flex: 1;
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .control-button:hover {
+      background-color: rgba(0, 0, 0, 0.5);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* 滑块 */
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 3px;
+      outline: none;
+      margin: 10px 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #4e79ff;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* 复选框 */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      margin-right: 10px;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* 恒星参数 */
+    .star-params {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .star-param-group {
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
+
+    .star-param-group h4 {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .star-color {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-left: 8px;
+    }
+
+    /* 信息显示 */
+    .info-display {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .info-display p {
+      margin-bottom: 10px;
+    }
+
+    .info-display p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* 移动端控制提示 */
+    .mobile-controls-hint {
+      position: fixed;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      z-index: 100;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: none;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .control-panel {
+        width: 260px;
+        max-height: 60vh;
+      }
+
+      .mobile-controls-hint {
+        display: block;
+      }
+
+      .panel-collapsed .panel-content {
+        display: none;
+      }
+
+      .panel-collapsed {
+        width: auto;
+      }
+    }
+
+    /* 面板折叠状态 */
+    .panel-collapsed .panel-content {
+      display: none;
+    }
+
+    .panel-collapsed {
+      width: auto;
+      background-color: rgba(30, 30, 40, 0.5);
+    }
+
+    .panel-hidden {
+      transform: translateX(calc(100% - 40px));
+    }
+
+    .panel-hidden .panel-header h2 {
+      display: none;
+    }
+
+    /* 加载指示器 */
+    .loading-indicator {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #4e79ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .loading-text {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="app-container">
@@ -128,7 +427,7 @@
           <input type="range" id="speed-slider" min="0.1" max="5" step="0.1" value="1">
         </div>
 
-        <!-- 轨迹显示 -->
+        <!-- 轨迹长度 -->
         <div class="control-group">
           <label>轨迹长度: <span id="trail-value">500</span></label>
           <input type="range" id="trail-slider" min="0" max="2000" step="50" value="500">
@@ -192,16 +491,744 @@
     <div class="mobile-controls-hint">
       <p>拖动: 旋转视角 | 双指: 缩放 | 三指: 平移</p>
     </div>
+
+    <!-- 加载指示器 -->
+    <div class="loading-indicator">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在初始化三体模拟...</div>
+    </div>
   </div>
 
-  <!-- 加载脚本 -->
-  <script src="js/utils/math.js"></script>
-  <script src="js/utils/colors.js"></script>
-  <script src="js/CelestialBody.js"></script>
-  <script src="js/OrbitTracer.js"></script>
-  <script src="js/ThreeBodySystem.js"></script>
-  <script src="js/SceneManager.js"></script>
-  <script src="js/UI.js"></script>
-  <script src="js/main.js"></script>
+  <!-- 内嵌Three.js脚本 -->
+  <script>
+    // 应用状态
+    const state = {
+      running: true,
+      simulationSpeed: 1.0,
+      trailLength: 500,
+      showTrails: true,
+      showGrid: false,
+      showVectors: false,
+      currentPreset: 'figure8'
+    };
+
+    // 恒星颜色
+    const starColors = [0x4e79ff, 0xff4e4e, 0x4eff7e]; // 蓝色、红色、绿色
+
+    // 等待DOM加载完成
+    document.addEventListener('DOMContentLoaded', () => {
+      // 初始化应用
+      initApp();
+    });
+
+    /**
+     * 初始化应用
+     */
+    function initApp() {
+      try {
+        console.log('开始初始化应用...');
+
+        // 初始化Three.js
+        initThreeJs();
+
+        // 初始化UI控制
+        initUI();
+
+        // 隐藏加载指示器
+        hideLoading();
+
+        console.log('应用初始化完成!');
+      } catch (error) {
+        console.error('初始化应用时出错:', error);
+        alert('初始化应用时出错: ' + error.message);
+        hideLoading();
+      }
+    }
+
+    /**
+     * 隐藏加载指示器
+     */
+    function hideLoading() {
+      const loadingIndicator = document.querySelector('.loading-indicator');
+      if (loadingIndicator) {
+        loadingIndicator.style.opacity = '0';
+        setTimeout(() => {
+          loadingIndicator.style.display = 'none';
+        }, 500);
+      }
+    }
+
+    /**
+     * 初始化Three.js
+     */
+    function initThreeJs() {
+      // 创建场景
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x000000);
+
+      // 创建相机 - 调整视角和位置以增强3D效果
+      const container = document.getElementById('canvas-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      const camera = new THREE.PerspectiveCamera(70, width / height, 0.1, 1000);
+      // 从一个倾斜的角度观察，增强3D效果
+      camera.position.set(5, 8, 15);
+
+      // 创建渲染器
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      container.appendChild(renderer.domElement);
+
+      // 添加环境光
+      const ambientLight = new THREE.AmbientLight(0x404040);
+      scene.add(ambientLight);
+
+      // 添加方向光
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(5, 3, 5);
+      scene.add(directionalLight);
+
+      // 添加背景星空
+      const starsGeometry = new THREE.BufferGeometry();
+      const starsMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.1,
+        transparent: true,
+        opacity: 0.8,
+        sizeAttenuation: true
+      });
+
+      // 创建2000个随机分布的星星
+      const starsVertices = [];
+      for (let i = 0; i < 2000; i++) {
+        // 在一个大球体内随机分布星星
+        const radius = 50 + Math.random() * 50; // 50-100的半径
+        const theta = Math.random() * Math.PI * 2; // 0-2π
+        const phi = Math.acos(2 * Math.random() - 1); // 均匀分布在球面上
+
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.sin(phi) * Math.sin(theta);
+        const z = radius * Math.cos(phi);
+
+        starsVertices.push(x, y, z);
+      }
+
+      starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+      const starField = new THREE.Points(starsGeometry, starsMaterial);
+      scene.add(starField);
+
+      // 创建网格
+      const gridHelper = new THREE.GridHelper(20, 20, 0x555555, 0x222222);
+      gridHelper.rotation.x = Math.PI / 2;
+      gridHelper.visible = state.showGrid;
+      scene.add(gridHelper);
+
+      // 创建恒星和轨迹
+      const stars = [];
+      const trails = [];
+
+      // 创建恒星
+      function createStars() {
+        // 清除现有恒星
+        for (const star of stars) {
+          scene.remove(star.mesh);
+        }
+        stars.length = 0;
+
+        // 清除现有轨迹
+        for (const trail of trails) {
+          scene.remove(trail.line);
+        }
+        trails.length = 0;
+
+        // 根据当前预设创建恒星
+        let positions = [];
+        let velocities = [];
+
+        switch (state.currentPreset) {
+          case 'figure8':
+            // 8字形稳定轨道
+            positions = [
+              { x: 0.97000436, y: -0.24308753, z: 0 },
+              { x: -0.97000436, y: 0.24308753, z: 0 },
+              { x: 0, y: 0, z: 0 }
+            ];
+            velocities = [
+              { x: 0.466203685, y: 0.43236573, z: 0 },
+              { x: 0.466203685, y: 0.43236573, z: 0 },
+              { x: -0.93240737, y: -0.86473146, z: 0 }
+            ];
+            break;
+          case 'chaotic':
+            // 混沌轨道
+            positions = [
+              { x: 3, y: 1, z: 0 },
+              { x: -2, y: -1, z: 0 },
+              { x: -1, y: 2, z: 0 }
+            ];
+            velocities = [
+              { x: 0, y: 0.3, z: 0 },
+              { x: 0.1, y: -0.2, z: 0 },
+              { x: -0.1, y: -0.1, z: 0 }
+            ];
+            break;
+          case 'binary':
+            // 双星系统+单星
+            positions = [
+              { x: 2, y: 0, z: 0 },
+              { x: -2, y: 0, z: 0 },
+              { x: 0, y: 5, z: 0 }
+            ];
+            velocities = [
+              { x: 0, y: 0.6, z: 0 },
+              { x: 0, y: -0.6, z: 0 },
+              { x: -0.4, y: 0, z: 0.1 }
+            ];
+            break;
+          case 'collision':
+            // 碰撞路径
+            positions = [
+              { x: 3, y: 0, z: 0 },
+              { x: -3, y: 0, z: 0 },
+              { x: 0, y: 0, z: 3 }
+            ];
+            velocities = [
+              { x: 0, y: 0.2, z: 0 },
+              { x: 0, y: -0.2, z: 0 },
+              { x: -0.1, y: -0.1, z: -0.3 }
+            ];
+            break;
+          case 'random':
+            // 随机配置
+            for (let i = 0; i < 3; i++) {
+              positions.push({
+                x: Math.random() * 10 - 5,
+                y: Math.random() * 10 - 5,
+                z: Math.random() * 4 - 2
+              });
+              velocities.push({
+                x: Math.random() * 0.6 - 0.3,
+                y: Math.random() * 0.6 - 0.3,
+                z: Math.random() * 0.2 - 0.1
+              });
+            }
+            break;
+        }
+
+        // 创建恒星
+        for (let i = 0; i < 3; i++) {
+          // 创建恒星几何体和材质 - 减小初始大小
+          const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+          const material = new THREE.MeshStandardMaterial({
+            color: starColors[i],
+            emissive: starColors[i],
+            emissiveIntensity: 0.7,
+            roughness: 0.2,
+            metalness: 0.3
+          });
+
+          // 创建恒星网格
+          const mesh = new THREE.Mesh(geometry, material);
+          mesh.position.set(positions[i].x, positions[i].y, positions[i].z);
+          // 添加随机旋转以增强3D效果
+          mesh.rotation.x = Math.random() * Math.PI;
+          mesh.rotation.y = Math.random() * Math.PI;
+          mesh.rotation.z = Math.random() * Math.PI;
+          scene.add(mesh);
+
+          // 创建发光效果 - 调整大小比例
+          const glowGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+          const glowMaterial = new THREE.MeshBasicMaterial({
+            color: starColors[i],
+            transparent: true,
+            opacity: 0.15
+          });
+          const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+          mesh.add(glow);
+
+          // 存储恒星引用
+          stars.push({
+            mesh: mesh,
+            glow: glow,
+            velocity: velocities[i],
+            mass: 1.0,
+            trail: []
+          });
+
+          // 创建轨迹
+          createTrail(i);
+        }
+
+        // 更新UI
+        updateMassUI();
+      }
+
+      // 创建轨迹
+      function createTrail(index) {
+        const geometry = new THREE.BufferGeometry();
+        const material = new THREE.LineBasicMaterial({
+          color: starColors[index],
+          linewidth: 2,
+          transparent: true,
+          opacity: 0.7
+        });
+
+        const positions = new Float32Array(state.trailLength * 3);
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setDrawRange(0, 0);
+
+        const line = new THREE.Line(geometry, material);
+        scene.add(line);
+
+        trails.push({
+          line: line,
+          positions: positions,
+          count: 0
+        });
+      }
+
+      // 更新轨迹
+      function updateTrail(index, position) {
+        if (!state.showTrails) return;
+
+        const trail = trails[index];
+        const positions = trail.positions;
+
+        if (trail.count < state.trailLength) {
+          // 还有空间，直接添加
+          const i = trail.count * 3;
+          positions[i] = position.x;
+          positions[i + 1] = position.y;
+          positions[i + 2] = position.z;
+          trail.count++;
+        } else {
+          // 已满，移动所有点并添加新点
+          for (let i = 0; i < state.trailLength - 1; i++) {
+            const currentIndex = i * 3;
+            const nextIndex = (i + 1) * 3;
+            positions[currentIndex] = positions[nextIndex];
+            positions[currentIndex + 1] = positions[nextIndex + 1];
+            positions[currentIndex + 2] = positions[nextIndex + 2];
+          }
+
+          // 添加新点到末尾
+          const lastIndex = (state.trailLength - 1) * 3;
+          positions[lastIndex] = position.x;
+          positions[lastIndex + 1] = position.y;
+          positions[lastIndex + 2] = position.z;
+        }
+
+        // 更新几何体
+        trail.line.geometry.attributes.position.needsUpdate = true;
+        trail.line.geometry.setDrawRange(0, trail.count);
+      }
+
+      // 计算引力
+      function calculateGravity(star1, star2) {
+        const dx = star2.mesh.position.x - star1.mesh.position.x;
+        const dy = star2.mesh.position.y - star1.mesh.position.y;
+        const dz = star2.mesh.position.z - star1.mesh.position.z;
+
+        const distSquared = dx * dx + dy * dy + dz * dz;
+        const dist = Math.sqrt(distSquared);
+
+        // 防止距离过小导致的数值不稳定
+        if (dist < 0.1) return { x: 0, y: 0, z: 0 };
+
+        // 引力常数
+        const G = 0.5;
+
+        // 计算引力大小
+        const force = G * star1.mass * star2.mass / distSquared;
+
+        // 计算引力方向
+        return {
+          x: force * dx / dist,
+          y: force * dy / dist,
+          z: force * dz / dist
+        };
+      }
+
+      // 更新恒星质量
+      function updateStarMass(index, mass) {
+        if (index >= 0 && index < stars.length) {
+          stars[index].mass = mass;
+
+          // 更新恒星大小
+          const scale = Math.pow(mass, 1/3);
+          stars[index].mesh.scale.set(scale, scale, scale);
+        }
+      }
+
+      // 更新质量UI
+      function updateMassUI() {
+        for (let i = 0; i < stars.length; i++) {
+          const massValue = document.getElementById(`star${i+1}-mass-value`);
+          if (massValue) {
+            massValue.textContent = stars[i].mass.toFixed(1);
+          }
+
+          const massSlider = document.getElementById(`star${i+1}-mass`);
+          if (massSlider) {
+            massSlider.value = stars[i].mass;
+          }
+        }
+      }
+
+      // 简单的相机控制
+      let isDragging = false;
+      let previousMousePosition = { x: 0, y: 0 };
+
+      renderer.domElement.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        previousMousePosition = {
+          x: e.clientX,
+          y: e.clientY
+        };
+      });
+
+      renderer.domElement.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          const deltaMove = {
+            x: e.clientX - previousMousePosition.x,
+            y: e.clientY - previousMousePosition.y
+          };
+
+          // 计算当前相机到原点的距离
+          const distance = Math.sqrt(
+            camera.position.x * camera.position.x +
+            camera.position.y * camera.position.y +
+            camera.position.z * camera.position.z
+          );
+
+          // 更直观的轨道控制 - 围绕场景中心旋转
+          const rotationSpeed = 0.01;
+
+          // 计算旋转角度
+          const theta = -deltaMove.x * rotationSpeed; // 水平旋转
+          const phi = deltaMove.y * rotationSpeed;    // 垂直旋转
+
+          // 应用旋转 - 围绕Y轴旋转（水平）
+          const cosTheta = Math.cos(theta);
+          const sinTheta = Math.sin(theta);
+          const newX = camera.position.x * cosTheta - camera.position.z * sinTheta;
+          const newZ = camera.position.x * sinTheta + camera.position.z * cosTheta;
+          camera.position.x = newX;
+          camera.position.z = newZ;
+
+          // 应用旋转 - 围绕相机右侧向量旋转（垂直）
+          // 获取相机的右侧向量
+          const right = new THREE.Vector3();
+          right.crossVectors(camera.up, new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z).normalize());
+          right.normalize();
+
+          // 围绕右侧向量旋转
+          const cosPhi = Math.cos(phi);
+          const sinPhi = Math.sin(phi);
+          const normalizedPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z).normalize();
+          const rotatedPos = new THREE.Vector3();
+
+          // 罗德里格旋转公式
+          rotatedPos.copy(normalizedPos.multiplyScalar(cosPhi));
+          rotatedPos.add(new THREE.Vector3(
+            right.x * (1 - cosPhi) * (right.x * normalizedPos.x + right.y * normalizedPos.y + right.z * normalizedPos.z),
+            right.y * (1 - cosPhi) * (right.x * normalizedPos.x + right.y * normalizedPos.y + right.z * normalizedPos.z),
+            right.z * (1 - cosPhi) * (right.x * normalizedPos.x + right.y * normalizedPos.y + right.z * normalizedPos.z)
+          ));
+          rotatedPos.add(new THREE.Vector3(
+            right.y * normalizedPos.z - right.z * normalizedPos.y,
+            right.z * normalizedPos.x - right.x * normalizedPos.z,
+            right.x * normalizedPos.y - right.y * normalizedPos.x
+          ).multiplyScalar(sinPhi));
+
+          // 应用旋转后的位置，保持距离不变
+          camera.position.x = rotatedPos.x * distance;
+          camera.position.y = rotatedPos.y * distance;
+          camera.position.z = rotatedPos.z * distance;
+
+          // 确保相机始终看向场景中心
+          camera.lookAt(scene.position);
+
+          previousMousePosition = {
+            x: e.clientX,
+            y: e.clientY
+          };
+        }
+      });
+
+      renderer.domElement.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      // 鼠标滚轮缩放 - 增强缩放效果
+      renderer.domElement.addEventListener('wheel', (e) => {
+        e.preventDefault();
+
+        // 增强缩放效果
+        const zoomSpeed = 0.05; // 增大缩放速度
+
+        // 计算当前到原点的距离
+        const distance = Math.sqrt(
+          camera.position.x * camera.position.x +
+          camera.position.y * camera.position.y +
+          camera.position.z * camera.position.z
+        );
+
+        // 创建从相机指向原点的方向向量
+        const direction = new THREE.Vector3(
+          -camera.position.x / distance,
+          -camera.position.y / distance,
+          -camera.position.z / distance
+        );
+
+        // 沿着这个方向移动相机
+        const moveAmount = e.deltaY * zoomSpeed;
+        camera.position.x += direction.x * moveAmount;
+        camera.position.y += direction.y * moveAmount;
+        camera.position.z += direction.z * moveAmount;
+
+        // 限制缩放范围
+        const newDistance = Math.sqrt(
+          camera.position.x * camera.position.x +
+          camera.position.y * camera.position.y +
+          camera.position.z * camera.position.z
+        );
+
+        if (newDistance < 5) {
+          // 如果太近，将相机拉回到5个单位的距离
+          camera.position.x = direction.x * -5;
+          camera.position.y = direction.y * -5;
+          camera.position.z = direction.z * -5;
+        } else if (newDistance > 50) {
+          // 如果太远，将相机拉回到50个单位的距离
+          camera.position.x = direction.x * -50;
+          camera.position.y = direction.y * -50;
+          camera.position.z = direction.z * -50;
+        }
+
+        // 确保相机始终看向场景中心
+        camera.lookAt(scene.position);
+      });
+
+      // 窗口大小调整
+      window.addEventListener('resize', () => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(width, height);
+      });
+
+      // 动画循环
+      function animate() {
+        requestAnimationFrame(animate);
+
+        try {
+          if (state.running) {
+            // 计算引力并更新位置
+            for (let i = 0; i < stars.length; i++) {
+              const star = stars[i];
+
+              // 重置加速度
+              let ax = 0, ay = 0, az = 0;
+
+              // 计算其他恒星的引力
+              for (let j = 0; j < stars.length; j++) {
+                if (i === j) continue;
+
+                const force = calculateGravity(star, stars[j]);
+
+                // 计算加速度 (F = ma, a = F/m)
+                ax += force.x / star.mass;
+                ay += force.y / star.mass;
+                az += force.z / star.mass;
+              }
+
+              // 更新速度
+              const dt = 0.01 * state.simulationSpeed;
+              star.velocity.x += ax * dt;
+              star.velocity.y += ay * dt;
+              star.velocity.z += az * dt;
+
+              // 更新位置
+              star.mesh.position.x += star.velocity.x * dt;
+              star.mesh.position.y += star.velocity.y * dt;
+              star.mesh.position.z += star.velocity.z * dt;
+
+              // 边界检查 - 防止恒星跑出视野
+              const boundaryRadius = 20;
+              const distanceFromCenter = Math.sqrt(
+                star.mesh.position.x * star.mesh.position.x +
+                star.mesh.position.y * star.mesh.position.y +
+                star.mesh.position.z * star.mesh.position.z
+              );
+
+              if (distanceFromCenter > boundaryRadius) {
+                // 如果恒星超出边界，将其拉回边界并反转速度
+                const ratio = boundaryRadius / distanceFromCenter * 0.8; // 拉回到边界内80%的位置
+                star.mesh.position.x *= ratio;
+                star.mesh.position.y *= ratio;
+                star.mesh.position.z *= ratio;
+
+                // 反转速度并减小一点（模拟能量损失）
+                star.velocity.x *= -0.8;
+                star.velocity.y *= -0.8;
+                star.velocity.z *= -0.8;
+              }
+
+              // 更新轨迹
+              updateTrail(i, star.mesh.position);
+            }
+          }
+
+          // 渲染场景
+          renderer.render(scene, camera);
+        } catch (error) {
+          console.error('动画循环中出错:', error);
+          // 继续执行，不要因为一帧渲染失败而中断整个应用
+        }
+      }
+
+      // 初始化恒星
+      createStars();
+
+      // 开始动画循环
+      animate();
+
+      // 导出函数和对象
+      window.threeApp = {
+        scene,
+        camera,
+        renderer,
+        stars,
+        trails,
+        gridHelper,
+        createStars,
+        updateStarMass,
+        updateMassUI
+      };
+    }
+
+    /**
+     * 初始化UI控制
+     */
+    function initUI() {
+      // 预设选择
+      const presetSelect = document.getElementById('preset-select');
+      presetSelect.addEventListener('change', () => {
+        state.currentPreset = presetSelect.value;
+        window.threeApp.createStars();
+      });
+
+      // 播放/暂停按钮
+      const playPauseButton = document.getElementById('play-pause');
+      playPauseButton.addEventListener('click', () => {
+        state.running = !state.running;
+        playPauseButton.textContent = state.running ? '暂停' : '继续';
+      });
+
+      // 重置按钮
+      const resetButton = document.getElementById('reset');
+      resetButton.addEventListener('click', () => {
+        window.threeApp.createStars();
+      });
+
+      // 模拟速度滑块
+      const speedSlider = document.getElementById('speed-slider');
+      const speedValue = document.getElementById('speed-value');
+      speedSlider.addEventListener('input', () => {
+        state.simulationSpeed = parseFloat(speedSlider.value);
+        speedValue.textContent = state.simulationSpeed.toFixed(1);
+      });
+
+      // 轨迹长度滑块
+      const trailSlider = document.getElementById('trail-slider');
+      const trailValue = document.getElementById('trail-value');
+      trailSlider.addEventListener('input', () => {
+        state.trailLength = parseInt(trailSlider.value);
+        trailValue.textContent = state.trailLength;
+
+        // 重新创建轨迹
+        window.threeApp.createStars();
+      });
+
+      // 显示轨迹复选框
+      const showTrailsCheckbox = document.getElementById('show-trails');
+      showTrailsCheckbox.addEventListener('change', () => {
+        state.showTrails = showTrailsCheckbox.checked;
+
+        // 更新轨迹可见性
+        if (window.threeApp && window.threeApp.trails) {
+          for (const trail of window.threeApp.trails) {
+            trail.line.visible = state.showTrails;
+          }
+        }
+      });
+
+      // 显示网格复选框
+      const showGridCheckbox = document.getElementById('show-grid');
+      showGridCheckbox.addEventListener('change', () => {
+        state.showGrid = showGridCheckbox.checked;
+
+        // 更新网格可见性
+        if (window.threeApp && window.threeApp.gridHelper) {
+          window.threeApp.gridHelper.visible = state.showGrid;
+        }
+      });
+
+      // 显示速度向量复选框
+      const showVectorsCheckbox = document.getElementById('show-vectors');
+      showVectorsCheckbox.addEventListener('change', () => {
+        state.showVectors = showVectorsCheckbox.checked;
+        // 速度向量功能在这个简化版本中未实现
+      });
+
+      // 恒星质量滑块
+      for (let i = 1; i <= 3; i++) {
+        const massSlider = document.getElementById(`star${i}-mass`);
+        const massValue = document.getElementById(`star${i}-mass-value`);
+
+        massSlider.addEventListener('input', () => {
+          const mass = parseFloat(massSlider.value);
+          massValue.textContent = mass.toFixed(1);
+
+          // 更新恒星质量
+          if (window.threeApp) {
+            window.threeApp.updateStarMass(i - 1, mass);
+          }
+        });
+      }
+
+      // 面板折叠按钮
+      const togglePanelButton = document.getElementById('toggle-panel');
+      const controlPanel = document.querySelector('.control-panel');
+
+      // 单击折叠/展开面板内容
+      togglePanelButton.addEventListener('click', () => {
+        controlPanel.classList.toggle('panel-collapsed');
+      });
+
+      // 双击完全隐藏/显示面板
+      togglePanelButton.addEventListener('dblclick', (e) => {
+        e.preventDefault(); // 防止双击选中文本
+        controlPanel.classList.toggle('panel-hidden');
+      });
+
+      // 点击面板外部区域时折叠面板
+      document.addEventListener('click', (e) => {
+        if (!controlPanel.contains(e.target) && !controlPanel.classList.contains('panel-collapsed')) {
+          controlPanel.classList.add('panel-collapsed');
+        }
+      });
+
+      // 检测移动设备
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        document.querySelector('.mobile-controls-hint').style.display = 'block';
+      }
+    }
+  </script>
 </body>
 </html>

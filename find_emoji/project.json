@@ -1,11 +1,12 @@
 {
-    "title": "表情符号查找器",
-    "description": "快速搜索和查找各种表情符号，支持关键词搜索和分类浏览。",
+    "title": "找到不动的 emoji",
+    "description": "有一个 emoji 是没有动的，找到它！",
     "tags": [
-        "实用工具",
-        "搜索功能"
+        "emoji",
+        "find",
+        "不动的"
     ],
     "status": "stable",
-    "category": "实用工具",
+    "category": "游戏与娱乐",
     "order": 1
 }
