@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>电子木鱼 - Electronic Wooden Fish</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Anton&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 返回主菜单链接 -->
+    <a href="/" class="back-link">返回主菜单</a>
+
+    <!-- 主界面 -->
+    <div class="main-screen">
+      <!-- 木鱼容器 -->
+      <div class="fish-container">
+        <div class="fish-wrapper">
+          <!-- 木鱼图像 -->
+          <div class="wooden-fish">
+            <div class="fish-image"></div>
+            <div class="fish-shadow"></div>
+          </div>
+
+          <!-- 角色图像容器 -->
+          <div class="character-container">
+            <div class="character-image"></div>
+          </div>
+        </div>
+
+        <!-- 木鱼敲击区域 -->
+        <div class="tap-area" id="tapArea"></div>
+      </div>
+
+      <!-- 计数器和连击显示 -->
+      <div class="counter-container">
+        <div class="merit-counter">
+          <span class="counter-value" id="meritCounter">0</span>
+          <span class="counter-label">功德</span>
+        </div>
+        <div class="combo-display" id="comboDisplay">
+          <span class="combo-count">x<span id="comboCounter">0</span></span>
+          <span class="combo-label" id="comboLabel">连击</span>
+        </div>
+      </div>
+
+      <!-- 文字动画区域 -->
+      <div class="text-animation-container" id="textAnimationContainer"></div>
+
+      <!-- 粒子效果画布 -->
+      <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <button class="control-btn" id="uploadBtn">
+        <span class="btn-icon">🖼️</span>
+        <span class="btn-text">上传角色</span>
+      </button>
+      <button class="control-btn" id="settingsBtn">
+        <span class="btn-icon">⚙️</span>
+        <span class="btn-text">设置</span>
+      </button>
+      <button class="control-btn" id="resetBtn">
+        <span class="btn-icon">🔄</span>
+        <span class="btn-text">重置</span>
+      </button>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <h2>设置</h2>
+        <button class="close-btn" id="closeSettingsBtn">×</button>
+      </div>
+      <div class="settings-content">
+        <div class="settings-group">
+          <h3>音效</h3>
+          <div class="setting-item">
+            <label for="volumeSlider">音量</label>
+            <input type="range" id="volumeSlider" min="0" max="100" value="70">
+          </div>
+          <div class="setting-item">
+            <label for="soundToggle">音效开关</label>
+            <label class="toggle">
+              <input type="checkbox" id="soundToggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label for="soundStyleSelect">音效风格</label>
+            <select id="soundStyleSelect" class="settings-select">
+              <option value="0">传统木鱼</option>
+              <option value="1">现代木鱼</option>
+              <option value="2">电子木鱼</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3>视觉效果</h3>
+          <div class="setting-item">
+            <label for="particleToggle">粒子效果</label>
+            <label class="toggle">
+              <input type="checkbox" id="particleToggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label for="particleStyleSelect">粒子风格</label>
+            <select id="particleStyleSelect" class="settings-select">
+              <option value="0">简约</option>
+              <option value="1">标准</option>
+              <option value="2">华丽</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label for="textToggle">文字动画</label>
+            <label class="toggle">
+              <input type="checkbox" id="textToggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label for="textStyleSelect">文字风格</label>
+            <select id="textStyleSelect" class="settings-select">
+              <option value="0">传统</option>
+              <option value="1">现代</option>
+              <option value="2">游戏</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3>性能</h3>
+          <div class="setting-item">
+            <label for="qualitySelect">画面质量</label>
+            <select id="qualitySelect" class="settings-select">
+              <option value="0">低 (流畅)</option>
+              <option value="1" selected>中 (平衡)</option>
+              <option value="2">高 (精美)</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label for="vibrationToggle">振动反馈</label>
+            <label class="toggle">
+              <input type="checkbox" id="vibrationToggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 文件上传对话框 -->
+    <div class="upload-panel" id="uploadPanel">
+      <div class="upload-header">
+        <h2>上传角色图片</h2>
+        <button class="close-btn" id="closeUploadBtn">×</button>
+      </div>
+      <div class="upload-content">
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="imageInput" accept="image/*" hidden>
+          <div class="upload-placeholder">
+            <div class="upload-icon">📷</div>
+            <p>点击或拖放图片</p>
+          </div>
+          <div class="upload-preview" id="imagePreview"></div>
+        </div>
+        <div class="upload-actions">
+          <button class="action-btn cancel-btn" id="cancelUploadBtn">取消</button>
+          <button class="action-btn confirm-btn" id="confirmUploadBtn">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay"></div>
+  </div>
+
+  <!-- 脚本 -->
+  <script src="js/utils.js"></script>
+  <script src="js/audio-manager.js"></script>
+  <script src="js/particle-system.js"></script>
+  <script src="js/combo-system.js"></script>
+  <script src="js/image-processor.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

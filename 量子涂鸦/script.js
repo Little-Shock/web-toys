@@ -19,7 +19,7 @@ let quantumEffect;
 let drawHistory = []; // 用于撤销功能
 let controlsVisible = false; // 控制面板可见性
 
-// 初始化函数
+// 初始化函数 - 移除Three.js以提高性能
 function init() {
     // 获取画布元素
     drawingCanvas = document.getElementById('drawingCanvas');
@@ -35,9 +35,6 @@ function init() {
     // 设置初始混合模式
     effectContext.globalCompositeOperation = blendMode;
 
-    // 初始化Three.js
-    initThreeJS();
-
     // 添加事件监听器
     addEventListeners();
 
@@ -48,7 +45,7 @@ function init() {
     saveDrawState();
 }
 
-// 调整画布尺寸
+// 调整画布尺寸 - 移除Three.js相关代码
 function resizeCanvases() {
     const container = document.querySelector('.canvas-container');
     const width = container.clientWidth;
@@ -59,13 +56,6 @@ function resizeCanvases() {
     drawingCanvas.height = height;
     effectCanvas.width = width;
     effectCanvas.height = height;
-
-    // 如果Three.js已初始化，也更新其尺寸
-    if (renderer) {
-        renderer.setSize(width, height);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-    }
 }
 
 // 添加事件监听器
@@ -149,9 +139,29 @@ function startDrawing(e) {
     lastX = pos.x;
     lastY = pos.y;
 
+    // 重置点历史
+    pointHistory = [];
+
+    // 添加初始点到历史记录
+    pointHistory.push({x: pos.x, y: pos.y});
+
     // 创建初始粒子
     createParticles(pos.x, pos.y);
+
+    // 绘制一个小点作为起点
+    drawingContext.beginPath();
+    drawingContext.arc(pos.x, pos.y, brushSize/2, 0, Math.PI * 2);
+    drawingContext.fillStyle = getBaseColor();
+    drawingContext.fill();
 }
+
+// 添加一个点历史数组，用于平滑线条
+let pointHistory = [];
+const HISTORY_SIZE = 5; // 保留最近的5个点用于平滑
+
+// 存储绘制的线段，用于淡出效果
+let strokeSegments = [];
+const STROKE_LIFETIME = 5000; // 线段存在时间（毫秒）
 
 function draw(e) {
     if (!isDrawing) return;
@@ -166,10 +176,18 @@ function draw(e) {
     // 如果距离太小，不绘制（防止点击产生的小点）
     if (distance < 1) return;
 
+    // 添加当前点到历史记录
+    pointHistory.push({x: currentX, y: currentY});
+
+    // 保持历史记录在指定大小
+    if (pointHistory.length > HISTORY_SIZE) {
+        pointHistory.shift();
+    }
+
     // 绘制线条
     drawLine(lastX, lastY, currentX, currentY);
 
-    // 根据距离和速度创建粒子
+    // 根据距离和速度创建粒子，距离越大创建越多粒子
     const particleCount = Math.max(1, Math.floor(distance / 2));
 
     // 在线段上均匀分布粒子
@@ -187,6 +205,31 @@ function draw(e) {
 
 function stopDrawing() {
     if (isDrawing) {
+        // 如果有足够的历史点，绘制一个平滑的结束曲线
+        if (pointHistory.length >= 2) {
+            const lastPoint = pointHistory[pointHistory.length - 1];
+
+            // 创建一个小的收尾效果
+            drawingContext.beginPath();
+            drawingContext.arc(lastPoint.x, lastPoint.y, brushSize/3, 0, Math.PI * 2);
+
+            // 使用渐变填充
+            const gradient = drawingContext.createRadialGradient(
+                lastPoint.x, lastPoint.y, 0,
+                lastPoint.x, lastPoint.y, brushSize/2
+            );
+
+            const baseColor = getBaseColor();
+            gradient.addColorStop(0, baseColor);
+            gradient.addColorStop(1, 'transparent');
+
+            drawingContext.fillStyle = gradient;
+            drawingContext.fill();
+
+            // 在结束点添加一些额外的粒子
+            createParticles(lastPoint.x, lastPoint.y);
+        }
+
         isDrawing = false;
         // 保存当前绘图状态用于撤销
         saveDrawState();
@@ -200,8 +243,27 @@ function saveDrawState() {
         drawHistory.shift();
     }
 
-    // 保存当前画布状态
-    drawHistory.push(drawingContext.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height));
+    // 创建临时画布来保存当前状态
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = drawingCanvas.width;
+    tempCanvas.height = drawingCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // 绘制所有当前线段到临时画布
+    for (const segment of strokeSegments) {
+        tempCtx.globalAlpha = segment.opacity;
+        tempCtx.drawImage(segment.canvas, 0, 0);
+    }
+
+    // 保存当前画布状态和线段状态
+    drawHistory.push({
+        imageData: tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height),
+        segments: JSON.parse(JSON.stringify(strokeSegments.map(s => ({
+            createdAt: s.createdAt,
+            opacity: s.opacity
+        })))),
+        canvases: strokeSegments.map(s => s.canvas)
+    });
 }
 
 // 撤销上一步
@@ -209,9 +271,22 @@ function undoLastDraw() {
     if (drawHistory.length > 1) {
         // 移除当前状态
         drawHistory.pop();
+
         // 恢复上一个状态
         const prevState = drawHistory[drawHistory.length - 1];
-        drawingContext.putImageData(prevState, 0, 0);
+
+        // 清除当前画布
+        drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+
+        // 恢复图像数据
+        drawingContext.putImageData(prevState.imageData, 0, 0);
+
+        // 恢复线段状态
+        strokeSegments = prevState.segments.map((s, i) => ({
+            canvas: prevState.canvases[i],
+            createdAt: s.createdAt,
+            opacity: s.opacity
+        }));
     } else if (drawHistory.length === 1) {
         // 只有初始状态，清空画布
         clearCanvas();
@@ -252,36 +327,130 @@ function getPointerPosition(e) {
     };
 }
 
-// 绘制线条
+// 绘制线条 - 增强美观度，添加淡出效果
 function drawLine(x1, y1, x2, y2) {
-    // 获取渐变色
+    // 计算线条长度
+    const lineLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+
+    // 根据线条长度调整笔刷大小，使快速移动时线条更细，慢速移动时线条更粗
+    // 更平滑的速度因子计算
+    const speedFactor = Math.min(1, Math.max(0.3, 30 / (lineLength + 10)));
+    const dynamicBrushSize = brushSize * speedFactor * 1.5; // 增加线条宽度，形成色带效果
+
+    // 创建更丰富的渐变
     const gradient = drawingContext.createLinearGradient(x1, y1, x2, y2);
     const baseColor = getBaseColor();
     const complementaryColor = getComplementaryColor(baseColor);
+    const brightColor = getBrighterColor(baseColor);
 
-    // 创建平滑渐变
+    // 多色渐变，使线条更有层次感
     gradient.addColorStop(0, baseColor);
+    gradient.addColorStop(0.3, brightColor);
     gradient.addColorStop(0.5, complementaryColor);
+    gradient.addColorStop(0.7, brightColor);
     gradient.addColorStop(1, baseColor);
 
+    // 创建一个临时画布来绘制线段
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = drawingCanvas.width;
+    tempCanvas.height = drawingCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // 使用点历史记录创建更平滑的曲线
+    let path = new Path2D(); // 使用Path2D对象存储路径
+
+    if (pointHistory.length >= 3) {
+        // 获取最近的几个点
+        const p0 = pointHistory[pointHistory.length - 3]; // 倒数第三个点
+        const p1 = pointHistory[pointHistory.length - 2]; // 倒数第二个点
+        const p2 = pointHistory[pointHistory.length - 1]; // 最新点
+        const p3 = {x: x2, y: y2}; // 当前点
+
+        // 使用Catmull-Rom样条曲线创建平滑路径
+        path.moveTo(p1.x, p1.y);
+
+        // 计算控制点
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+        // 绘制三次贝塞尔曲线
+        path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    }
+    else if (pointHistory.length === 2) {
+        // 只有两个点时使用二次贝塞尔曲线
+        const p0 = pointHistory[pointHistory.length - 2];
+        const p1 = pointHistory[pointHistory.length - 1];
+
+        path.moveTo(p0.x, p0.y);
+
+        // 计算控制点
+        const cpx = (p0.x + p1.x + x2) / 3;
+        const cpy = (p0.y + p1.y + y2) / 3;
+
+        path.quadraticCurveTo(cpx, cpy, p1.x, p1.y);
+        path.lineTo(x2, y2);
+    }
+    else {
+        // 点不够时使用简单线段
+        path.moveTo(x1, y1);
+        path.lineTo(x2, y2);
+    }
+
+    // 在临时画布上绘制线条
+    tempCtx.strokeStyle = gradient;
+    tempCtx.lineWidth = dynamicBrushSize;
+    tempCtx.lineCap = 'round';
+    tempCtx.lineJoin = 'round';
+
+    // 添加适度的发光效果
+    tempCtx.shadowColor = brightColor;
+    tempCtx.shadowBlur = dynamicBrushSize * 1.2;
+
     // 绘制线条
-    drawingContext.beginPath();
-    drawingContext.moveTo(x1, y1);
-    drawingContext.lineTo(x2, y2);
-    drawingContext.strokeStyle = gradient;
-    drawingContext.lineWidth = brushSize;
-    drawingContext.lineCap = 'round';
-    drawingContext.lineJoin = 'round';
+    tempCtx.stroke(path);
 
-    // 添加阴影效果
-    drawingContext.shadowColor = complementaryColor;
-    drawingContext.shadowBlur = brushSize / 2;
+    // 绘制线段端点，使线条更加圆润
+    tempCtx.beginPath();
+    tempCtx.arc(x2, y2, dynamicBrushSize/2, 0, Math.PI * 2);
+    tempCtx.fillStyle = gradient;
+    tempCtx.fill();
 
-    drawingContext.stroke();
+    // 将线段添加到strokeSegments数组
+    strokeSegments.push({
+        canvas: tempCanvas,
+        createdAt: Date.now(),
+        opacity: 1.0
+    });
+
+    // 限制线段数量
+    if (strokeSegments.length > 50) {
+        strokeSegments = strokeSegments.slice(-50);
+    }
 
     // 重置阴影
-    drawingContext.shadowColor = 'transparent';
-    drawingContext.shadowBlur = 0;
+    tempCtx.shadowColor = 'transparent';
+    tempCtx.shadowBlur = 0;
+}
+
+// 获取更亮的颜色变体
+function getBrighterColor(color) {
+    // 从HSL颜色字符串中提取色相、饱和度和亮度
+    const hslMatch = color.match(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%/);
+    if (hslMatch && hslMatch.length >= 4) {
+        const hue = parseInt(hslMatch[1]);
+        const saturation = parseInt(hslMatch[2]);
+        const lightness = parseInt(hslMatch[3]);
+
+        // 增加亮度，但保持在合理范围内
+        const newLightness = Math.min(lightness + 15, 85);
+
+        // 返回更亮的颜色
+        return color.replace(/hsla?\((\d+),\s*(\d+)%,\s*(\d+)%/,
+                            `hsla(${hue}, ${saturation}%, ${newLightness}%`);
+    }
+    return color;
 }
 
 // 获取基础颜色
@@ -317,58 +486,54 @@ function getComplementaryColor(baseColor) {
     return baseColor;
 }
 
-// 粒子系统
+// 粒子系统 - 简化版本以提高性能
 function createParticles(x, y) {
     // 根据笔刷类型创建不同数量和特性的粒子
     const count = getBrushParticleCount();
 
     for (let i = 0; i < count; i++) {
-        // 计算粒子生命周期，使用粒子寿命倍数
-        const lifeBase = Math.random() * 100 + 150;
+        // 减少粒子生命周期，提高性能
+        const lifeBase = Math.random() * 50 + 50;
         const life = lifeBase * particleLifeMultiplier;
 
-        // 创建粒子对象
+        // 创建简化的粒子对象，减少属性
         const particle = {
             x: x + (Math.random() - 0.5) * brushSize * 2,
             y: y + (Math.random() - 0.5) * brushSize * 2,
-            size: Math.random() * brushSize * 0.5 + brushSize * 0.2,
+            size: Math.random() * brushSize * 0.4 + brushSize * 0.1,
             color: getParticleColor(),
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
             life: life,
             maxLife: life,
             type: brushType,
-            phase: Math.random() * Math.PI * 2,
-            frequency: Math.random() * 0.05 + 0.01,
-            opacity: Math.random() * 0.5 + 0.5,
-            rotation: Math.random() * Math.PI * 2,
-            rotationSpeed: (Math.random() - 0.5) * 0.02
+            phase: Math.random() * Math.PI * 2
         };
 
         particles.push(particle);
     }
 
-    // 限制粒子数量，防止性能问题
-    if (particles.length > 2000) {
-        particles = particles.slice(-2000);
+    // 限制粒子数量，防止性能问题 - 大幅减少最大粒子数
+    if (particles.length > 300) {
+        particles = particles.slice(-300);
     }
 }
 
-// 根据笔刷类型获取粒子数量
+// 根据笔刷类型获取粒子数量 - 大幅减少粒子数量以提高性能
 function getBrushParticleCount() {
     switch (brushType) {
         case 'quantum':
-            return Math.floor(brushSize * 0.8);
+            return Math.floor(brushSize * 0.3);
         case 'wave':
-            return Math.floor(brushSize * 0.5);
+            return Math.floor(brushSize * 0.2);
         case 'entangle':
-            return Math.floor(brushSize * 1.2);
+            return Math.floor(brushSize * 0.4);
         case 'particle':
-            return Math.floor(brushSize * 1.5);
+            return Math.floor(brushSize * 0.5);
         case 'flow':
-            return Math.floor(brushSize * 1.0);
+            return Math.floor(brushSize * 0.3);
         default:
-            return Math.floor(brushSize);
+            return Math.floor(brushSize * 0.3);
     }
 }
 
@@ -391,29 +556,25 @@ function getParticleColor() {
     }
 }
 
-// 更新和绘制粒子
+// 更新和绘制粒子 - 简化版本以提高性能
 function updateParticles() {
+    // 清除画布
+    effectContext.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
+
     // 设置混合模式
-    effectContext.globalCompositeOperation = blendMode;
-
-    // 使用半透明黑色覆盖，创造拖尾效果
-    effectContext.fillStyle = 'rgba(0, 0, 0, 0.05)';
-    effectContext.fillRect(0, 0, effectCanvas.width, effectCanvas.height);
-
-    // 恢复混合模式
     effectContext.globalCompositeOperation = blendMode;
 
     for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
-        // 根据粒子类型更新位置和特性
+        // 简化的粒子更新
         updateParticleByType(p, i);
 
-        // 绘制粒子
+        // 简化的粒子绘制
         drawParticle(p);
 
-        // 减少生命值
-        p.life -= 0.3; // 减缓生命减少速度
+        // 加快生命值减少速度
+        p.life -= 1.0;
 
         // 移除死亡粒子
         if (p.life <= 0) {
@@ -423,71 +584,40 @@ function updateParticles() {
     }
 }
 
-// 根据粒子类型更新粒子
+// 根据粒子类型更新粒子 - 极度简化版本以提高性能
 function updateParticleByType(particle, index) {
     // 计算生命周期比例
     const lifeRatio = particle.life / particle.maxLife;
 
     switch (particle.type) {
         case 'quantum':
-            // 量子笔刷：随机波动
-            particle.x += particle.vx * (Math.sin(Date.now() * 0.001 + particle.phase) * 0.5 + 0.5) * evolutionSpeed;
-            particle.y += particle.vy * (Math.cos(Date.now() * 0.001 + particle.phase) * 0.5 + 0.5) * evolutionSpeed;
-            // 随时间变化大小
-            particle.size = (Math.sin(Date.now() * 0.002 + particle.phase) * 0.2 + 0.8) * particle.size;
+            // 量子笔刷：简化的运动
+            particle.x += particle.vx * evolutionSpeed;
+            particle.y += particle.vy * evolutionSpeed;
             break;
 
         case 'wave':
-            // 波函数笔刷：波浪运动
+            // 波函数笔刷：简化的波浪运动
             particle.x += particle.vx * evolutionSpeed;
-            particle.y += particle.vy * evolutionSpeed + Math.sin(Date.now() * particle.frequency) * 2 * evolutionSpeed;
-            // 随时间变化颜色
-            const hue = parseInt(particle.color.match(/hsla?\((\d+)/)[1]);
-            const newHue = (hue + 0.5) % 360;
-            particle.color = particle.color.replace(/hsla?\(\d+/, `hsla(${newHue}`);
+            particle.y += particle.vy * evolutionSpeed + Math.sin(particle.phase) * evolutionSpeed;
             break;
 
         case 'entangle':
-            // 纠缠笔刷：相互吸引/排斥
-            if (particles.length > 1 && index % 5 === 0) {
-                // 只对部分粒子应用纠缠效果，提高性能
-                const otherIndex = Math.floor(Math.random() * particles.length);
-                const other = particles[otherIndex];
-
-                if (other !== particle) {
-                    const dx = other.x - particle.x;
-                    const dy = other.y - particle.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-
-                    if (dist > 0 && dist < 150) {
-                        // 根据距离计算力度
-                        const force = 0.05 * (1 - dist / 150) * evolutionSpeed;
-                        particle.vx += (dx / dist) * force;
-                        particle.vy += (dy / dist) * force;
-                    }
-                }
-            }
+            // 纠缠笔刷：简化的运动
             particle.x += particle.vx * evolutionSpeed;
             particle.y += particle.vy * evolutionSpeed;
             break;
 
         case 'particle':
-            // 粒子笔刷：更快的运动
-            particle.x += particle.vx * evolutionSpeed * 1.5;
-            particle.y += particle.vy * evolutionSpeed * 1.5;
-            // 旋转
-            particle.rotation += particle.rotationSpeed * evolutionSpeed;
+            // 粒子笔刷：简化的运动
+            particle.x += particle.vx * evolutionSpeed * 1.2;
+            particle.y += particle.vy * evolutionSpeed * 1.2;
             break;
 
         case 'flow':
-            // 流光笔刷：流动效果
+            // 流光笔刷：简化的运动
             particle.x += particle.vx * evolutionSpeed;
             particle.y += particle.vy * evolutionSpeed;
-            // 添加微小的随机运动
-            particle.vx += (Math.random() - 0.5) * 0.1;
-            particle.vy += (Math.random() - 0.5) * 0.1;
-            // 随时间变化透明度
-            particle.opacity = lifeRatio * 0.8;
             break;
 
         default:
@@ -500,90 +630,35 @@ function updateParticleByType(particle, index) {
     particle.y = Math.max(0, Math.min(effectCanvas.height, particle.y));
 
     // 缓慢减小速度
-    particle.vx *= 0.99;
-    particle.vy *= 0.99;
+    particle.vx *= 0.98;
+    particle.vy *= 0.98;
 }
 
-// 绘制单个粒子
+// 绘制单个粒子 - 极度简化版本以提高性能
 function drawParticle(p) {
     // 计算生命周期比例
     const lifeRatio = p.life / p.maxLife;
 
-    // 根据粒子类型绘制不同形状
+    // 根据粒子类型绘制简化形状
     switch (p.type) {
         case 'quantum':
-            // 量子笔刷：发光圆形
-            const gradient = effectContext.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-            gradient.addColorStop(0, p.color);
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
+            // 量子笔刷：简单圆形
             effectContext.beginPath();
-            effectContext.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            effectContext.fillStyle = gradient;
+            effectContext.arc(p.x, p.y, p.size * lifeRatio, 0, Math.PI * 2);
+            effectContext.fillStyle = p.color;
             effectContext.fill();
-
-            // 添加光晕效果
-            if (Math.random() > 0.9) {
-                effectContext.beginPath();
-                effectContext.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
-                effectContext.strokeStyle = p.color.replace('0.7', '0.2');
-                effectContext.lineWidth = 1;
-                effectContext.stroke();
-            }
             break;
 
         case 'wave':
-            // 波函数笔刷：波浪线
+            // 波函数笔刷：简单圆形
             effectContext.beginPath();
-            effectContext.arc(
-                p.x,
-                p.y,
-                p.size * (Math.sin(Date.now() * 0.002 + p.phase) * 0.3 + 0.7),
-                0,
-                Math.PI * 2
-            );
+            effectContext.arc(p.x, p.y, p.size * lifeRatio, 0, Math.PI * 2);
             effectContext.fillStyle = p.color;
             effectContext.fill();
-
-            // 添加波纹效果
-            if (Math.random() > 0.95) {
-                effectContext.beginPath();
-                effectContext.arc(p.x, p.y, p.size * 2 * lifeRatio, 0, Math.PI * 2);
-                effectContext.strokeStyle = p.color.replace('0.7', '0.1');
-                effectContext.lineWidth = 0.5;
-                effectContext.stroke();
-            }
             break;
 
         case 'entangle':
-            // 纠缠笔刷：连接线
-            if (particles.length > 1 && Math.random() > 0.8) {
-                // 寻找附近的粒子
-                for (let i = 0; i < 3; i++) { // 限制连线数量
-                    const other = particles[Math.floor(Math.random() * particles.length)];
-                    if (other === p) continue;
-
-                    const dx = other.x - p.x;
-                    const dy = other.y - p.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-
-                    if (dist < 100) {
-                        // 创建渐变连线
-                        const gradient = effectContext.createLinearGradient(p.x, p.y, other.x, other.y);
-                        gradient.addColorStop(0, p.color.replace('0.7', '0.3'));
-                        gradient.addColorStop(1, other.color.replace('0.7', '0.1'));
-
-                        effectContext.beginPath();
-                        effectContext.moveTo(p.x, p.y);
-                        effectContext.lineTo(other.x, other.y);
-                        effectContext.strokeStyle = gradient;
-                        effectContext.lineWidth = 0.5;
-                        effectContext.stroke();
-                    }
-                }
-            }
-
-            // 绘制粒子本身
+            // 纠缠笔刷：简单圆形
             effectContext.beginPath();
             effectContext.arc(p.x, p.y, p.size * lifeRatio, 0, Math.PI * 2);
             effectContext.fillStyle = p.color;
@@ -591,36 +666,17 @@ function drawParticle(p) {
             break;
 
         case 'particle':
-            // 粒子笔刷：旋转的小方块
-            effectContext.save();
-            effectContext.translate(p.x, p.y);
-            effectContext.rotate(p.rotation);
+            // 粒子笔刷：简单方块
             effectContext.fillStyle = p.color;
-            effectContext.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-            effectContext.restore();
-
-            // 添加轨迹效果
-            if (Math.random() > 0.7) {
-                effectContext.beginPath();
-                effectContext.moveTo(p.x, p.y);
-                effectContext.lineTo(p.x - p.vx * 5, p.y - p.vy * 5);
-                effectContext.strokeStyle = p.color.replace('0.7', '0.2');
-                effectContext.lineWidth = 0.5;
-                effectContext.stroke();
-            }
+            effectContext.fillRect(p.x - p.size/2 * lifeRatio, p.y - p.size/2 * lifeRatio,
+                                  p.size * lifeRatio, p.size * lifeRatio);
             break;
 
         case 'flow':
-            // 流光笔刷：流动的光效
-            const flowGradient = effectContext.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
-            const flowColor = p.color.replace('0.7', `${p.opacity}`);
-            flowGradient.addColorStop(0, flowColor);
-            flowGradient.addColorStop(0.5, flowColor.replace('0.7', '0.3'));
-            flowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
+            // 流光笔刷：简单圆形
             effectContext.beginPath();
-            effectContext.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
-            effectContext.fillStyle = flowGradient;
+            effectContext.arc(p.x, p.y, p.size * lifeRatio * 1.5, 0, Math.PI * 2);
+            effectContext.fillStyle = p.color;
             effectContext.fill();
             break;
 
@@ -778,27 +834,45 @@ function getColorSchemeValue() {
     }
 }
 
-// 动画循环
+// 动画循环 - 添加线段淡出效果
 function animate() {
     animationId = requestAnimationFrame(animate);
 
-    // 更新粒子
-    updateParticles();
+    // 清除主绘图画布
+    drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
 
-    // 更新Three.js效果
-    if (quantumEffect) {
-        // 更新绘图纹理
-        quantumEffect.material.uniforms.drawingTexture.value.needsUpdate = true;
+    // 绘制所有线段，应用淡出效果
+    const currentTime = Date.now();
 
-        // 更新时间
-        quantumEffect.material.uniforms.time.value = Date.now() * 0.0005; // 减慢时间流逝
+    // 处理每个线段
+    for (let i = strokeSegments.length - 1; i >= 0; i--) {
+        const segment = strokeSegments[i];
+        const age = currentTime - segment.createdAt;
 
-        // 更新颜色方案
-        quantumEffect.material.uniforms.colorScheme.value = getColorSchemeValue();
+        // 计算不透明度，随时间减少
+        if (age < STROKE_LIFETIME) {
+            // 前半段时间保持完全不透明
+            if (age < STROKE_LIFETIME / 2) {
+                segment.opacity = 1.0;
+            } else {
+                // 后半段时间线性淡出
+                segment.opacity = 1.0 - (age - STROKE_LIFETIME / 2) / (STROKE_LIFETIME / 2);
+            }
+
+            // 绘制线段，应用不透明度
+            drawingContext.globalAlpha = segment.opacity;
+            drawingContext.drawImage(segment.canvas, 0, 0);
+        } else {
+            // 超过生命周期，移除线段
+            strokeSegments.splice(i, 1);
+        }
     }
 
-    // 渲染Three.js场景
-    renderer.render(scene, camera);
+    // 重置全局透明度
+    drawingContext.globalAlpha = 1.0;
+
+    // 更新粒子
+    updateParticles();
 }
 
 // 清除画布
@@ -809,7 +883,10 @@ function clearCanvas() {
     // 清除画布
     drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     effectContext.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
+
+    // 清除所有粒子和线段
     particles = [];
+    strokeSegments = [];
 
     // 显示清除反馈
     showFeedback('画布已清除');
@@ -851,7 +928,7 @@ function showFeedback(message) {
     }, 2000);
 }
 
-// 保存图像
+// 保存图像 - 移除Three.js相关代码
 function saveImage() {
     // 创建临时画布合并所有图层
     const tempCanvas = document.createElement('canvas');
@@ -869,9 +946,6 @@ function saveImage() {
     // 绘制效果画布
     tempContext.drawImage(effectCanvas, 0, 0);
 
-    // 捕获Three.js渲染
-    tempContext.drawImage(renderer.domElement, 0, 0);
-
     // 创建下载链接
     const link = document.createElement('a');
     link.download = `量子涂鸦_${new Date().toISOString().slice(0, 10)}.png`;
@@ -882,7 +956,7 @@ function saveImage() {
     showFeedback('图像已保存');
 }
 
-// 保存GIF
+// 保存GIF - 移除Three.js相关代码，简化以提高性能
 function saveGif() {
     // 显示加载提示
     showFeedback('正在生成GIF，请稍候...');
@@ -905,8 +979,8 @@ function saveGif() {
     tempCanvas.height = drawingCanvas.height;
     const tempContext = tempCanvas.getContext('2d');
 
-    // 捕获多个帧
-    const frameCount = 40;
+    // 捕获多个帧 - 减少帧数以提高性能
+    const frameCount = 20;
     let currentFrame = 0;
 
     function captureFrame() {
@@ -922,9 +996,6 @@ function saveGif() {
 
         // 绘制效果画布
         tempContext.drawImage(effectCanvas, 0, 0);
-
-        // 捕获Three.js渲染
-        tempContext.drawImage(renderer.domElement, 0, 0);
 
         // 添加帧到GIF
         gif.addFrame(tempCanvas, { delay: 100, copy: true });

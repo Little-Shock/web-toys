@@ -1,0 +1,350 @@
+/* 基础样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans SC', 'Space Mono', sans-serif;
+  background-color: #000;
+  color: #fff;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.app-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 星空画布 */
+.star-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 返回链接 */
+.back-link {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 14px;
+  z-index: 100;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.back-link:hover, .back-link:active {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+
+/* 控制面板 */
+.controls-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 500px;
+  z-index: 10;
+}
+
+.controls-toggle {
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  margin: 0 auto;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.controls-toggle:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.toggle-icon {
+  font-size: 24px;
+}
+
+.controls-content {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 20px;
+  margin-top: 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: none;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.controls-content.active {
+  display: block;
+}
+
+.control-group {
+  margin-bottom: 20px;
+}
+
+.control-group h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.layers-container, .theme-container, .actions-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.layer-btn, .theme-btn, .action-btn {
+  padding: 8px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.layer-btn:hover, .theme-btn:hover, .action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.layer-btn.active, .theme-btn.active {
+  background: rgba(120, 120, 255, 0.3);
+  border-color: rgba(120, 120, 255, 0.5);
+  color: #fff;
+}
+
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.setting label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.setting input[type="range"] {
+  width: 60%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  -webkit-appearance: none;
+}
+
+.setting input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.setting.checkbox {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.setting.checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+/* 信息面板 */
+.info-panel {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 10;
+}
+
+.info-toggle {
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.info-content {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  width: 280px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 15px;
+  display: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.info-content.active {
+  display: block;
+}
+
+.info-content h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.info-content h3 {
+  font-size: 15px;
+  margin: 15px 0 5px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.info-content p {
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.info-content ul {
+  padding-left: 20px;
+  margin-top: 5px;
+}
+
+.info-content li {
+  font-size: 14px;
+  margin-bottom: 5px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 加载指示器 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+.loading-text {
+  margin-top: 20px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .controls-content {
+    padding: 15px;
+  }
+  
+  .layer-btn, .theme-btn, .action-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .info-content {
+    width: 250px;
+  }
+}
+
+/* 星点样式 */
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #fff;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.star-pulse {
+  position: absolute;
+  border-radius: 50%;
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: pulse 2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+/* 星座连接线 */
+.constellation-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%);
+  transform-origin: 0 0;
+  pointer-events: none;
+}

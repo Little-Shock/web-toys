@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <!-- 木鱼底部 -->
+  <ellipse cx="150" cy="230" rx="70" ry="20" fill="#8B4513" opacity="0.5" />
+
+  <!-- 木鱼主体 - 仿照真实木鱼的形状 -->
+  <path d="M150,60
+         C220,60 270,120 270,170
+         C270,220 220,240 150,240
+         C80,240 30,220 30,170
+         C30,120 80,60 150,60 Z"
+        fill="#C19A6B" />
+
+  <!-- 木鱼纹理 - 木质纹理 -->
+  <path d="M150,70
+         C210,70 260,120 260,170
+         C260,210 210,230 150,230
+         C90,230 40,210 40,170
+         C40,120 90,70 150,70 Z"
+        fill="#A0522D" />
+
+  <!-- 木鱼顶部纹理 -->
+  <path d="M150,80
+         C200,80 240,120 240,160
+         C240,200 200,210 150,210
+         C100,210 60,200 60,160
+         C60,120 100,80 150,80 Z"
+        fill="#8B4513" />
+
+  <!-- 木鱼开口 - 类似照片中的开口 -->
+  <path d="M90,140
+         C110,100 190,100 210,140
+         L210,170
+         C190,210 110,210 90,170
+         Z"
+        fill="#5D4037" />
+
+  <!-- 木鱼开口内部 -->
+  <path d="M100,145
+         C120,115 180,115 200,145
+         L200,165
+         C180,195 120,195 100,165
+         Z"
+        fill="#3E2723" />
+
+  <!-- 木鱼开口高光 -->
+  <path d="M100,145
+         C120,115 180,115 200,145"
+        stroke="rgba(255,255,255,0.3)"
+        stroke-width="2"
+        fill="none" />
+
+  <!-- 木鱼纹理线条 -->
+  <path d="M70,120 Q150,140 230,120" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.7" />
+  <path d="M60,150 Q150,170 240,150" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.7" />
+  <path d="M70,180 Q150,200 230,180" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.7" />
+
+  <!-- 木鱼环形纹理 -->
+  <ellipse cx="150" cy="150" rx="100" ry="70" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.5" />
+  <ellipse cx="150" cy="150" rx="80" ry="55" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.5" />
+
+  <!-- 木鱼高光 -->
+  <ellipse cx="150" cy="100" rx="80" ry="30" fill="rgba(255,255,255,0.15)" />
+
+  <!-- 木质纹理细节 -->
+  <path d="M100,90 L110,95 L100,100" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.6" />
+  <path d="M200,90 L190,95 L200,100" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.6" />
+  <path d="M120,80 L125,85 L130,80" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.6" />
+  <path d="M170,80 L175,85 L180,80" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.6" />
+
+  <!-- 木鱼表面纹理 -->
+  <path d="M90,110 Q95,105 100,110" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.4" />
+  <path d="M110,100 Q115,95 120,100" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.4" />
+  <path d="M130,90 Q135,85 140,90" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.4" />
+  <path d="M160,90 Q165,85 170,90" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.4" />
+  <path d="M180,100 Q185,95 190,100" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.4" />
+  <path d="M200,110 Q205,105 210,110" stroke="#5D4037" stroke-width="1" fill="none" opacity="0.4" />
+</svg>

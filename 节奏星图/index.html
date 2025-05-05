@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>节奏星图 - Rhythm Constellation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 返回主菜单链接 -->
+    <a href="../index.html" class="back-link">返回主菜单</a>
+    
+    <!-- 主画布 -->
+    <canvas id="starCanvas" class="star-canvas"></canvas>
+    
+    <!-- 控制面板 -->
+    <div class="controls-panel">
+      <div class="controls-toggle">
+        <span class="toggle-icon">⚙️</span>
+      </div>
+      <div class="controls-content">
+        <div class="control-group">
+          <h3>节奏层</h3>
+          <div class="layers-container">
+            <button class="layer-btn active" data-layer="0">层 1</button>
+            <button class="layer-btn" data-layer="1">层 2</button>
+            <button class="layer-btn" data-layer="2">层 3</button>
+            <button class="layer-btn" data-layer="3">层 4</button>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <h3>星空主题</h3>
+          <div class="theme-container">
+            <button class="theme-btn active" data-theme="cosmic">宇宙</button>
+            <button class="theme-btn" data-theme="aurora">极光</button>
+            <button class="theme-btn" data-theme="nebula">星云</button>
+            <button class="theme-btn" data-theme="galaxy">银河</button>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <h3>操作</h3>
+          <div class="actions-container">
+            <button id="clearBtn" class="action-btn">清除</button>
+            <button id="saveBtn" class="action-btn">保存</button>
+            <button id="shareBtn" class="action-btn">分享</button>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <h3>设置</h3>
+          <div class="settings-container">
+            <div class="setting">
+              <label for="volumeSlider">音量</label>
+              <input type="range" id="volumeSlider" min="0" max="100" value="70">
+            </div>
+            <div class="setting">
+              <label for="tempoSlider">速度</label>
+              <input type="range" id="tempoSlider" min="60" max="180" value="120">
+            </div>
+            <div class="setting checkbox">
+              <input type="checkbox" id="vibrationToggle" checked>
+              <label for="vibrationToggle">振动反馈</label>
+            </div>
+            <div class="setting checkbox">
+              <input type="checkbox" id="autoConnectToggle" checked>
+              <label for="autoConnectToggle">自动连接</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 信息面板 -->
+    <div class="info-panel">
+      <div class="info-toggle">?</div>
+      <div class="info-content">
+        <h2>节奏星图</h2>
+        <p>触摸屏幕创造音乐和星空图案，系统会记住你的节奏并形成星座。</p>
+        <h3>操作指南：</h3>
+        <ul>
+          <li><strong>点击/触摸</strong>：创建音符和星点</li>
+          <li><strong>长按</strong>：创建持续音符和脉冲星</li>
+          <li><strong>滑动</strong>：创建连续的星轨</li>
+          <li><strong>摇晃设备</strong>：扰动星空</li>
+        </ul>
+        <h3>节奏层：</h3>
+        <p>可以创建最多4个独立的节奏层，每层有不同的音色和星点样式。</p>
+        <h3>星座连接：</h3>
+        <p>系统会根据你创建的节奏模式自动连接星点，形成星座图案。</p>
+      </div>
+    </div>
+    
+    <!-- 加载指示器 -->
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在初始化星空...</div>
+    </div>
+  </div>
+
+  <!-- JavaScript 文件 -->
+  <script src="js/utils/math.js"></script>
+  <script src="js/utils/touch.js"></script>
+  <script src="js/AudioManager.js"></script>
+  <script src="js/RhythmTracker.js"></script>
+  <script src="js/StarField.js"></script>
+  <script src="js/ParticleSystem.js"></script>
+  <script src="js/ConstellationDrawer.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

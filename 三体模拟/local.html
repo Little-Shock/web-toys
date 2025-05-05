@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三体模拟 - 本地版</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #000; }
+    canvas { display: block; }
+    #info {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-family: Arial, sans-serif;
+      z-index: 100;
+    }
+    .controls {
+      position: absolute;
+      top: 50px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      color: white;
+      font-family: Arial, sans-serif;
+      z-index: 100;
+    }
+    button {
+      background: #4e79ff;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      margin: 5px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3a5bbf;
+    }
+    .back-link {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      text-decoration: none;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border-radius: 5px;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">三体模拟 - 本地版</div>
+  <a href="../index.html" class="back-link">返回主菜单</a>
+  
+  <div class="controls">
+    <button id="reset">重置模拟</button>
+    <button id="toggle-play">暂停</button>
+    <div>
+      <label for="speed">模拟速度:</label>
+      <input type="range" id="speed" min="0.1" max="2" step="0.1" value="1">
+    </div>
+  </div>
+  
+  <script src="js/lib/three.min.js"></script>
+  <script>
+    // 检查Three.js是否加载
+    if (!window.THREE) {
+      alert('Three.js未加载，请确保js/lib/three.min.js文件存在。');
+      throw new Error('Three.js未加载');
+    }
+    
+    // 应用状态
+    const state = {
+      running: true,
+      simulationSpeed: 1.0
+    };
+    
+    // 创建场景
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    
+    // 创建相机
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 20;
+    
+    // 创建渲染器
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    
+    // 添加环境光
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    // 添加方向光
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 3, 5);
+    scene.add(directionalLight);
+    
+    // 创建恒星
+    const stars = [];
+    const colors = [0x4e79ff, 0xff4e4e, 0x4eff7e]; // 蓝色、红色、绿色
+    const starNames = ['恒星A', '恒星B', '恒星C'];
+    
+    function createStars() {
+      // 清除现有恒星
+      for (const star of stars) {
+        scene.remove(star.mesh);
+      }
+      stars.length = 0;
+      
+      // 清除现有轨迹
+      for (const trail of trails) {
+        scene.remove(trail.line);
+      }
+      trails.length = 0;
+      trailsGeometry.length = 0;
+      trailsMaterial.length = 0;
+      
+      // 创建新恒星
+      for (let i = 0; i < 3; i++) {
+        // 创建几何体
+        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        
+        // 创建材质
+        const material = new THREE.MeshStandardMaterial({ 
+          color: colors[i],
+          emissive: colors[i],
+          emissiveIntensity: 0.5
+        });
+        
+        // 创建网格
+        const star = new THREE.Mesh(geometry, material);
+        
+        // 设置初始位置和速度
+        let position, velocity;
+        
+        switch (i) {
+          case 0: // 恒星A
+            position = new THREE.Vector3(3, 1, 0);
+            velocity = new THREE.Vector3(0, 0.3, 0);
+            break;
+          case 1: // 恒星B
+            position = new THREE.Vector3(-2, -1, 0);
+            velocity = new THREE.Vector3(0.1, -0.2, 0);
+            break;
+          case 2: // 恒星C
+            position = new THREE.Vector3(-1, 2, 0);
+            velocity = new THREE.Vector3(-0.1, -0.1, 0);
+            break;
+        }
+        
+        star.position.copy(position);
+        
+        // 添加到场景
+        scene.add(star);
+        
+        // 创建发光效果
+        const glowGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+          color: colors[i],
+          transparent: true,
+          opacity: 0.2
+        });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        star.add(glow);
+        
+        // 存储引用
+        stars.push({
+          mesh: star,
+          glow: glow,
+          velocity: velocity,
+          mass: 1.0,
+          name: starNames[i]
+        });
+        
+        // 创建轨迹
+        createTrail(i, colors[i]);
+      }
+    }
+    
+    // 创建轨迹
+    const trailsGeometry = [];
+    const trailsMaterial = [];
+    const trails = [];
+    const maxTrailLength = 500;
+    
+    function createTrail(index, color) {
+      // 创建几何体
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(maxTrailLength * 3);
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setDrawRange(0, 0);
+      
+      // 创建材质
+      const material = new THREE.LineBasicMaterial({
+        color: color,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.7
+      });
+      
+      // 创建线条
+      const trail = new THREE.Line(geometry, material);
+      scene.add(trail);
+      
+      // 存储引用
+      trailsGeometry.push(geometry);
+      trailsMaterial.push(material);
+      trails.push({
+        line: trail,
+        positions: positions,
+        count: 0
+      });
+    }
+    
+    // 计算引力
+    function calculateGravity(star1, star2) {
+      const dx = star2.mesh.position.x - star1.mesh.position.x;
+      const dy = star2.mesh.position.y - star1.mesh.position.y;
+      const dz = star2.mesh.position.z - star1.mesh.position.z;
+      
+      const distSquared = dx * dx + dy * dy + dz * dz;
+      const dist = Math.sqrt(distSquared);
+      
+      // 防止距离过小导致的数值不稳定
+      if (dist < 0.1) return { x: 0, y: 0, z: 0 };
+      
+      // 引力常数
+      const G = 0.5;
+      
+      // 计算引力大小
+      const force = G * star1.mass * star2.mass / distSquared;
+      
+      // 计算引力方向
+      return {
+        x: force * dx / dist,
+        y: force * dy / dist,
+        z: force * dz / dist
+      };
+    }
+    
+    // 更新轨迹
+    function updateTrail(index, position) {
+      const trail = trails[index];
+      const positions = trail.positions;
+      
+      if (trail.count < maxTrailLength) {
+        // 还有空间，直接添加
+        const i = trail.count * 3;
+        positions[i] = position.x;
+        positions[i + 1] = position.y;
+        positions[i + 2] = position.z;
+        trail.count++;
+      } else {
+        // 已满，移动所有点并添加新点
+        for (let i = 0; i < maxTrailLength - 1; i++) {
+          const currentIndex = i * 3;
+          const nextIndex = (i + 1) * 3;
+          positions[currentIndex] = positions[nextIndex];
+          positions[currentIndex + 1] = positions[nextIndex + 1];
+          positions[currentIndex + 2] = positions[nextIndex + 2];
+        }
+        
+        // 添加新点到末尾
+        const lastIndex = (maxTrailLength - 1) * 3;
+        positions[lastIndex] = position.x;
+        positions[lastIndex + 1] = position.y;
+        positions[lastIndex + 2] = position.z;
+      }
+      
+      // 更新几何体
+      trailsGeometry[index].attributes.position.needsUpdate = true;
+      trailsGeometry[index].setDrawRange(0, trail.count);
+    }
+    
+    // 简单的相机控制
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    
+    renderer.domElement.addEventListener('mousedown', (e) => {
+      isDragging = true;
+    });
+    
+    renderer.domElement.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const deltaMove = {
+          x: e.clientX - previousMousePosition.x,
+          y: e.clientY - previousMousePosition.y
+        };
+        
+        // 旋转相机
+        camera.position.x += deltaMove.x * 0.01;
+        camera.position.y -= deltaMove.y * 0.01;
+        camera.lookAt(scene.position);
+      }
+      
+      previousMousePosition = {
+        x: e.clientX,
+        y: e.clientY
+      };
+    });
+    
+    renderer.domElement.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+    
+    // 鼠标滚轮缩放
+    renderer.domElement.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      
+      // 缩放相机
+      camera.position.z += e.deltaY * 0.01;
+      
+      // 限制缩放范围
+      if (camera.position.z < 5) camera.position.z = 5;
+      if (camera.position.z > 50) camera.position.z = 50;
+    });
+    
+    // 动画循环
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      if (state.running) {
+        // 计算引力并更新位置
+        for (let i = 0; i < stars.length; i++) {
+          const star = stars[i];
+          
+          // 重置加速度
+          let ax = 0, ay = 0, az = 0;
+          
+          // 计算其他恒星的引力
+          for (let j = 0; j < stars.length; j++) {
+            if (i === j) continue;
+            
+            const force = calculateGravity(star, stars[j]);
+            
+            // 计算加速度 (F = ma, a = F/m)
+            ax += force.x / star.mass;
+            ay += force.y / star.mass;
+            az += force.z / star.mass;
+          }
+          
+          // 更新速度
+          star.velocity.x += ax * 0.01 * state.simulationSpeed;
+          star.velocity.y += ay * 0.01 * state.simulationSpeed;
+          star.velocity.z += az * 0.01 * state.simulationSpeed;
+          
+          // 更新位置
+          star.mesh.position.x += star.velocity.x * state.simulationSpeed;
+          star.mesh.position.y += star.velocity.y * state.simulationSpeed;
+          star.mesh.position.z += star.velocity.z * state.simulationSpeed;
+          
+          // 更新轨迹
+          updateTrail(i, star.mesh.position);
+        }
+      }
+      
+      // 渲染场景
+      renderer.render(scene, camera);
+    }
+    
+    // 窗口大小调整
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // 添加窗口大小调整监听器
+    window.addEventListener('resize', onWindowResize);
+    
+    // 控制按钮事件
+    document.getElementById('reset').addEventListener('click', () => {
+      createStars();
+    });
+    
+    document.getElementById('toggle-play').addEventListener('click', () => {
+      state.running = !state.running;
+      document.getElementById('toggle-play').textContent = state.running ? '暂停' : '继续';
+    });
+    
+    document.getElementById('speed').addEventListener('input', (e) => {
+      state.simulationSpeed = parseFloat(e.target.value);
+    });
+    
+    // 初始化恒星
+    createStars();
+    
+    // 开始动画循环
+    animate();
+  </script>
+</body>
+</html>

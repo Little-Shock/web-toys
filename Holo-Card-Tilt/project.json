@@ -1,0 +1,11 @@
+{
+    "title": "Holo-Card Tilt",
+    "description": "上传角色图 → 即刻生成可随手机姿态"闪彩折射"的全息卡，并能导出动图/短片",
+    "tags": [
+        "光效",
+        "3D交互"
+    ],
+    "status": "stable",
+    "category": "特效展示",
+    "order": 1
+}

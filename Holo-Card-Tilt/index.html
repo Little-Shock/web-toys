@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Holo-Card Tilt - Little Shock</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Preload Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- Preload gif.js for GIF export -->
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
+</head>
+<body>
+    <!-- Back to main menu link -->
+    <a href="../index.html" class="back-link">返回主菜单</a>
+
+    <!-- Main container -->
+    <div class="container">
+        <!-- Initial welcome screen -->
+        <div id="welcome-screen" class="screen active">
+            <h1 class="title">Holo-Card Tilt</h1>
+            <p class="subtitle">上传角色图 → 即刻生成可随手机姿态"闪彩折射"的全息卡</p>
+            
+            <!-- Upload button -->
+            <div class="upload-container">
+                <label for="image-upload" class="upload-button">
+                    <span class="upload-icon">+</span>
+                    <span class="upload-text">上传图片</span>
+                </label>
+                <input type="file" id="image-upload" accept="image/*" hidden>
+            </div>
+            
+            <!-- Features list -->
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-text">倾斜手机或拖拽卡片</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">✨</div>
+                    <div class="feature-text">全息彩虹衍射效果</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎬</div>
+                    <div class="feature-text">导出GIF/MP4分享</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card view screen (initially hidden) -->
+        <div id="card-screen" class="screen">
+            <!-- Card container with 3D perspective -->
+            <div id="card-container">
+                <div id="card-renderer"></div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="controls">
+                <div class="filter-controls">
+                    <button class="filter-button active" data-filter="rainbow">霓虹</button>
+                    <button class="filter-button" data-filter="metal">金属</button>
+                    <button class="filter-button" data-filter="cyber">黑客绿</button>
+                </div>
+                
+                <div class="action-controls">
+                    <button id="lock-button" class="action-button">
+                        <span class="icon">🔓</span>
+                    </button>
+                    <button id="export-button" class="action-button">
+                        <span class="icon">📷</span>
+                    </button>
+                    <button id="share-button" class="action-button">
+                        <span class="icon">📤</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export modal (initially hidden) -->
+        <div id="export-modal" class="modal">
+            <div class="modal-content">
+                <h2>导出选项</h2>
+                <div class="export-options">
+                    <button id="export-gif" class="export-option">
+                        <span class="icon">🎞️</span>
+                        <span class="text">GIF动图</span>
+                    </button>
+                    <button id="export-mp4" class="export-option">
+                        <span class="icon">🎬</span>
+                        <span class="text">MP4视频</span>
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-export" class="cancel-button">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="loading-overlay" class="overlay">
+            <div class="spinner"></div>
+            <div class="loading-text">处理中...</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/shaders.js"></script>
+    <script src="js/orientation.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
