@@ -20,64 +20,72 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportMp4Button = document.getElementById('export-mp4');
     const cancelExportButton = document.getElementById('cancel-export');
     const filterButtons = document.querySelectorAll('.filter-button');
-    
+
     // Application state
     let currentFilter = 'rainbow';
     let isLocked = false;
     let userImage = null;
     let renderer, scene, camera, material, mesh, clock;
     let animationFrameId = null;
-    
+
     // Initialize managers
     const orientationManager = new OrientationManager();
     const exportManager = new ExportManager();
-    
+
     /**
      * Initialize Three.js scene
      */
     function initThreeJS() {
         // Create renderer
-        renderer = new THREE.WebGLRenderer({ 
+        renderer = new THREE.WebGLRenderer({
             antialias: true,
             alpha: true,
-            preserveDrawingBuffer: true // Required for image capture
+            preserveDrawingBuffer: true, // Required for image capture
+            premultipliedAlpha: false // Important for correct alpha blending
         });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(cardRenderer.clientWidth, cardRenderer.clientHeight);
         cardRenderer.appendChild(renderer.domElement);
-        
+
         // Create scene
         scene = new THREE.Scene();
-        
+
         // Create camera
         camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.1, 1000);
         camera.position.z = 1;
-        
+
         // Create clock for animation
         clock = new THREE.Clock();
-        
+
         // Create a plane for the card
         const geometry = new THREE.PlaneGeometry(1, 1);
-        
+
+        // Create a default texture (1x1 white pixel) to avoid null texture issues
+        const defaultTexture = new THREE.Texture();
+        defaultTexture.image = new Image(1, 1);
+        defaultTexture.image.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
+        defaultTexture.needsUpdate = true;
+
         // Create material with shader
         material = new THREE.ShaderMaterial({
             vertexShader: shaders.vertex,
             fragmentShader: shaders.rainbow,
             uniforms: {
-                tDiffuse: { value: null },
+                tDiffuse: { value: defaultTexture },
                 uTime: { value: 0 },
                 uTilt: { value: new THREE.Vector2(0, 0) },
                 uResolution: { value: new THREE.Vector2(
-                    cardRenderer.clientWidth, 
+                    cardRenderer.clientWidth,
                     cardRenderer.clientHeight
                 )}
-            }
+            },
+            transparent: true
         });
-        
+
         // Create mesh
         mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
-        
+
         // Initialize export manager
         exportManager.init(
             renderer.domElement,
@@ -85,33 +93,33 @@ document.addEventListener('DOMContentLoaded', () => {
             handleExportProgress,
             handleExportComplete
         );
-        
+
         // Start animation loop
         animate();
     }
-    
+
     /**
      * Animation loop
      */
     function animate() {
         animationFrameId = requestAnimationFrame(animate);
-        
+
         // Update uniforms
         material.uniforms.uTime.value = clock.getElapsedTime();
-        
+
         // Get current tilt from orientation manager
         const tilt = orientationManager.getTilt();
         material.uniforms.uTilt.value.set(tilt.x, tilt.y);
-        
+
         // Apply 3D transform to card container
         const tiltX = -tilt.y * 15; // Invert Y for natural tilt
         const tiltY = tilt.x * 15;
         cardRenderer.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
-        
+
         // Render scene
         renderer.render(scene, camera);
     }
-    
+
     /**
      * Handle image upload
      * @param {Event} event - Upload input change event
@@ -119,58 +127,70 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleImageUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
+
         // Show loading overlay
         loadingOverlay.classList.add('active');
-        
+
         // Create object URL
         const url = URL.createObjectURL(file);
-        
+
         // Load image
         const image = new Image();
+
+        // Set crossOrigin to anonymous to prevent CORS issues
+        image.crossOrigin = "Anonymous";
+
         image.onload = () => {
-            // Create texture
+            console.log("Image loaded successfully:", image.width, "x", image.height);
+
+            // Create texture with proper settings
             const texture = new THREE.Texture(image);
             texture.needsUpdate = true;
-            
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.format = THREE.RGBAFormat;
+
+            console.log("Texture created:", texture);
+
             // Update material
             material.uniforms.tDiffuse.value = texture;
-            
+
             // Store user image
             userImage = image;
-            
+
             // Switch to card screen
             welcomeScreen.classList.remove('active');
             cardScreen.classList.add('active');
-            
+
             // Initialize orientation manager
             orientationManager.init(cardRenderer);
-            
+
             // Hide loading overlay
             loadingOverlay.classList.remove('active');
-            
+
             // Announce to screen readers
             announceToScreenReader('图片已加载，您可以倾斜手机或拖动卡片查看全息效果');
         };
-        
-        image.onerror = () => {
+
+        image.onerror = (error) => {
+            console.error("Image loading error:", error);
             loadingOverlay.classList.remove('active');
             alert('图片加载失败，请尝试其他图片。');
         };
-        
+
         image.src = url;
     }
-    
+
     /**
      * Change holographic filter
      * @param {string} filter - Filter name: 'rainbow', 'metal', or 'cyber'
      */
     function changeFilter(filter) {
         if (filter === currentFilter) return;
-        
+
         // Update current filter
         currentFilter = filter;
-        
+
         // Update shader
         switch (filter) {
             case 'rainbow':
@@ -183,10 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 material.fragmentShader = shaders.cyber;
                 break;
         }
-        
+
         // Need to flag for recompilation
         material.needsUpdate = true;
-        
+
         // Update UI
         filterButtons.forEach(button => {
             if (button.dataset.filter === filter) {
@@ -196,44 +216,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     /**
      * Toggle orientation lock
      */
     function toggleLock() {
         isLocked = orientationManager.toggleLock();
-        
+
         // Update lock button
         lockButton.querySelector('.icon').textContent = isLocked ? '🔒' : '🔓';
-        
+
         // Announce to screen readers
         announceToScreenReader(isLocked ? '已锁定卡片位置' : '已解锁卡片位置');
     }
-    
+
     /**
      * Show export modal
      */
     function showExportModal() {
         exportModal.classList.add('active');
     }
-    
+
     /**
      * Hide export modal
      */
     function hideExportModal() {
         exportModal.classList.remove('active');
     }
-    
+
     /**
      * Handle export start
      * @param {string} type - Export type: 'gif' or 'mp4'
      */
     function handleExportStart(type) {
         loadingOverlay.classList.add('active');
-        loadingOverlay.querySelector('.loading-text').textContent = 
+        loadingOverlay.querySelector('.loading-text').textContent =
             type === 'gif' ? '正在生成GIF...' : '正在录制视频...';
     }
-    
+
     /**
      * Handle export progress
      * @param {number} progress - Progress from 0 to 1
@@ -242,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const percent = Math.round(progress * 100);
         loadingOverlay.querySelector('.loading-text').textContent = `处理中... ${percent}%`;
     }
-    
+
     /**
      * Handle export complete
      * @param {Blob} blob - The exported file blob
@@ -250,19 +270,19 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function handleExportComplete(blob, type) {
         loadingOverlay.classList.remove('active');
-        
+
         if (!blob) {
             alert('导出失败，请重试。');
             return;
         }
-        
+
         // Download the file
         exportManager.downloadFile(blob, type);
-        
+
         // Announce to screen readers
         announceToScreenReader(type === 'gif' ? 'GIF已保存' : '视频已保存');
     }
-    
+
     /**
      * Share the current card
      */
@@ -271,13 +291,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (navigator.share) {
             // Take a snapshot
             const dataUrl = renderer.domElement.toDataURL('image/png');
-            
+
             // Convert data URL to blob
             fetch(dataUrl)
                 .then(res => res.blob())
                 .then(blob => {
                     const file = new File([blob], 'holo-card.png', { type: 'image/png' });
-                    
+
                     navigator.share({
                         title: 'Holo-Card Tilt',
                         text: '查看我制作的全息闪卡！',
@@ -292,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showExportModal();
         }
     }
-    
+
     /**
      * Announce message to screen readers
      * @param {string} message - Message to announce
@@ -304,29 +324,29 @@ document.addEventListener('DOMContentLoaded', () => {
         announcement.className = 'sr-only';
         announcement.textContent = message;
         document.body.appendChild(announcement);
-        
+
         // Remove after announcement is processed
         setTimeout(() => {
             document.body.removeChild(announcement);
         }, 3000);
     }
-    
+
     /**
      * Handle window resize
      */
     function handleResize() {
         if (!renderer) return;
-        
+
         // Update renderer size
         renderer.setSize(cardRenderer.clientWidth, cardRenderer.clientHeight);
-        
+
         // Update resolution uniform
         material.uniforms.uResolution.value.set(
             cardRenderer.clientWidth,
             cardRenderer.clientHeight
         );
     }
-    
+
     /**
      * Clean up resources
      */
@@ -334,44 +354,44 @@ document.addEventListener('DOMContentLoaded', () => {
         if (animationFrameId) {
             cancelAnimationFrame(animationFrameId);
         }
-        
+
         if (orientationManager) {
             orientationManager.destroy();
         }
-        
+
         if (renderer) {
             renderer.dispose();
         }
     }
-    
+
     // Initialize Three.js
     initThreeJS();
-    
+
     // Event listeners
     imageUpload.addEventListener('change', handleImageUpload);
-    
+
     lockButton.addEventListener('click', toggleLock);
     exportButton.addEventListener('click', showExportModal);
     shareButton.addEventListener('click', shareCard);
-    
+
     exportGifButton.addEventListener('click', () => {
         hideExportModal();
         exportManager.startRecording('gif', 3000);
     });
-    
+
     exportMp4Button.addEventListener('click', () => {
         hideExportModal();
         exportManager.startRecording('mp4', 3000);
     });
-    
+
     cancelExportButton.addEventListener('click', hideExportModal);
-    
+
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
             changeFilter(button.dataset.filter);
         });
     });
-    
+
     window.addEventListener('resize', handleResize);
     window.addEventListener('beforeunload', cleanup);
 });

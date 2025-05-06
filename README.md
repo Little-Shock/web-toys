@@ -302,4 +302,4 @@ Little Shock 团队的网页玩具设计理念包括：
 
 ---
 
-© 2023-2024 Little Shock 团队 | [Little Shock 专区 @ WaytoAGI](https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd)
+© 2025 Little Shock 团队 | [Little Shock 专区 @ WaytoAGI](https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd)
