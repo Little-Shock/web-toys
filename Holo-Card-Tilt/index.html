@@ -20,7 +20,7 @@
         <div id="welcome-screen" class="screen active">
             <h1 class="title">Holo-Card Tilt</h1>
             <p class="subtitle">上传角色图 → 即刻生成可随手机姿态"闪彩折射"的全息卡</p>
-            
+
             <!-- Upload button -->
             <div class="upload-container">
                 <label for="image-upload" class="upload-button">
@@ -29,7 +29,7 @@
                 </label>
                 <input type="file" id="image-upload" accept="image/*" hidden>
             </div>
-            
+
             <!-- Features list -->
             <div class="features">
                 <div class="feature">
@@ -45,6 +45,13 @@
                     <div class="feature-text">导出GIF/MP4分享</div>
                 </div>
             </div>
+
+            <!-- Basic mode link -->
+            <div style="margin-top: 20px;">
+                <a href="basic.html" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px;">
+                    图片无法显示？尝试<strong>基本模式</strong>
+                </a>
+            </div>
         </div>
 
         <!-- Card view screen (initially hidden) -->
@@ -53,7 +60,7 @@
             <div id="card-container">
                 <div id="card-renderer"></div>
             </div>
-            
+
             <!-- Controls -->
             <div class="controls">
                 <div class="filter-controls">
@@ -61,7 +68,7 @@
                     <button class="filter-button" data-filter="metal">金属</button>
                     <button class="filter-button" data-filter="cyber">黑客绿</button>
                 </div>
-                
+
                 <div class="action-controls">
                     <button id="lock-button" class="action-button">
                         <span class="icon">🔓</span>

@@ -36,18 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
      * Initialize Three.js scene
      */
     function initThreeJS() {
-        // Create renderer
+        console.log("Initializing Three.js with default texture");
+
+        // Create renderer with basic settings
         renderer = new THREE.WebGLRenderer({
             antialias: true,
             alpha: true,
-            preserveDrawingBuffer: true, // Required for image capture
-            premultipliedAlpha: false // Important for correct alpha blending
+            preserveDrawingBuffer: true // Required for image capture
         });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(cardRenderer.clientWidth, cardRenderer.clientHeight);
         cardRenderer.appendChild(renderer.domElement);
 
-        // Create scene
+        // Create scene with white background for testing
         scene = new THREE.Scene();
 
         // Create camera
@@ -60,18 +61,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create a plane for the card
         const geometry = new THREE.PlaneGeometry(1, 1);
 
-        // Create a default texture (1x1 white pixel) to avoid null texture issues
-        const defaultTexture = new THREE.Texture();
-        defaultTexture.image = new Image(1, 1);
-        defaultTexture.image.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
-        defaultTexture.needsUpdate = true;
+        // Try both approaches: shader material and basic material
 
-        // Create material with shader
+        // 1. First create a basic material as fallback
+        const basicMaterial = new THREE.MeshBasicMaterial({
+            color: 0xcccccc,
+            transparent: true
+        });
+
+        // 2. Then create shader material
+        // Get shaders from the unified shaders.js file
+        const allShaders = window.shaders || {};
+
+        // Try to use the minimal shader first if available, otherwise use the full effect shader
         material = new THREE.ShaderMaterial({
-            vertexShader: shaders.vertex,
-            fragmentShader: shaders.rainbow,
+            vertexShader: allShaders.vertex,
+            fragmentShader: allShaders.minimal ? allShaders.minimal.rainbow : allShaders.rainbow,
             uniforms: {
-                tDiffuse: { value: defaultTexture },
+                tDiffuse: { value: null },
                 uTime: { value: 0 },
                 uTilt: { value: new THREE.Vector2(0, 0) },
                 uResolution: { value: new THREE.Vector2(
@@ -82,9 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
             transparent: true
         });
 
-        // Create mesh
+        // Create mesh with the shader material
         mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
+
+        // Store the basic material for potential fallback
+        window.basicMaterial = basicMaterial;
 
         // Initialize export manager
         exportManager.init(
@@ -96,6 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Start animation loop
         animate();
+
+        console.log("Three.js initialized");
     }
 
     /**
@@ -134,51 +146,146 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create object URL
         const url = URL.createObjectURL(file);
 
-        // Load image
-        const image = new Image();
+        // Try multiple approaches to ensure the image displays
 
-        // Set crossOrigin to anonymous to prevent CORS issues
-        image.crossOrigin = "Anonymous";
+        // APPROACH 1: Use TextureLoader (more reliable for Three.js)
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.crossOrigin = '';
 
-        image.onload = () => {
-            console.log("Image loaded successfully:", image.width, "x", image.height);
+        textureLoader.load(
+            url,
+            // onLoad callback
+            function(loadedTexture) {
+                console.log("Texture loaded via TextureLoader:", loadedTexture);
 
-            // Create texture with proper settings
-            const texture = new THREE.Texture(image);
-            texture.needsUpdate = true;
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.format = THREE.RGBAFormat;
+                // Set texture parameters
+                loadedTexture.minFilter = THREE.LinearFilter;
+                loadedTexture.magFilter = THREE.LinearFilter;
+                loadedTexture.format = THREE.RGBAFormat;
+                loadedTexture.needsUpdate = true;
 
-            console.log("Texture created:", texture);
+                // Update material with the loaded texture
+                material.uniforms.tDiffuse.value = loadedTexture;
+                material.needsUpdate = true;
 
-            // Update material
-            material.uniforms.tDiffuse.value = texture;
+                // APPROACH 2: Create a basic material as fallback
+                const fallbackMaterial = new THREE.MeshBasicMaterial({
+                    map: loadedTexture,
+                    transparent: true
+                });
 
-            // Store user image
-            userImage = image;
+                // Store the fallback material for potential use
+                window.fallbackMaterial = fallbackMaterial;
 
-            // Switch to card screen
-            welcomeScreen.classList.remove('active');
-            cardScreen.classList.add('active');
+                // Add a button to switch to basic material if shader doesn't work
+                const fallbackButton = document.createElement('button');
+                fallbackButton.textContent = '图片不显示？点击这里';
+                fallbackButton.className = 'fallback-button';
+                fallbackButton.style.position = 'absolute';
+                fallbackButton.style.bottom = '120px';
+                fallbackButton.style.left = '50%';
+                fallbackButton.style.transform = 'translateX(-50%)';
+                fallbackButton.style.padding = '8px 16px';
+                fallbackButton.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                fallbackButton.style.color = 'white';
+                fallbackButton.style.border = 'none';
+                fallbackButton.style.borderRadius = '20px';
+                fallbackButton.style.zIndex = '100';
 
-            // Initialize orientation manager
-            orientationManager.init(cardRenderer);
+                fallbackButton.addEventListener('click', function() {
+                    console.log("Switching to basic material");
+                    // Switch to basic material
+                    mesh.material = fallbackMaterial;
+                    // Hide the button
+                    this.style.display = 'none';
+                });
 
-            // Hide loading overlay
-            loadingOverlay.classList.remove('active');
+                // APPROACH 3: Add a button to switch to minimal shader mode
+                const minimalButton = document.createElement('button');
+                minimalButton.textContent = '简化特效模式';
+                minimalButton.className = 'fallback-button';
+                minimalButton.style.position = 'absolute';
+                minimalButton.style.bottom = '70px';
+                minimalButton.style.left = '50%';
+                minimalButton.style.transform = 'translateX(-50%)';
+                minimalButton.style.padding = '8px 16px';
+                minimalButton.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                minimalButton.style.color = 'white';
+                minimalButton.style.border = 'none';
+                minimalButton.style.borderRadius = '20px';
+                minimalButton.style.zIndex = '100';
 
-            // Announce to screen readers
-            announceToScreenReader('图片已加载，您可以倾斜手机或拖动卡片查看全息效果');
-        };
+                minimalButton.addEventListener('click', function() {
+                    // Toggle minimal shader mode
+                    document.body.classList.add('use-minimal-shaders');
 
-        image.onerror = (error) => {
-            console.error("Image loading error:", error);
-            loadingOverlay.classList.remove('active');
-            alert('图片加载失败，请尝试其他图片。');
-        };
+                    // Update shader with minimal version
+                    const allShaders = window.shaders || {};
+                    if (allShaders.minimal) {
+                        switch (currentFilter) {
+                            case 'rainbow':
+                                material.fragmentShader = allShaders.minimal.rainbow;
+                                break;
+                            case 'metal':
+                                material.fragmentShader = allShaders.minimal.metal;
+                                break;
+                            case 'cyber':
+                                material.fragmentShader = allShaders.minimal.cyber;
+                                break;
+                        }
+                        material.needsUpdate = true;
+                    }
 
-        image.src = url;
+                    // Hide this button
+                    this.style.display = 'none';
+                });
+
+                // APPROACH 4: Add a button to switch to no-effect mode
+                const noEffectButton = document.createElement('button');
+                noEffectButton.textContent = '无特效模式';
+                noEffectButton.className = 'fallback-button';
+                noEffectButton.style.position = 'absolute';
+                noEffectButton.style.bottom = '20px';
+                noEffectButton.style.left = '50%';
+                noEffectButton.style.transform = 'translateX(-50%)';
+                noEffectButton.style.padding = '8px 16px';
+                noEffectButton.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                noEffectButton.style.color = 'white';
+                noEffectButton.style.border = 'none';
+                noEffectButton.style.borderRadius = '20px';
+                noEffectButton.style.zIndex = '100';
+
+                noEffectButton.addEventListener('click', function() {
+                    // Redirect to basic.html
+                    window.location.href = 'basic.html';
+                });
+
+                cardScreen.appendChild(fallbackButton);
+                cardScreen.appendChild(minimalButton);
+                cardScreen.appendChild(noEffectButton);
+
+                // Switch to card screen
+                welcomeScreen.classList.remove('active');
+                cardScreen.classList.add('active');
+
+                // Initialize orientation manager
+                orientationManager.init(cardRenderer);
+
+                // Hide loading overlay
+                loadingOverlay.classList.remove('active');
+
+                // Announce to screen readers
+                announceToScreenReader('图片已加载，您可以倾斜手机或拖动卡片查看全息效果');
+            },
+            // onProgress callback
+            undefined,
+            // onError callback
+            function(err) {
+                console.error("TextureLoader error:", err);
+                loadingOverlay.classList.remove('active');
+                alert('图片加载失败，请尝试其他图片。');
+            }
+        );
     }
 
     /**
@@ -191,17 +298,39 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update current filter
         currentFilter = filter;
 
-        // Update shader
-        switch (filter) {
-            case 'rainbow':
-                material.fragmentShader = shaders.rainbow;
-                break;
-            case 'metal':
-                material.fragmentShader = shaders.metal;
-                break;
-            case 'cyber':
-                material.fragmentShader = shaders.cyber;
-                break;
+        // Get shaders from the unified shaders.js file
+        const allShaders = window.shaders || {};
+
+        // Check if we're using minimal shaders (for performance/compatibility)
+        const useMinimal = document.body.classList.contains('use-minimal-shaders');
+
+        // Update shader based on selected filter
+        if (useMinimal && allShaders.minimal) {
+            // Use minimal shaders if available and requested
+            switch (filter) {
+                case 'rainbow':
+                    material.fragmentShader = allShaders.minimal.rainbow;
+                    break;
+                case 'metal':
+                    material.fragmentShader = allShaders.minimal.metal;
+                    break;
+                case 'cyber':
+                    material.fragmentShader = allShaders.minimal.cyber;
+                    break;
+            }
+        } else {
+            // Use full effect shaders
+            switch (filter) {
+                case 'rainbow':
+                    material.fragmentShader = allShaders.rainbow;
+                    break;
+                case 'metal':
+                    material.fragmentShader = allShaders.metal;
+                    break;
+                case 'cyber':
+                    material.fragmentShader = allShaders.cyber;
+                    break;
+            }
         }
 
         // Need to flag for recompilation

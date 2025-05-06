@@ -506,7 +506,7 @@ def generate_homepage():
 
     # 添加页脚
     html.append(f"""        <footer>
-            <p>{site_config.get("copyright", "© 2023-2024 Little Shock 团队 | 所有项目均为开源网页玩具")}</p>
+            <p>{site_config.get("copyright", "© 2025 Little Shock 团队 | 所有项目均为开源网页玩具")}</p>
         </footer>
     </div>""")
 

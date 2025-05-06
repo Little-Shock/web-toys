@@ -70,6 +70,7 @@
     "元素波纹": "interactive-visuals",
     "微光沙盘": "interactive-visuals",
     "微光沙盘_WebGL": "interactive-visuals",
+    "粒子花园": "interactive-visuals",
 
     "量子弹球": "physics-simulations",
     "blackhole": "physics-simulations",
@@ -88,6 +89,7 @@
     "spiderweb": "visual-effects",
     "赛博闪卡": "visual-effects",
     "Holo-Card-Tilt": "visual-effects",
+    "镭射卡": "visual-effects",
 
     "find_emoji": "games-and-entertainment",
     "赛博流麻": "games-and-entertainment",

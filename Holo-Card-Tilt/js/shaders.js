@@ -36,45 +36,45 @@ float fresnel(vec2 uv, vec2 tilt) {
 
 void main() {
     vec2 uv = vUv;
-    
+
     // Apply subtle distortion based on tilt
     float distortAmount = 0.02 * length(uTilt);
     uv += uTilt * distortAmount;
-    
+
     // Calculate fresnel effect
     float fresnelFactor = fresnel(uv, uTilt);
-    
+
     // RGB shift based on tilt and fresnel
     float rgbShiftAmount = 0.01 * fresnelFactor;
     vec4 texR = texture2D(tDiffuse, uv + vec2(rgbShiftAmount, 0.0));
     vec4 texG = texture2D(tDiffuse, uv);
     vec4 texB = texture2D(tDiffuse, uv - vec2(rgbShiftAmount, 0.0));
-    
+
     // Combine RGB channels
     vec4 color = vec4(texR.r, texG.g, texB.b, 1.0);
-    
+
     // Add holographic rainbow effect
     vec3 rainbow = vec3(0.0);
     float angle = atan(uTilt.y, uTilt.x) + uTime * 0.2;
     rainbow.r = 0.5 + 0.5 * sin(fresnelFactor * 10.0 + angle);
     rainbow.g = 0.5 + 0.5 * sin(fresnelFactor * 10.0 + angle + 2.0);
     rainbow.b = 0.5 + 0.5 * sin(fresnelFactor * 10.0 + angle + 4.0);
-    
+
     // Add scan lines
     float scanLine = 0.05 * sin(uv.y * uResolution.y * 0.5 + uTime * 2.0);
     color.rgb -= scanLine;
-    
+
     // Add noise
     float noise = random(uv * uTime * 0.01) * 0.05;
-    
+
     // Combine everything
     color.rgb = mix(color.rgb, rainbow, fresnelFactor * 0.7);
     color.rgb += noise;
-    
+
     // Add vignette
     float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - vec2(0.5)));
     color.rgb *= vignette;
-    
+
     gl_FragColor = color;
 }
 `;
@@ -102,44 +102,44 @@ float fresnel(vec2 uv, vec2 tilt) {
 
 void main() {
     vec2 uv = vUv;
-    
+
     // Apply subtle distortion based on tilt
     float distortAmount = 0.02 * length(uTilt);
     uv += uTilt * distortAmount;
-    
+
     // Calculate fresnel effect
     float fresnelFactor = fresnel(uv, uTilt);
-    
+
     // RGB shift based on tilt and fresnel
     float rgbShiftAmount = 0.005 * fresnelFactor;
     vec4 texR = texture2D(tDiffuse, uv + vec2(rgbShiftAmount, 0.0));
     vec4 texG = texture2D(tDiffuse, uv);
     vec4 texB = texture2D(tDiffuse, uv - vec2(rgbShiftAmount, 0.0));
-    
+
     // Combine RGB channels
     vec4 color = vec4(texR.r, texG.g, texB.b, 1.0);
-    
+
     // Add metallic effect
     vec3 metal = vec3(0.8, 0.8, 0.9);
     float metalAngle = atan(uTilt.y, uTilt.x) + uTime * 0.1;
     float metalFactor = 0.5 + 0.5 * sin(fresnelFactor * 15.0 + metalAngle);
     metal *= metalFactor;
-    
+
     // Add scan lines
     float scanLine = 0.03 * sin(uv.y * uResolution.y * 0.8 + uTime * 1.5);
     color.rgb -= scanLine;
-    
+
     // Add noise
     float noise = random(uv * uTime * 0.01) * 0.03;
-    
+
     // Combine everything
     color.rgb = mix(color.rgb, metal, fresnelFactor * 0.6);
     color.rgb += noise;
-    
+
     // Add vignette
     float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - vec2(0.5)));
     color.rgb *= vignette;
-    
+
     gl_FragColor = color;
 }
 `;
@@ -167,56 +167,101 @@ float fresnel(vec2 uv, vec2 tilt) {
 
 void main() {
     vec2 uv = vUv;
-    
+
     // Apply subtle distortion based on tilt
     float distortAmount = 0.03 * length(uTilt);
     uv += uTilt * distortAmount;
-    
+
     // Calculate fresnel effect
     float fresnelFactor = fresnel(uv, uTilt);
-    
+
     // RGB shift based on tilt and fresnel
     float rgbShiftAmount = 0.015 * fresnelFactor;
     vec4 texR = texture2D(tDiffuse, uv + vec2(rgbShiftAmount, 0.0));
     vec4 texG = texture2D(tDiffuse, uv);
     vec4 texB = texture2D(tDiffuse, uv - vec2(rgbShiftAmount, 0.0));
-    
+
     // Combine RGB channels with green emphasis
     vec4 color = vec4(texR.r * 0.7, texG.g * 1.2, texB.b * 0.7, 1.0);
-    
+
     // Add cyber green effect
     vec3 cyber = vec3(0.0, 1.0, 0.3);
     float cyberAngle = atan(uTilt.y, uTilt.x) + uTime * 0.3;
     float cyberFactor = 0.5 + 0.5 * sin(fresnelFactor * 12.0 + cyberAngle);
     cyber *= cyberFactor;
-    
+
     // Add scan lines
     float scanLine = 0.08 * sin(uv.y * uResolution.y * 1.0 + uTime * 3.0);
     color.rgb -= scanLine;
-    
+
     // Add digital noise
     float noise = step(0.7, random(floor(uv * 100.0) + uTime * 0.1)) * 0.1;
-    
+
     // Add glitch effect
     float glitchLine = step(0.97, random(vec2(floor(uv.y * 50.0), uTime))) * 0.1;
     uv.x += glitchLine;
-    
+
     // Combine everything
     color.rgb = mix(color.rgb, cyber, fresnelFactor * 0.5);
     color.rgb += noise;
-    
+
     // Add vignette
     float vignette = 1.0 - smoothstep(0.5, 1.5, length(uv - vec2(0.5)));
     color.rgb *= vignette;
-    
+
     gl_FragColor = color;
 }
 `;
 
+// ===== MINIMAL SHADERS (FALLBACK) =====
+
+// Minimal fragment shader - just displays the texture
+const minimalRainbowShader = `
+uniform sampler2D tDiffuse;
+varying vec2 vUv;
+
+void main() {
+    // Simply output the texture color directly
+    gl_FragColor = texture2D(tDiffuse, vUv);
+}
+`;
+
+// Minimal metal effect
+const minimalMetalShader = `
+uniform sampler2D tDiffuse;
+varying vec2 vUv;
+
+void main() {
+    // Simply output the texture color directly
+    gl_FragColor = texture2D(tDiffuse, vUv);
+}
+`;
+
+// Minimal cyber effect
+const minimalCyberShader = `
+uniform sampler2D tDiffuse;
+varying vec2 vUv;
+
+void main() {
+    // Simply output the texture color directly
+    gl_FragColor = texture2D(tDiffuse, vUv);
+}
+`;
+
 // Export shader objects for use in main.js
-const shaders = {
+window.shaders = {
+    // Common vertex shader
     vertex: vertexShader,
+
+    // Full effect shaders
     rainbow: rainbowFragmentShader,
     metal: metalFragmentShader,
-    cyber: cyberFragmentShader
+    cyber: cyberFragmentShader,
+
+    // Minimal shaders (fallback)
+    minimal: {
+        rainbow: minimalRainbowShader,
+        metal: minimalMetalShader,
+        cyber: minimalCyberShader
+    }
 };

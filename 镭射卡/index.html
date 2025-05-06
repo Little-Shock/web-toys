@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OC镭射卡片制作器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none; 
+        }
+
+        .card-perspective-container {
+            perspective: 1000px;
+        }
+
+        #card {
+            width: 300px;
+            height: 450px;
+            background-color: #4a5568; 
+            border-radius: 16px; 
+            position: relative;
+            overflow: visible; /* 改为 visible 以允许粒子效果溢出，但要注意对其他布局的影响 */
+            transition: transform 0.1s ease-out, box-shadow 0.3s ease-out; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23); 
+            transform-style: preserve-3d; 
+        }
+
+        #card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            border-radius: 16px; 
+            display: block;
+            position: relative; /* 确保图片在最底层 */
+            z-index: 0;
+        }
+        
+        /* 卡片内部容器，用于裁剪镭射和闪光效果，同时允许卡片本身 overflow: visible */
+        .card-effects-clipper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            pointer-events: none; /* 确保不阻挡卡片交互 */
+            z-index: 1;
+        }
+
+
+        #holographic-overlay {
+            position: absolute;
+            top: -50%; 
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                115deg,
+                hsla(0, 0%, 100%, 0) 0%, hsla(0, 0%, 100%, 0) 35%,
+                hsla(180, 100%, 50%, 0.3) 44%, hsla(300, 100%, 50%, 0.3) 50%,
+                hsla(60, 100%, 50%, 0.3) 56%, hsla(0, 0%, 100%, 0) 65%,
+                hsla(0, 0%, 100%, 0) 100%
+            );
+            mix-blend-mode: screen; 
+            opacity: 0; 
+            transition: opacity 0.3s ease-in-out; 
+            border-radius: 16px; /* 确保在裁剪容器内圆角一致 */
+        }
+
+        #glint-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(
+                100deg, transparent 30%,
+                rgba(255, 255, 255, 0.35) 48%, rgba(255, 255, 255, 0.35) 52%,
+                transparent 70%
+            );
+            background-size: 350% 100%; 
+            background-position: 175% 0; 
+            mix-blend-mode: overlay; 
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out; 
+            border-radius: 16px; /* 确保在裁剪容器内圆角一致 */
+        }
+
+        #card.active-effect .card-effects-clipper #holographic-overlay { opacity: 0.5; }
+        #card.active-effect .card-effects-clipper #glint-overlay { opacity: 0.75; }
+        
+        /* 基础辉光 (上传图片后默认) */
+        #card.active-effect {
+            box-shadow: 0 10px 20px rgba(0,0,0,0.25), 0 6px 6px rgba(0,0,0,0.20),
+                        0 0 25px rgba(130, 190, 255, 0.35), /* 淡蓝色默认辉光 */
+                        0 0 40px rgba(200, 220, 255, 0.15);
+        }
+
+        /* 稀有度辉光样式 */
+        #card.glow-common.active-effect { /* 普通，可以移除特定辉光或使用非常微弱的 */
+            box-shadow: 0 10px 15px rgba(0,0,0,0.2), 0 4px 6px rgba(0,0,0,0.18);
+        }
+        #card.glow-uncommon.active-effect {
+            box-shadow: 0 10px 20px rgba(0,0,0,0.25), 0 6px 6px rgba(0,0,0,0.20),
+                        0 0 30px rgba(0, 120, 255, 0.6), /* 鲜艳的蓝色 (Uncommon) */
+                        0 0 50px rgba(100, 180, 255, 0.3);
+        }
+        #card.glow-rare.active-effect {
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3), 0 6px 6px rgba(0,0,0,0.25),
+                        0 0 35px rgba(128, 0, 128, 0.7), /* 紫色 (Rare) */
+                        0 0 60px rgba(180, 80, 180, 0.4);
+        }
+        #card.glow-epic.active-effect {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3), 0 8px 8px rgba(0,0,0,0.25),
+                        0 0 40px rgba(192, 20, 192, 0.8), /* 深品红/粉紫 (Epic) */
+                        0 0 70px rgba(220, 100, 220, 0.5);
+        }
+        #card.glow-legendary.active-effect {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 10px 10px rgba(0,0,0,0.3),
+                        0 0 50px rgba(255, 165, 0, 0.85), /* 橙金色 (Legendary) */
+                        0 0 80px rgba(255, 200, 80, 0.6);
+        }
+        
+        #image-upload-label {
+            cursor: pointer; padding: 12px 24px; background-color: #4299e1; 
+            color: white; border-radius: 8px; 
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        #image-upload-label:hover { background-color: #3182ce; transform: translateY(-1px); }
+        #image-upload-label:active { transform: translateY(0px); }
+        #image-upload { display: none; }
+
+        .card-clicked { animation: cardClickAnim 0.4s ease-out; }
+        @keyframes cardClickAnim {
+            0% { transform: scale(1) rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg)) translateZ(0px); }
+            40% { transform: scale(1.1) rotateX(calc(var(--card-rotate-x, 0deg) * 1.15)) rotateY(calc(var(--card-rotate-y, 0deg) * 1.15)) translateZ(20px); }
+            70% { transform: scale(0.98) rotateX(calc(var(--card-rotate-x, 0deg) * 0.95)) rotateY(calc(var(--card-rotate-y, 0deg) * 0.95)) translateZ(-10px); }
+            100% { transform: scale(1) rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg)) translateZ(0px); }
+        }
+
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+        }
+
+        .back-link {
+            position: fixed; top: 1rem; right: 1rem; z-index: 1000; /* 确保在粒子之上 */
+            background-color: rgba(30, 41, 59, 0.7); color: #e2e8f0; 
+            padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none;
+            font-size: 0.875rem; font-weight: 600; backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .back-link:hover { background-color: rgba(51, 65, 85, 0.85); color: #ffffff; transform: translateY(-2px); }
+
+        /* 选项按钮容器 */
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem; /* 12px */
+            justify-content: center;
+            margin-top: 1.5rem; /* 24px */
+            padding: 1rem;
+            background-color: rgba(45, 55, 72, 0.5); /* bg-slate-700 with opacity */
+            border-radius: 12px; /* rounded-xl */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .options-container h3 {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem; /* text-lg */
+            color: #cbd5e1; /* slate-300 */
+        }
+        .option-button {
+            padding: 0.5rem 1rem; /* px-4 py-2 */
+            border-radius: 6px; /* rounded-md */
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #e2e8f0; /* slate-200 */
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            background-color: rgba(71, 85, 105, 0.7); /* slate-600 with opacity */
+        }
+        .option-button:hover {
+            background-color: rgba(51, 65, 85, 0.9); /* slate-700 with opacity */
+            transform: translateY(-1px);
+        }
+        .option-button.active {
+            background-color: #3b82f6; /* bg-blue-600 */
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        /* 粒子效果 */
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none; /* 确保不干扰点击 */
+            z-index: 5; /* 在卡片效果之上，但在UI之下 */
+            opacity: 0.9;
+            background-color: #facc15; /* 默认黄色粒子 */
+        }
+        .particle.p-blue { background-color: #60a5fa; }
+        .particle.p-purple { background-color: #c084fc; }
+        .particle.p-pink { background-color: #f472b6; }
+        .particle.p-gold { background-color: #fbbf24; }
+
+
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-slate-200 min-h-screen flex flex-col items-center justify-center p-4 space-y-6 overflow-hidden">
+
+    <a href="../index.html" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="inline-block mr-1 -mt-px" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+        </svg>
+        返回主菜单
+    </a>
+
+    <div class="text-center space-y-1">
+        <h1 class="text-4xl font-bold tracking-tight">OC镭射卡片</h1>
+        <p class="text-slate-400">上传图片，选择稀有度，体验究极效果！</p>
+    </div>
+
+    <div class="card-perspective-container">
+        <div id="card">
+            <img id="card-image" src="https://placehold.co/300x450/4A5568/E2E8F0?text=请上传图片" alt="OC 卡片图片">
+            <div class="card-effects-clipper">
+                <div id="holographic-overlay"></div>
+                <div id="glint-overlay"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="options-container" id="rarity-options">
+        <h3>选择卡片稀有度</h3>
+        <button class="option-button" data-rarity="common">普通</button>
+        <button class="option-button active" data-rarity="uncommon">稀有</button> <button class="option-button" data-rarity="rare">史诗</button>
+        <button class="option-button" data-rarity="epic">传奇</button>
+        <button class="option-button" data-rarity="legendary">神话</button>
+    </div>
+
+    <div>
+        <label for="image-upload" id="image-upload-label" class="text-lg font-semibold">
+            上传图片
+        </label>
+        <input type="file" id="image-upload" accept="image/*">
+    </div>
+    
+    <div id="instructions" class="mt-4 p-4 rounded-lg shadow-md text-center text-sm max-w-md instructions">
+        <p class="font-semibold mb-1">操作指南：</p>
+        <p>电脑端：鼠标在卡片上移动，或点击卡片。</p>
+        <p>移动端：晃动设备，或点击卡片。</p>
+        <p class="mt-2 text-xs text-slate-400">如果移动端晃动无效，请确保浏览器有权限访问设备运动传感器，或尝试点击下方按钮请求权限。</p>
+    </div>
+    <button id="request-motion-permission" class="hidden mt-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-md text-sm">
+        启用设备晃动效果
+    </button>
+
+
+    <script>
+        const card = document.getElementById('card');
+        const cardImage = document.getElementById('card-image');
+        const holographicOverlay = document.getElementById('holographic-overlay');
+        const glintOverlay = document.getElementById('glint-overlay');
+        const imageUpload = document.getElementById('image-upload');
+        const requestMotionPermissionButton = document.getElementById('request-motion-permission');
+        const rarityOptionsContainer = document.getElementById('rarity-options');
+
+        const MAX_ROTATION = 15;
+        let currentImageSrc = 'https://placehold.co/300x450/4A5568/E2E8F0?text=请上传图片';
+        let currentRarity = 'uncommon'; // 默认稀有度
+
+        // --- 初始化 ---
+        function initializeCardState() {
+            if (!cardImage.src.startsWith('https://placehold.co')) {
+                card.classList.add('active-effect');
+            }
+            setRarity(currentRarity); // 应用默认或已选稀有度
+        }
+
+
+        // --- 图片上传处理 ---
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImageSrc = e.target.result;
+                    cardImage.src = currentImageSrc;
+                    card.classList.add('active-effect'); // 图片上传后激活效果
+                    setRarity(currentRarity); // 重新应用稀有度辉光，确保 active-effect 生效
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- 鼠标移动交互 (桌面端) ---
+        card.addEventListener('mousemove', (event) => {
+            if (window.matchMedia("(hover: none)").matches) return; 
+
+            const { left, top, width, height } = card.getBoundingClientRect();
+            const x = (event.clientX - left) / width - 0.5; 
+            const y = (event.clientY - top) / height - 0.5; 
+
+            const rotateX = y * -MAX_ROTATION;
+            const rotateY = x * MAX_ROTATION;
+            
+            card.style.setProperty('--card-rotate-x', `${rotateX}deg`);
+            card.style.setProperty('--card-rotate-y', `${rotateY}deg`);
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+
+            holographicOverlay.style.backgroundPositionX = `${x * 100 + 50}%`;
+            holographicOverlay.style.backgroundPositionY = `${y * 100 + 50}%`;
+            
+            const glintBgPosX = 175 - ((x + 0.5) * 200); 
+            glintOverlay.style.backgroundPosition = `${glintBgPosX}% 0`;
+            
+            if (!card.classList.contains('active-effect') && !cardImage.src.startsWith('https://placehold.co')) {
+                card.classList.add('active-effect');
+                setRarity(currentRarity); // 确保辉光在交互时也应用
+            }
+        });
+
+        card.addEventListener('mouseleave', () => {
+            if (window.matchMedia("(hover: none)").matches) return;
+
+            card.style.setProperty('--card-rotate-x', `0deg`);
+            card.style.setProperty('--card-rotate-y', `0deg`);
+            card.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+            glintOverlay.style.backgroundPosition = `175% 0`;
+            // 如果希望无图时移除效果，则取消注释下一行
+            // if (cardImage.src.startsWith('https://placehold.co')) card.classList.remove('active-effect');
+        });
+
+        // --- 设备方向传感器 (移动端重力感应) ---
+        function handleDeviceOrientation(event) {
+            if (event.gamma === null || event.beta === null) return;
+
+            let tiltX_raw = event.beta;  
+            let tiltY_raw = event.gamma; 
+
+            tiltX_raw = Math.max(-90, Math.min(90, tiltX_raw));
+            tiltY_raw = Math.max(-90, Math.min(90, tiltY_raw));
+
+            const effectiveTiltRange = 45; 
+            let normX = tiltY_raw / effectiveTiltRange; 
+            let normY = tiltX_raw / effectiveTiltRange; 
+
+            normX = Math.max(-0.5, Math.min(0.5, normX));
+            normY = Math.max(-0.5, Math.min(0.5, normY));
+            
+            const rotateX = normY * -MAX_ROTATION;
+            const rotateY = normX * MAX_ROTATION;
+
+            card.style.setProperty('--card-rotate-x', `${rotateX}deg`);
+            card.style.setProperty('--card-rotate-y', `${rotateY}deg`);
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+
+            holographicOverlay.style.backgroundPositionX = `${normX * 100 + 50}%`;
+            holographicOverlay.style.backgroundPositionY = `${normY * 100 + 50}%`;
+
+            const glintBgPosX = 175 - ((normX + 0.5) * 200);
+            glintOverlay.style.backgroundPosition = `${glintBgPosX}% 0`;
+
+            if (!card.classList.contains('active-effect') && !cardImage.src.startsWith('https://placehold.co')) {
+                 card.classList.add('active-effect');
+                 setRarity(currentRarity);
+            }
+        }
+        
+        function requestAndAddDeviceOrientationListener() {
+            if (window.DeviceOrientationEvent) {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+                                requestMotionPermissionButton.classList.add('hidden'); 
+                            } else { console.warn('Device orientation permission denied.'); }
+                        })
+                        .catch(console.error);
+                } else {
+                    window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+                    requestMotionPermissionButton.classList.add('hidden'); 
+                }
+            } else {
+                console.warn('DeviceOrientationEvent not supported.');
+                requestMotionPermissionButton.classList.add('hidden'); 
+            }
+        }
+        
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            requestMotionPermissionButton.classList.remove('hidden');
+            requestMotionPermissionButton.addEventListener('click', requestAndAddDeviceOrientationListener);
+        } else if (typeof DeviceOrientationEvent !== 'undefined') {
+             window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+        }
+
+        // --- 卡片点击交互 ---
+        card.addEventListener('click', (event) => {
+            card.classList.remove('card-clicked'); 
+            void card.offsetWidth; 
+            card.classList.add('card-clicked');
+
+            // 粒子效果
+            const rect = card.getBoundingClientRect();
+            // 计算点击位置相对于卡片左上角
+            const clickXInCard = event.clientX - rect.left;
+            const clickYInCard = event.clientY - rect.top;
+            createParticles(clickXInCard, clickYInCard);
+        });
+
+        // --- 稀有度处理 ---
+        const rarityClasses = ['glow-common', 'glow-uncommon', 'glow-rare', 'glow-epic', 'glow-legendary'];
+        
+        function setRarity(rarityValue) {
+            currentRarity = rarityValue;
+            // 移除所有稀有度相关的 class
+            rarityClasses.forEach(cls => card.classList.remove(cls));
+            // 添加选定的稀有度 class
+            if (rarityValue) {
+                card.classList.add(`glow-${rarityValue}`);
+            }
+
+            // 更新按钮的 active 状态
+            const buttons = rarityOptionsContainer.querySelectorAll('.option-button');
+            buttons.forEach(button => {
+                if (button.dataset.rarity === rarityValue) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
+
+        rarityOptionsContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('option-button')) {
+                const newRarity = event.target.dataset.rarity;
+                setRarity(newRarity);
+            }
+        });
+
+        // --- 粒子效果 ---
+        const particleColors = {
+            common: 'p-blue', // 假设普通也给个颜色
+            uncommon: 'p-blue',
+            rare: 'p-purple',
+            epic: 'p-pink',
+            legendary: 'p-gold'
+        };
+
+        function createParticles(x, y) {
+            const particleCount = 10 + Math.floor(Math.random() * 10); // 10-19 颗粒子
+            const particleContainer = card; // 粒子相对于卡片定位
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // 根据当前稀有度选择粒子颜色，若无则默认
+                const rarityColorClass = particleColors[currentRarity] || 'p-blue';
+                particle.classList.add(rarityColorClass);
+
+                particleContainer.appendChild(particle);
+
+                // 初始位置在点击处
+                particle.style.left = `${x - 4}px`; // 减去粒子半径
+                particle.style.top = `${y - 4}px`;
+
+                const angle = Math.random() * Math.PI * 2; // 随机方向
+                const distance = 50 + Math.random() * 80; // 随机扩散距离
+                const duration = 500 + Math.random() * 500; // 随机持续时间
+
+                // 动画
+                particle.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 0.9 },
+                    { transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: duration,
+                    easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)', // 先快后慢的缓动
+                    fill: 'forwards' // 动画结束后保持最终状态
+                });
+
+                // 动画结束后移除粒子
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, duration);
+            }
+        }
+        
+        // 初始化
+        initializeCardState();
+
+    </script>
+</body>
+</html>
