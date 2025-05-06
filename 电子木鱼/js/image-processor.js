@@ -14,7 +14,8 @@ class ImageProcessor {
       maxWidth: 500,
       maxHeight: 500,
       quality: 0.9,
-      circularCrop: true
+      circularCrop: false,  // 改为使用木鱼形状
+      fishShapeCrop: true   // 使用木鱼形状裁剪
     };
 
     // 检测浏览器功能
@@ -66,36 +67,38 @@ class ImageProcessor {
    */
   createFallbackImage() {
     const canvas = document.createElement('canvas');
-    canvas.width = 200;
-    canvas.height = 200;
+    canvas.width = 300;
+    canvas.height = 300;
     const ctx = canvas.getContext('2d');
 
-    // 绘制圆形背景
-    ctx.beginPath();
-    ctx.arc(100, 100, 100, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.fill();
+    // 绘制渐变背景
+    const gradient = ctx.createLinearGradient(0, 0, 300, 300);
+    gradient.addColorStop(0, 'rgba(255, 200, 150, 0.6)');
+    gradient.addColorStop(1, 'rgba(255, 150, 100, 0.6)');
 
-    // 绘制简单的笑脸
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 300, 300);
+
+    // 绘制简单的图案
     ctx.beginPath();
-    ctx.arc(100, 100, 80, 0, Math.PI * 2);
+    ctx.moveTo(50, 150);
+    ctx.bezierCurveTo(50, 50, 250, 50, 250, 150);
+    ctx.bezierCurveTo(250, 250, 50, 250, 50, 150);
+    ctx.closePath();
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    // 眼睛
-    ctx.beginPath();
-    ctx.arc(70, 80, 10, 0, Math.PI * 2);
-    ctx.arc(130, 80, 10, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.fill();
-
-    // 嘴巴
-    ctx.beginPath();
-    ctx.arc(100, 110, 40, 0.2 * Math.PI, 0.8 * Math.PI);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    // 添加一些装饰线条
+    for (let i = 0; i < 5; i++) {
+      const y = 80 + i * 30;
+      ctx.beginPath();
+      ctx.moveTo(80, y);
+      ctx.quadraticCurveTo(150, y + 15, 220, y);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
 
     return canvas.toDataURL('image/png');
   }
@@ -158,6 +161,9 @@ class ImageProcessor {
       return this.createCircularImage(resizedImage);
     }
 
+    // 木鱼形状裁剪 - 由于使用CSS蒙版，这里不需要特殊处理
+    // 我们只需要调整图像大小并返回
+
     return resizedImage;
   }
 
@@ -171,18 +177,34 @@ class ImageProcessor {
     let width = img.width;
     let height = img.height;
 
-    // 计算缩放比例
+    // 计算缩放比例 - 确保图像足够大以填满木鱼形状
     if (width > this.params.maxWidth || height > this.params.maxHeight) {
       const ratio = Math.min(this.params.maxWidth / width, this.params.maxHeight / height);
       width = Math.floor(width * ratio);
       height = Math.floor(height * ratio);
     }
 
-    canvas.width = width;
-    canvas.height = height;
+    // 如果是木鱼形状裁剪，确保图像足够大以填满整个区域
+    if (this.params.fishShapeCrop) {
+      // 使用正方形画布，确保图像能完全覆盖木鱼形状
+      const size = Math.max(width, height);
+      canvas.width = size;
+      canvas.height = size;
 
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, width, height);
+      // 居中绘制图像
+      const offsetX = (size - width) / 2;
+      const offsetY = (size - height) / 2;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, offsetX, offsetY, width, height);
+    } else {
+      // 普通调整大小
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+    }
 
     return canvas.toDataURL('image/png', this.params.quality);
   }
