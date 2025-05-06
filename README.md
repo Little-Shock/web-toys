@@ -29,94 +29,57 @@
 
 ## 项目结构
 
-项目采用简单的目录结构：
+项目采用灵活的分类系统组织，所有分类和项目分配都集中在 `site_config.json` 文件中管理。
+
+### 主要文件
+
+- `index.html`: 主页，展示所有项目，支持分类导航
+- `site_config.json`: 网站配置文件，包含分类定义和项目分配
+- `generate_homepage_new.py`: 主页生成器脚本
+- `README.md`: 项目说明文档
+
+### 目录结构
 
 ```
 web-toys/
 ├── index.html                # 主导航页面
+├── site_config.json          # 网站配置文件
+├── generate_homepage_new.py  # 主页生成器脚本
 ├── README.md                 # 项目说明文档
 ├── neuron/                   # 神经元模拟玩具
-│   └── index.html
+│   ├── index.html
+│   └── project.json          # 项目配置文件
 ├── spiderweb/                # 蜘蛛网效果玩具
-│   └── index.html
+│   ├── index.html
+│   └── project.json
 ├── Holofoil Card/            # 闪卡效果玩具 (旧版)
-│   └── index.html
+│   ├── index.html
+│   └── project.json
 ├── 赛博闪卡/                  # 赛博闪卡玩具 (新版)
-│   └── index.html
+│   ├── index.html
+│   └── project.json
 ├── find_emoji/               # 表情符号查找器
 │   ├── index.html
 │   ├── css/
-│   └── js/
-├── 赛博流麻/                  # 赛博流麻效果处理器
-│   ├── index.html
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       ├── glitch.js         # 流麻效果处理核心
-│       └── main.js           # 用户交互控制
-├── 元素波纹/                  # 元素波纹互动体验
-│   ├── index.html
-│   ├── css/
-│   │   └── style.css
 │   ├── js/
-│   │   ├── audio-manager.js  # 音频管理器
-│   │   ├── ripple-renderer.js # 波纹渲染器
-│   │   └── main.js           # 主控制脚本
-│   └── assets/
-│       └── sounds/           # 音效资源目录
-├── 量子弹球/                  # 量子弹球游戏
-│   ├── index.html
-│   ├── css/
-│   │   └── style.css
-│   ├── js/
-│   │   ├── matter.min.js     # 物理引擎库
-│   │   ├── audio-manager.js  # 音频管理器
-│   │   ├── ball-manager.js   # 弹球管理器
-│   │   ├── obstacle-manager.js # 障碍物管理器
-│   │   ├── game-engine.js    # 游戏引擎
-│   │   └── main.js           # 主控制脚本
-│   └── assets/
-│       ├── sounds/           # 音效资源目录
-│       └── images/           # 图像资源目录
-├── 墨韵/                     # 流体墨水画布
-│   ├── index.html
-│   ├── css/
-│   │   └── style.css
-│   ├── js/
-│   │   ├── fluid-simulation.js # 流体模拟核心
-│   │   ├── audio-manager.js  # 音频管理器
-│   │   ├── ink-renderer.js   # 墨水渲染器
-│   │   └── main.js           # 主控制脚本
-│   └── assets/
-│       └── images/           # 纸张纹理图像
-├── 光绘/                     # 光影剪影创作工具
-│   ├── index.html
-│   ├── css/
-│   │   └── style.css
-│   ├── js/
-│   │   ├── light-engine.js   # 光源引擎
-│   │   ├── shadow-renderer.js # 阴影渲染器
-│   │   ├── audio-manager.js  # 音频管理器
-│   │   └── main.js           # 主控制脚本
-│   └── assets/
-│       └── images/           # 图像资源目录
-├── 织梦/                     # 虚拟织物模拟器
-│   ├── index.html
-│   ├── css/
-│   │   └── style.css
-│   ├── js/
-│   │   ├── fabric-physics.js # 织物物理引擎
-│   │   ├── fabric-renderer.js # 织物渲染器
-│   │   ├── audio-manager.js  # 音频管理器
-│   │   └── main.js           # 主控制脚本
-│   └── assets/
-│       ├── images/           # 图像资源目录
-│       └── textures/         # 织物纹理目录
-└── 开发过程/                  # 开发文档目录
-    └── ...
+│   └── project.json
+└── ... (其他项目)
 ```
 
-每个玩具都有自己的目录，包含至少一个 `index.html` 文件，主页面通过链接引导用户访问各个玩具。
+每个项目目录中都包含一个 `project.json` 文件，用于定义项目的元数据，如标题、描述、标签等。主页通过读取这些配置文件和 `site_config.json` 中的分类定义，自动生成带有分类导航的主页。
+
+### 分类系统
+
+项目使用灵活的分类系统，所有项目按以下分类组织：
+
+1. **互动视觉 (interactive-visuals)**: 通过触摸和交互创造的视觉体验，让你沉浸在流动的光影和动态效果中
+2. **物理模拟 (physics-simulations)**: 基于物理原理的模拟与交互，探索自然规律和科学现象
+3. **创意工具 (creative-tools)**: 释放你的创造力，用数字画笔和特效创作独特的艺术作品
+4. **音乐与声音 (music-and-sound)**: 探索声音与视觉的结合，创造独特的听觉和视觉体验
+5. **视觉特效 (visual-effects)**: 令人惊叹的视觉效果和特效展示，带来视觉上的震撼体验
+6. **游戏与娱乐 (games-and-entertainment)**: 有趣的互动游戏和娱乐体验，带来轻松愉快的时光
+7. **实用工具 (utility-tools)**: 实用的功能性工具，解决特定需求的小应用
+8. **归档项目 (archived)**: 历史项目和早期版本，见证我们的发展历程
 
 ## 如何提交新玩具
 
@@ -139,11 +102,26 @@ web-toys/
 ```
 web-toys/
 └── your-toy-name/
-    └── index.html
+    ├── index.html
+    ├── project.json
     └── (其他必要的资源文件)
 ```
 
-### 3. 添加返回链接
+### 3. 创建项目配置文件
+
+在你的玩具目录中创建一个 `project.json` 文件，包含以下内容：
+
+```json
+{
+  "title": "你的玩具名称",
+  "description": "简短的描述，说明玩具的功能和特点",
+  "tags": ["标签1", "标签2"],
+  "status": "beta",  // 可选值: "stable", "beta", "deprecated"
+  "order": 1  // 在分类中的显示顺序
+}
+```
+
+### 4. 添加返回链接
 
 在你的玩具页面中添加一个返回主菜单的链接，样式可以参考现有玩具。基本HTML结构如下：
 
@@ -153,15 +131,25 @@ web-toys/
 
 样式可以根据你的玩具页面背景进行调整，但应保持在右上角位置。
 
-### 4. 更新主导航页面
+### 5. 更新分类配置
 
-修改根目录的 `index.html` 文件，添加指向你的新玩具的链接：
+在 `site_config.json` 文件的 `category_assignments` 部分添加你的项目分类：
 
-```html
-<a href="your-toy-name/index.html" class="button">你的玩具名称</a>
+```json
+"category_assignments": {
+  "your-toy-name": "分类ID"  // 例如: "interactive-visuals", "creative-tools" 等
+}
 ```
 
-### 5. 记录开发过程
+### 6. 生成新的主页
+
+运行主页生成器脚本更新主页：
+
+```bash
+python generate_homepage_new.py
+```
+
+### 7. 记录开发过程
 
 在 `开发过程` 目录中创建一个新的Markdown文件，记录添加这个玩具的过程，包括：
 
@@ -171,12 +159,13 @@ web-toys/
 
 文件命名格式参考：`XX_添加YourToyName项目.md`，其中XX是序号。
 
-### 6. 提交更改
+### 8. 提交更改
 
 将所有更改添加到Git并提交：
 
 ```bash
 git add your-toy-name/
+git add site_config.json
 git add index.html
 git add 开发过程/XX_添加YourToyName项目.md
 git commit -m "添加新玩具：你的玩具名称"

@@ -127,11 +127,6 @@
             white-space: nowrap;
         }
 
-        .category-icon {
-            margin-right: 8px;
-            font-size: 1.1em;
-        }
-
         .category-tab:hover {
             background: rgba(40, 40, 50, 0.9);
             transform: translateY(-2px);
@@ -211,18 +206,10 @@
         .category-title {
             font-size: 1.8rem;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid var(--secondary-color);
             display: inline-block;
-        }
-
-        .category-description {
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 20px;
-            max-width: 800px;
-            font-size: 1rem;
-            line-height: 1.5;
         }
 
         .toy-card {
@@ -352,14 +339,14 @@
                 <div class="nav-arrow-icon">◀</div>
             </div>
             <div class="category-nav-scroll">
-                <div class="category-tab" data-category="interactive-visuals"><span class="category-icon">✨</span>互动视觉</div>
-                <div class="category-tab" data-category="physics-simulations"><span class="category-icon">🔮</span>物理模拟</div>
-                <div class="category-tab" data-category="creative-tools"><span class="category-icon">🎨</span>创意工具</div>
-                <div class="category-tab" data-category="music-and-sound"><span class="category-icon">🎵</span>音乐与声音</div>
-                <div class="category-tab" data-category="visual-effects"><span class="category-icon">💫</span>视觉特效</div>
-                <div class="category-tab" data-category="games-and-entertainment"><span class="category-icon">🎮</span>游戏与娱乐</div>
-                <div class="category-tab" data-category="utility-tools"><span class="category-icon">🔧</span>实用工具</div>
-                <div class="category-tab" data-category="archived"><span class="category-icon">📦</span>归档项目</div>
+                <div class="category-tab" data-category="interactive-visuals">互动视觉</div>
+                <div class="category-tab" data-category="physics-simulations">物理模拟</div>
+                <div class="category-tab" data-category="creative-tools">创意工具</div>
+                <div class="category-tab" data-category="music-and-sound">音乐与声音</div>
+                <div class="category-tab" data-category="visual-effects">视觉特效</div>
+                <div class="category-tab" data-category="games-and-entertainment">游戏与娱乐</div>
+                <div class="category-tab" data-category="utility-tools">实用工具</div>
+                <div class="category-tab" data-category="archived">归档项目</div>
             </div>
             <div class="nav-arrows right">
                 <div class="nav-arrow-icon">▶</div>
@@ -368,7 +355,6 @@
         <div class="content-area">
             <div class="category-content" id="content-interactive-visuals">
                 <h2 class="category-title">互动视觉</h2>
-                <p class="category-description">通过触摸和交互创造的视觉体验，让你沉浸在流动的光影和动态效果中</p>
                 <div class="toys-container">
                 <div class="toy-card">
                     <a href="赛博流光/index.html" class="toy-link">
@@ -424,7 +410,6 @@
             </div>
             <div class="category-content" id="content-physics-simulations">
                 <h2 class="category-title">物理模拟</h2>
-                <p class="category-description">基于物理原理的模拟与交互，探索自然规律和科学现象</p>
                 <div class="toys-container">
                 <div class="toy-card">
                     <a href="量子弹球/index.html" class="toy-link">
@@ -460,7 +445,6 @@
             </div>
             <div class="category-content" id="content-creative-tools">
                 <h2 class="category-title">创意工具</h2>
-                <p class="category-description">释放你的创造力，用数字画笔和特效创作独特的艺术作品</p>
                 <div class="toys-container">
                 <div class="toy-card">
                     <a href="赛博故障风/index.html" class="toy-link">
@@ -506,7 +490,6 @@
             </div>
             <div class="category-content" id="content-music-and-sound">
                 <h2 class="category-title">音乐与声音</h2>
-                <p class="category-description">探索声音与视觉的结合，创造独特的听觉和视觉体验</p>
                 <div class="toys-container">
                 <div class="toy-card">
                     <a href="声音雕塑/index.html" class="toy-link">
@@ -542,7 +525,6 @@
             </div>
             <div class="category-content" id="content-visual-effects">
                 <h2 class="category-title">视觉特效</h2>
-                <p class="category-description">令人惊叹的视觉效果和特效展示，带来视觉上的震撼体验</p>
                 <div class="toys-container">
                 <div class="toy-card">
                     <a href="赛博闪卡/index.html" class="toy-link">
@@ -588,7 +570,6 @@
             </div>
             <div class="category-content" id="content-games-and-entertainment">
                 <h2 class="category-title">游戏与娱乐</h2>
-                <p class="category-description">有趣的互动游戏和娱乐体验，带来轻松愉快的时光</p>
                 <div class="toys-container">
                 <div class="toy-card">
                     <a href="find_emoji/index.html" class="toy-link">
@@ -615,7 +596,6 @@
             </div>
             <div class="category-content" id="content-utility-tools">
                 <h2 class="category-title">实用工具</h2>
-                <p class="category-description">实用的功能性工具，解决特定需求的小应用</p>
                 <div class="toys-container">
                 <div class="toy-card">
                     <a href="放大镜后/index.html" class="toy-link">
@@ -631,7 +611,6 @@
             </div>
             <div class="category-content" id="content-archived">
                 <h2 class="category-title">归档项目</h2>
-                <p class="category-description">历史项目和早期版本，见证我们的发展历程</p>
                 <div class="toys-container">
                 <div class="toy-card">
                     <a href="Holofoil Card/index.html" class="toy-link">

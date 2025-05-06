@@ -1,0 +1,100 @@
+{
+  "site_title": "网页玩具合集 - Little Shock",
+  "site_description": "创意网页玩具合集 - 探索互动视觉与声音的奇妙世界",
+  "team_name": "Little Shock",
+  "team_link": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+  "copyright": "© 2023-2024 Little Shock 团队 | 所有项目均为开源网页玩具",
+
+  "categories": [
+    {
+      "id": "interactive-visuals",
+      "name": "互动视觉",
+      "description": "通过触摸和交互创造的视觉体验，让你沉浸在流动的光影和动态效果中",
+      "order": 1,
+      "icon": "✨"
+    },
+    {
+      "id": "physics-simulations",
+      "name": "物理模拟",
+      "description": "基于物理原理的模拟与交互，探索自然规律和科学现象",
+      "order": 2,
+      "icon": "🔮"
+    },
+    {
+      "id": "creative-tools",
+      "name": "创意工具",
+      "description": "释放你的创造力，用数字画笔和特效创作独特的艺术作品",
+      "order": 3,
+      "icon": "🎨"
+    },
+    {
+      "id": "music-and-sound",
+      "name": "音乐与声音",
+      "description": "探索声音与视觉的结合，创造独特的听觉和视觉体验",
+      "order": 4,
+      "icon": "🎵"
+    },
+    {
+      "id": "visual-effects",
+      "name": "视觉特效",
+      "description": "令人惊叹的视觉效果和特效展示，带来视觉上的震撼体验",
+      "order": 5,
+      "icon": "💫"
+    },
+    {
+      "id": "games-and-entertainment",
+      "name": "游戏与娱乐",
+      "description": "有趣的互动游戏和娱乐体验，带来轻松愉快的时光",
+      "order": 6,
+      "icon": "🎮"
+    },
+    {
+      "id": "utility-tools",
+      "name": "实用工具",
+      "description": "实用的功能性工具，解决特定需求的小应用",
+      "order": 7,
+      "icon": "🔧"
+    },
+    {
+      "id": "archived",
+      "name": "归档项目",
+      "description": "历史项目和早期版本，见证我们的发展历程",
+      "order": 8,
+      "icon": "📦"
+    }
+  ],
+
+  "category_assignments": {
+    "赛博流光": "interactive-visuals",
+    "墨韵": "interactive-visuals",
+    "元素波纹": "interactive-visuals",
+    "微光沙盘": "interactive-visuals",
+    "微光沙盘_WebGL": "interactive-visuals",
+
+    "量子弹球": "physics-simulations",
+    "blackhole": "physics-simulations",
+    "三体模拟": "physics-simulations",
+
+    "赛博故障风": "creative-tools",
+    "光绘": "creative-tools",
+    "织梦": "creative-tools",
+    "量子涂鸦": "creative-tools",
+
+    "声音雕塑": "music-and-sound",
+    "节奏星图": "music-and-sound",
+    "电子木鱼": "music-and-sound",
+
+    "neuron": "visual-effects",
+    "spiderweb": "visual-effects",
+    "赛博闪卡": "visual-effects",
+    "Holo-Card-Tilt": "visual-effects",
+
+    "find_emoji": "games-and-entertainment",
+    "赛博流麻": "games-and-entertainment",
+
+    "放大镜后": "utility-tools",
+
+    "Holofoil Card": "archived",
+    "赛博流麻_old": "archived"
+  }
+}

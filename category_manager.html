@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分类管理 - Little Shock</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6200ea;
+            --secondary-color: #00b0ff;
+            --accent-color: #ff4081;
+            --dark-bg: #121212;
+            --light-bg: #f8f9fa;
+            --text-light: #ffffff;
+            --text-dark: #212121;
+            --card-bg: rgba(30, 30, 40, 0.7);
+            --shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--dark-bg), #2d2d3a);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 5px 15px rgba(98, 0, 234, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--secondary-color);
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel {
+            background: rgba(30, 30, 40, 0.7);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary-color);
+            display: inline-block;
+        }
+
+        .categories-list {
+            margin-bottom: 30px;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(40, 40, 50, 0.5);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .category-item:hover {
+            background: rgba(50, 50, 60, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .category-info {
+            flex: 1;
+        }
+
+        .category-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-icon {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+
+        .category-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .projects-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .project-item {
+            background: rgba(40, 40, 50, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .project-item:hover {
+            background: rgba(50, 50, 60, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .project-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .project-category {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(98, 0, 234, 0.2);
+            color: var(--secondary-color);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        .category-select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(30, 30, 40, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: var(--text-light);
+            margin-top: 10px;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        .save-btn {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .save-btn:hover {
+            background: #7c4dff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .projects-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="title">分类管理</h1>
+            <p class="subtitle">管理项目分类和分配</p>
+            <a href="index.html" class="back-link">返回主页</a>
+        </header>
+
+        <div class="panel">
+            <h2 class="panel-title">分类列表</h2>
+            <div class="categories-list" id="categories-container">
+                <!-- 分类列表将通过JavaScript动态生成 -->
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 class="panel-title">项目分类分配</h2>
+            <div class="projects-list" id="projects-container">
+                <!-- 项目列表将通过JavaScript动态生成 -->
+                <div class="loading">加载中...</div>
+            </div>
+            <button class="save-btn" id="save-btn">保存更改</button>
+        </div>
+
+        <footer>
+            <p>© 2023-2024 Little Shock 团队 | 分类管理工具</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载站点配置
+            fetch('site_config.json')
+                .then(response => response.json())
+                .then(data => {
+                    // 初始化页面
+                    initializePage(data);
+                })
+                .catch(error => {
+                    console.error('加载配置失败:', error);
+                    alert('加载配置失败，请检查site_config.json文件');
+                });
+
+            // 初始化页面
+            function initializePage(config) {
+                // 渲染分类列表
+                renderCategories(config.categories);
+                
+                // 渲染项目列表
+                renderProjects(config.category_assignments, config.categories);
+                
+                // 绑定保存按钮事件
+                document.getElementById('save-btn').addEventListener('click', function() {
+                    saveChanges(config);
+                });
+            }
+
+            // 渲染分类列表
+            function renderCategories(categories) {
+                const container = document.getElementById('categories-container');
+                container.innerHTML = '';
+                
+                // 按顺序排序分类
+                const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
+                
+                sortedCategories.forEach(category => {
+                    const categoryItem = document.createElement('div');
+                    categoryItem.className = 'category-item';
+                    categoryItem.innerHTML = `
+                        <div class="category-info">
+                            <div class="category-name">
+                                <span class="category-icon">${category.icon || ''}</span>
+                                ${category.name}
+                            </div>
+                            <div class="category-description">${category.description || ''}</div>
+                        </div>
+                        <div class="category-actions">
+                            <button class="btn btn-secondary" data-id="${category.id}" data-action="edit">编辑</button>
+                        </div>
+                    `;
+                    container.appendChild(categoryItem);
+                });
+                
+                // 绑定编辑按钮事件
+                document.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const categoryId = this.getAttribute('data-id');
+                        alert('编辑功能尚未实现，请直接修改site_config.json文件');
+                    });
+                });
+            }
+
+            // 渲染项目列表
+            function renderProjects(assignments, categories) {
+                const container = document.getElementById('projects-container');
+                container.innerHTML = '';
+                
+                // 创建分类选择器选项
+                const categoryOptions = categories.map(cat => 
+                    `<option value="${cat.id}">${cat.name}</option>`
+                ).join('');
+                
+                // 获取所有项目
+                const projects = Object.keys(assignments);
+                
+                // 按字母顺序排序项目
+                projects.sort();
+                
+                projects.forEach(project => {
+                    const categoryId = assignments[project];
+                    const category = categories.find(c => c.id === categoryId);
+                    
+                    const projectItem = document.createElement('div');
+                    projectItem.className = 'project-item';
+                    projectItem.innerHTML = `
+                        <div class="project-title">${project}</div>
+                        <div class="project-category">${category ? category.name : '未分类'}</div>
+                        <select class="category-select" data-project="${project}">
+                            ${categoryOptions}
+                        </select>
+                    `;
+                    container.appendChild(projectItem);
+                    
+                    // 设置当前选中的分类
+                    const select = projectItem.querySelector('select');
+                    select.value = categoryId;
+                });
+            }
+
+            // 保存更改
+            function saveChanges(config) {
+                // 收集所有项目的分类分配
+                const newAssignments = {};
+                document.querySelectorAll('.category-select').forEach(select => {
+                    const project = select.getAttribute('data-project');
+                    const categoryId = select.value;
+                    newAssignments[project] = categoryId;
+                });
+                
+                // 更新配置
+                config.category_assignments = newAssignments;
+                
+                // 转换为JSON字符串
+                const configJson = JSON.stringify(config, null, 2);
+                
+                // 创建下载链接
+                const blob = new Blob([configJson], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'site_config.json';
+                a.click();
+                
+                alert('配置已下载，请将文件替换原有的site_config.json，然后运行生成脚本更新主页');
+            }
+        });
+    </script>
+</body>
+</html>

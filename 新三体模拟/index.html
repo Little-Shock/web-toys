@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>新三体模拟 - Three-Body Simulation</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 使用最新版本的Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <!-- 添加OrbitControls -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- 添加后期处理效果 -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/ShaderPass.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 返回主菜单链接 -->
+    <a href="../index.html" class="back-link">返回主菜单</a>
+
+    <!-- 主画布 -->
+    <div id="canvas-container"></div>
+
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <div class="panel-header">
+        <h2>三体模拟</h2>
+        <button id="toggle-panel" class="toggle-button" aria-label="折叠面板">
+          <span class="toggle-icon"></span>
+        </button>
+      </div>
+
+      <div class="panel-content">
+        <!-- 预设选择 -->
+        <div class="control-group">
+          <label>预设场景</label>
+          <div class="preset-buttons">
+            <button class="preset-button active" data-preset="figure8">8字轨道</button>
+            <button class="preset-button" data-preset="chaotic">混沌轨道</button>
+            <button class="preset-button" data-preset="binary">双星系统</button>
+            <button class="preset-button" data-preset="collision">碰撞路径</button>
+            <button class="preset-button" data-preset="random">随机配置</button>
+          </div>
+        </div>
+
+        <!-- 模拟控制 -->
+        <div class="control-group">
+          <div class="control-row">
+            <button id="play-pause" class="control-button play-pause-button">
+              <span class="button-icon pause-icon"></span>
+              <span class="button-text">暂停</span>
+            </button>
+            <button id="reset" class="control-button reset-button">
+              <span class="button-icon reset-icon"></span>
+              <span class="button-text">重置</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 模拟速度 -->
+        <div class="control-group">
+          <label>模拟速度: <span id="speed-value">1.0</span>x</label>
+          <div class="slider-container">
+            <button class="slider-button" id="speed-decrease">-</button>
+            <input type="range" id="speed-slider" min="0.1" max="5" step="0.1" value="1">
+            <button class="slider-button" id="speed-increase">+</button>
+          </div>
+        </div>
+
+        <!-- 显示选项 -->
+        <div class="control-group">
+          <label>显示选项</label>
+          <div class="toggle-options">
+            <label class="toggle-switch">
+              <input type="checkbox" id="show-trails" checked>
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">轨迹</span>
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="show-info">
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">信息</span>
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="show-effects" checked>
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">特效</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 恒星参数 -->
+        <div class="control-group stars-control">
+          <label>恒星参数</label>
+          <div class="star-params">
+            <!-- 恒星1 -->
+            <div class="star-param-group">
+              <div class="star-header">
+                <div class="star-color" style="background-color: #4e79ff;"></div>
+                <h4>恒星1</h4>
+                <span class="star-mass" id="star1-mass-value">1.0</span>
+              </div>
+              <input type="range" id="star1-mass" class="star-slider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <!-- 恒星2 -->
+            <div class="star-param-group">
+              <div class="star-header">
+                <div class="star-color" style="background-color: #ff4e4e;"></div>
+                <h4>恒星2</h4>
+                <span class="star-mass" id="star2-mass-value">1.0</span>
+              </div>
+              <input type="range" id="star2-mass" class="star-slider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+
+            <!-- 恒星3 -->
+            <div class="star-param-group">
+              <div class="star-header">
+                <div class="star-color" style="background-color: #4eff7e;"></div>
+                <h4>恒星3</h4>
+                <span class="star-mass" id="star3-mass-value">1.0</span>
+              </div>
+              <input type="range" id="star3-mass" class="star-slider" min="0.1" max="5" step="0.1" value="1">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 信息显示 -->
+    <div class="info-panel" id="info-panel">
+      <div class="info-content">
+        <div class="info-row">
+          <span class="info-label">模拟时间:</span>
+          <span class="info-value" id="simulation-time">0.0</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">系统能量:</span>
+          <span class="info-value" id="system-energy">0.0</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">帧率:</span>
+          <span class="info-value" id="fps-counter">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 移动端控制提示 -->
+    <div class="mobile-controls-hint" id="mobile-hint">
+      <div class="hint-content">
+        <p>单指: 旋转 | 双指: 缩放 | 长按: 重置视角</p>
+      </div>
+      <button class="hint-close" id="close-hint">×</button>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div class="loading-indicator" id="loading-indicator">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在初始化三体模拟...</div>
+    </div>
+  </div>
+
+  <!-- 加载JavaScript文件 -->
+  <script src="js/utils/math.js"></script>
+  <script src="js/utils/colors.js"></script>
+  <script src="js/CelestialBody.js"></script>
+  <script src="js/ThreeBodySystem.js"></script>
+  <script src="js/SceneManager.js"></script>
+  <script src="js/TouchControls.js"></script>
+  <script src="js/UI.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

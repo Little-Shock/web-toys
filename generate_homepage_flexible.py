@@ -6,13 +6,6 @@ import json
 import re
 from collections import defaultdict
 
-# 状态文本映射
-STATUS_TEXT = {
-    "stable": "稳定版",
-    "beta": "测试版",
-    "deprecated": "已归档"
-}
-
 def read_site_config():
     """读取站点配置文件"""
     try:
@@ -41,6 +34,13 @@ def generate_project_card(project_dir, config):
     tags = config.get("tags", [])
     status = config.get("status", "beta")
 
+    # 状态文本映射
+    status_text = {
+        "stable": "稳定版",
+        "beta": "测试版",
+        "deprecated": "已归档"
+    }
+
     # 构建项目卡片HTML
     card_html = f"""                <div class="toy-card">
                     <a href="{project_dir}/index.html" class="toy-link">
@@ -53,65 +53,22 @@ def generate_project_card(project_dir, config):
         card_html += f'                            <span class="toy-tag">{tag}</span>\n'
 
     # 添加状态
-    status_text = STATUS_TEXT.get(status, "测试版")
+    status_text_value = status_text.get(status, "测试版")
     card_html += f"""                        </div>
-                        <div class="toy-status {status}">{status_text}</div>
+                        <div class="toy-status {status}">{status_text_value}</div>
                     </a>
                 </div>"""
     return card_html
 
-def generate_homepage():
-    """生成主页HTML"""
-    # 读取站点配置
-    site_config = read_site_config()
-    if not site_config:
-        print("无法读取站点配置，生成中止")
-        return
-
-    # 获取分类和分类分配
-    categories = site_config.get("categories", [])
-    category_assignments = site_config.get("category_assignments", {})
-
-    # 获取所有项目目录
-    project_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and not d.startswith('.') and d != "开发过程"]
-
-    # 按分类组织项目
-    projects_by_category = defaultdict(list)
-
-    for project_dir in project_dirs:
-        config = read_project_config(project_dir)
-        if config:
-            # 从中央配置获取分类ID
-            category_id = category_assignments.get(project_dir, "other")
-
-            # 如果找不到分类，使用项目配置中的分类
-            if category_id == "other" and "category" in config:
-                old_category = config.get("category")
-                # 尝试根据名称匹配分类
-                for cat in categories:
-                    if cat["name"] == old_category:
-                        category_id = cat["id"]
-                        break
-
-            # 获取项目在分类中的顺序
-            order = config.get("order", 999)
-            projects_by_category[category_id].append((project_dir, config, order))
-
-    # 开始生成HTML
-    html = []
-
-    # 添加HTML头部
-    html.append("""<!DOCTYPE html>
+def generate_html_head(site_config):
+    """生成HTML头部"""
+    return f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">""")
-
-    # 添加标题
-    html.append(f'    <title>{site_config.get("site_title", "网页玩具合集 - Little Shock")}</title>')
-
-    # 添加样式
-    html.append("""    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{site_config.get("site_title", "网页玩具合集 - Little Shock")}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -234,11 +191,6 @@ def generate_homepage():
             white-space: nowrap;
         }
 
-        .category-icon {
-            margin-right: 8px;
-            font-size: 1.1em;
-        }
-
         .category-tab:hover {
             background: rgba(40, 40, 50, 0.9);
             transform: translateY(-2px);
@@ -303,10 +255,10 @@ def generate_homepage():
             display: block;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(10px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
 
         .toys-container {
             display: grid;
@@ -318,18 +270,10 @@ def generate_homepage():
         .category-title {
             font-size: 1.8rem;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid var(--secondary-color);
             display: inline-block;
-        }
-
-        .category-description {
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 20px;
-            max-width: 800px;
-            font-size: 1rem;
-            line-height: 1.5;
         }
 
         .toy-card {
@@ -447,22 +391,23 @@ def generate_homepage():
 </head>
 <body>
     <div class="container">
-        <header>""")
+        <header>
+            <div class="team-name">{site_config.get("team_name", "Little Shock")}</div>
+            <p class="subtitle">{site_config.get("site_description", "创意网页玩具合集")}</p>
+            <div class="little-shock-link">
+                <a href="{site_config.get("team_link", "#")}" target="_blank">Little Shock 专区 @ WaytoAGI</a>
+            </div>
+        </header>
+"""
 
-    # 添加团队名称和描述
-    html.append(f'            <div class="team-name">{site_config.get("team_name", "Little Shock")}</div>')
-    html.append(f'            <p class="subtitle">{site_config.get("site_description", "创意网页玩具合集")}</p>')
-    html.append(f'            <div class="little-shock-link">')
-    html.append(f'                <a href="{site_config.get("team_link", "#")}" target="_blank">Little Shock 专区 @ WaytoAGI</a>')
-    html.append(f'            </div>')
-    html.append(f'        </header>')
-
-    # 添加分类导航
-    html.append("""        <div class="category-nav">
+def generate_category_nav(categories, projects_by_category):
+    """生成分类导航HTML"""
+    html = """        <div class="category-nav">
             <div class="nav-arrows left">
                 <div class="nav-arrow-icon">◀</div>
             </div>
-            <div class="category-nav-scroll">""")
+            <div class="category-nav-scroll">
+"""
 
     # 按order排序分类
     sorted_categories = sorted(categories, key=lambda x: x.get("order", 999))
@@ -471,16 +416,23 @@ def generate_homepage():
     for category in sorted_categories:
         category_id = category.get("id")
         if category_id in projects_by_category and projects_by_category[category_id]:
-            icon = category.get("icon", "")
-            icon_html = f'<span class="category-icon">{icon}</span>' if icon else ''
-            html.append(f'                <div class="category-tab" data-category="{category_id}">{icon_html}{category.get("name", "未命名")}</div>')
+            html += f'                <div class="category-tab" data-category="{category_id}">{category.get("name", "未命名")}</div>\n'
 
-    html.append("""            </div>
+    html += """            </div>
             <div class="nav-arrows right">
                 <div class="nav-arrow-icon">▶</div>
             </div>
         </div>
-        <div class="content-area">""")
+        <div class="content-area">
+"""
+    return html
+
+def generate_category_content(categories, projects_by_category):
+    """生成分类内容HTML"""
+    html = ""
+
+    # 按order排序分类
+    sorted_categories = sorted(categories, key=lambda x: x.get("order", 999))
 
     # 生成每个分类的内容
     for category in sorted_categories:
@@ -490,28 +442,30 @@ def generate_homepage():
             projects = sorted(projects_by_category[category_id], key=lambda x: x[2])
 
             # 生成分类内容区域
-            html.append(f"""            <div class="category-content" id="content-{category_id}">
+            html += f"""            <div class="category-content" id="content-{category_id}">
                 <h2 class="category-title">{category.get("name", "未命名")}</h2>
-                <p class="category-description">{category.get("description", "")}</p>
-                <div class="toys-container">""")
+                <div class="toys-container">"""
 
             # 生成每个项目的卡片
             for project_dir, config, _ in projects:
-                html.append(generate_project_card(project_dir, config))
+                html += generate_project_card(project_dir, config)
 
-            html.append("""                </div>
-            </div>""")
+            html += """                </div>
+            </div>
+"""
 
-    html.append("        </div>")
+    html += "        </div>"
+    return html
 
-    # 添加页脚
-    html.append(f"""        <footer>
+def generate_html_footer(site_config):
+    """生成HTML尾部"""
+    return f"""
+        <footer>
             <p>{site_config.get("copyright", "© 2023-2024 Little Shock 团队 | 所有项目均为开源网页玩具")}</p>
         </footer>
-    </div>""")
+    </div>
 
-    # 添加脚本
-    html.append("""    <script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化分类标签和内容
             const tabs = document.querySelectorAll('.category-tab');
@@ -619,11 +573,60 @@ def generate_homepage():
         });
     </script>
 </body>
-</html>""")
+</html>"""
+
+def generate_homepage():
+    """生成主页HTML"""
+    # 读取站点配置
+    site_config = read_site_config()
+    if not site_config:
+        print("无法读取站点配置，生成中止")
+        return
+
+    # 获取分类和分类分配
+    categories = site_config.get("categories", [])
+    category_assignments = site_config.get("category_assignments", {})
+
+    # 获取所有项目目录
+    project_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and not d.startswith('.') and d != "开发过程"]
+
+    # 按分类组织项目
+    projects_by_category = defaultdict(list)
+
+    for project_dir in project_dirs:
+        config = read_project_config(project_dir)
+        if config:
+            # 从中央配置获取分类ID
+            category_id = category_assignments.get(project_dir, "other")
+
+            # 如果找不到分类，使用项目配置中的分类
+            if category_id == "other" and "category" in config:
+                old_category = config.get("category")
+                # 尝试根据名称匹配分类
+                for cat in categories:
+                    if cat["name"] == old_category:
+                        category_id = cat["id"]
+                        break
+
+            # 获取项目在分类中的顺序
+            order = config.get("order", 999)
+            projects_by_category[category_id].append((project_dir, config, order))
+
+    # 生成HTML头部
+    html = generate_html_head(site_config)
+
+    # 生成分类导航
+    html += generate_category_nav(categories, projects_by_category)
+
+    # 生成分类内容
+    html += generate_category_content(categories, projects_by_category)
+
+    # 生成HTML尾部
+    html += generate_html_footer(site_config)
 
     # 写入文件
     with open('index.html', 'w', encoding='utf-8') as f:
-        f.write('\n'.join(html))
+        f.write(html)
 
     print("主页生成完成！")
 
