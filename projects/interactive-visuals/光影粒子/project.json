@@ -1,0 +1,11 @@
+{
+  "title": "光影粒子",
+  "description": "全功能趣味配置的粒子互动效果，支持多种行为模式、形状和颜色，可自定义连接线和点击效果。",
+  "tags": ["触摸互动", "粒子效果", "光效", "移动优化"],
+  "status": "stable",
+  "version": "1.0",
+  "last_updated": "2023-05-08",
+  "primary_category": "interactive-visuals",
+  "secondary_categories": [],
+  "order": 10
+}

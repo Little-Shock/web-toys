@@ -2,94 +2,78 @@
 # -*- coding: utf-8 -*-
 
 import os
-import json
 import sys
-from datetime import datetime
 import re
+from datetime import datetime
 
-def read_site_config():
-    """读取站点配置文件"""
-    # 首先尝试读取根目录的配置文件
-    if os.path.exists('site_config.json'):
+# 导入工具模块
+from utils import (
+    read_site_config, load_project_config, save_project_config,
+    find_project, extract_features_from_readme, render_template,
+    get_today_date
+)
+
+def read_readme_template():
+    """读取README模板"""
+    template_path = "tools/readme_template.md"
+    if os.path.exists(template_path):
         try:
-            with open('site_config.json', 'r', encoding='utf-8') as f:
-                return json.load(f)
+            with open(template_path, 'r', encoding='utf-8') as f:
+                return f.read()
         except Exception as e:
-            print(f"读取根目录站点配置文件时出错: {e}")
-
-    # 如果根目录没有，尝试读取tools目录的配置文件
-    if os.path.exists('tools/site_config.json'):
-        try:
-            with open('tools/site_config.json', 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"读取tools目录站点配置文件时出错: {e}")
-
-    print("无法找到站点配置文件")
+            print(f"读取模板文件时出错: {e}")
+            return None
+    print(f"找不到模板文件: {template_path}")
     return None
 
-def load_project_config(project_path):
-    """加载项目配置"""
-    config_path = os.path.join(project_path, "project.json")
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                return json.load(f), config_path
-        except Exception as e:
-            print(f"读取项目配置文件时出错: {e}")
-    else:
-        print(f"项目配置文件不存在: {config_path}")
-    return None, None
-
-def save_project_config(config, config_path):
-    """保存项目配置"""
-    try:
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, ensure_ascii=False, indent=4)
-        print(f"项目配置已保存到 {config_path}")
-        return True
-    except Exception as e:
-        print(f"保存项目配置文件时出错: {e}")
+def generate_readme(project_path, config, force=False):
+    """生成README文件"""
+    # 检查是否已有README文件
+    readme_path = os.path.join(project_path, 'README.md')
+    if os.path.exists(readme_path) and not force:
+        print(f"项目已有README文件，跳过生成")
         return False
 
-def extract_features_from_readme(readme_path):
-    """从README文件中提取功能特点"""
-    if not os.path.exists(readme_path):
-        return []
+    # 读取模板
+    template = read_readme_template()
+    if not template:
+        return False
 
+    # 准备模板上下文
+    project_dir = os.path.basename(project_path)
+
+    # 状态文本映射
+    status_text_map = {
+        "stable": "稳定版",
+        "beta": "测试版",
+        "deprecated": "已归档"
+    }
+
+    context = {
+        'title': config.get('title', project_dir),
+        'description': config.get('description', ''),
+        'version': config.get('version', '1.0.0'),
+        'last_updated': config.get('last_updated', get_today_date()),
+        'status': config.get('status', 'beta'),
+        'status_text': status_text_map.get(config.get('status', 'beta'), '测试版'),
+        'project_dir': project_dir,
+        'features': config.get('features', ['基本功能']),
+        'dependencies': config.get('dependencies', []),
+        'changelog': config.get('changelog', [])
+    }
+
+    # 渲染模板
+    rendered_readme = render_template(template, context)
+
+    # 保存到项目目录
     try:
-        with open(readme_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        # 查找功能特点部分
-        features_match = re.search(r'## 功能特点\s+(.*?)(?=\s+##|\s*$)', content, re.DOTALL)
-        if features_match:
-            features_text = features_match.group(1).strip()
-            # 提取每个功能点
-            features = []
-            for line in features_text.split('\n'):
-                # 移除Markdown列表符号和加粗标记
-                cleaned_line = re.sub(r'^-\s+\*\*(.*?)\*\*.*$', r'\1', line.strip())
-                if cleaned_line and cleaned_line != line.strip():
-                    features.append(cleaned_line)
-            return features
-
-        # 如果没有找到功能特点部分，尝试查找其他可能的部分
-        tech_match = re.search(r'## 技术实现\s+(.*?)(?=\s+##|\s*$)', content, re.DOTALL)
-        if tech_match:
-            tech_text = tech_match.group(1).strip()
-            techs = []
-            for line in tech_text.split('\n'):
-                cleaned_line = re.sub(r'^-\s+\*\*(.*?)\*\*.*$', r'\1', line.strip())
-                if not cleaned_line or cleaned_line == line.strip():
-                    cleaned_line = re.sub(r'^-\s+(.*?)$', r'\1', line.strip())
-                if cleaned_line and cleaned_line != line.strip():
-                    techs.append(cleaned_line)
-            return techs
+        with open(readme_path, 'w', encoding='utf-8') as f:
+            f.write(rendered_readme)
+        print(f"已生成README文件: {readme_path}")
+        return True
     except Exception as e:
-        print(f"读取README文件时出错: {e}")
-
-    return []
+        print(f"保存README文件时出错: {e}")
+        return False
 
 def extract_dependencies_from_readme(readme_path):
     """从README文件中提取技术依赖"""
@@ -280,7 +264,7 @@ def update_readme_with_version(project_path):
         print(f"更新README文件时出错: {e}")
         return False
 
-def process_all_projects():
+def process_all_projects(generate_readme_flag=False, force_readme=False):
     """处理所有项目"""
     # 读取站点配置
     site_config = read_site_config()
@@ -309,6 +293,11 @@ def process_all_projects():
                     if update_project_metadata(project_path):
                         # 更新README文件
                         if update_readme_with_version(project_path):
+                            # 如果需要，生成完整的README
+                            if generate_readme_flag:
+                                config, _ = load_project_config(project_path)
+                                if config:
+                                    generate_readme(project_path, config, force_readme)
                             success_count += 1
                         else:
                             fail_count += 1
@@ -317,20 +306,10 @@ def process_all_projects():
 
     print(f"\n处理完成! 成功: {success_count}, 失败: {fail_count}")
 
-def process_single_project(project_name):
+def process_single_project(project_name, generate_readme_flag=False, force_readme=False):
     """处理单个项目"""
-    # 项目根目录
-    projects_root = "projects"
-
     # 查找项目
-    project_path = None
-    for category_dir in os.listdir(projects_root):
-        category_path = os.path.join(projects_root, category_dir)
-        if os.path.isdir(category_path):
-            possible_path = os.path.join(category_path, project_name)
-            if os.path.isdir(possible_path):
-                project_path = possible_path
-                break
+    project_path = find_project(project_name)
 
     if not project_path:
         print(f"找不到项目: {project_name}")
@@ -342,6 +321,11 @@ def process_single_project(project_name):
     if update_project_metadata(project_path):
         # 更新README文件
         if update_readme_with_version(project_path):
+            # 如果需要，生成完整的README
+            if generate_readme_flag:
+                config, _ = load_project_config(project_path)
+                if config:
+                    generate_readme(project_path, config, force_readme)
             print(f"项目 {project_name} 处理成功!")
             return True
 
@@ -352,10 +336,14 @@ def print_usage():
     """打印使用说明"""
     print("项目元信息更新工具")
     print("用法:")
-    print("  python update_project_metadata.py all")
+    print("  python update_project_metadata.py all [--readme] [--force]")
     print("    更新所有项目的元信息")
-    print("  python update_project_metadata.py <项目名称>")
+    print("    --readme: 同时生成README文件")
+    print("    --force: 强制覆盖已有的README文件")
+    print("  python update_project_metadata.py <项目名称> [--readme] [--force]")
     print("    更新指定项目的元信息")
+    print("    --readme: 同时生成README文件")
+    print("    --force: 强制覆盖已有的README文件")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -363,8 +351,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     command = sys.argv[1]
+    generate_readme_flag = "--readme" in sys.argv
+    force_readme = "--force" in sys.argv
 
     if command == "all":
-        process_all_projects()
+        process_all_projects(generate_readme_flag, force_readme)
     else:
-        process_single_project(command)
+        process_single_project(command, generate_readme_flag, force_readme)

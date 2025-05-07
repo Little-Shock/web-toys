@@ -15,33 +15,33 @@ def run_command(command):
 
 def update_all_projects():
     """更新所有项目的元信息和README"""
-    print("开始更新所有项目的元信息...")
-    success, output = run_command("python tools/update_project_metadata.py all")
+    print("开始更新所有项目的元信息和README...")
+    success, output = run_command("python tools/update_project_metadata.py all --readme")
     if not success:
-        print("更新项目元信息失败:")
+        print("更新项目元信息和README失败:")
         print(output)
         return False
-    
+
     print(output)
-    
+
     print("\n开始生成所有项目的详情页...")
     success, output = run_command("python tools/generate_project_details.py")
     if not success:
         print("生成项目详情页失败:")
         print(output)
         return False
-    
+
     print(output)
-    
+
     print("\n开始更新主页...")
-    success, output = run_command("python tools/generate_homepage.py")
+    success, output = run_command("python tools/generate_homepage_simplified.py")
     if not success:
         print("更新主页失败:")
         print(output)
         return False
-    
+
     print(output)
-    
+
     print("\n所有更新完成!")
     return True
 

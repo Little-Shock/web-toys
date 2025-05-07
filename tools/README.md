@@ -6,7 +6,7 @@
 
 ### 1. 项目元信息更新工具 (`update_project_metadata.py`)
 
-这个工具用于更新项目的元信息，包括版本号、更新时间、更新日志、兼容性信息等。
+这个工具用于更新项目的元信息，包括版本号、更新时间、更新日志、兼容性信息等。同时也可以生成README文件。
 
 **用法:**
 ```bash
@@ -15,25 +15,17 @@ python tools/update_project_metadata.py all
 
 # 更新指定项目的元信息
 python tools/update_project_metadata.py <项目名称>
+
+# 更新元信息并生成README
+python tools/update_project_metadata.py all --readme
+
+# 更新元信息并强制覆盖已有README
+python tools/update_project_metadata.py <项目名称> --readme --force
 ```
 
-### 2. README生成工具 (`generate_readme.py`)
 
-这个工具用于生成或更新项目的README文件，根据项目的元信息自动生成。
 
-**用法:**
-```bash
-# 为所有没有README的项目生成README文件
-python tools/generate_readme.py all
-
-# 为指定项目生成README文件
-python tools/generate_readme.py <项目名称>
-
-# 强制覆盖已有的README文件
-python tools/generate_readme.py <项目名称> --force
-```
-
-### 3. 项目详情页生成工具 (`generate_project_details.py`)
+### 2. 项目详情页生成工具 (`generate_project_details.py`)
 
 这个工具用于生成项目的详情页，显示项目的详细信息，包括版本历史、更新日志、兼容性信息等。
 
@@ -43,17 +35,17 @@ python tools/generate_readme.py <项目名称> --force
 python tools/generate_project_details.py
 ```
 
-### 4. 主页生成工具 (`generate_homepage.py`)
+### 3. 主页生成工具 (`generate_homepage_simplified.py`)
 
-这个工具用于生成项目的主页，显示所有项目的列表和分类。
+这个工具用于生成项目的主页，显示所有项目的列表和分类，支持标签筛选功能。
 
 **用法:**
 ```bash
 # 生成主页
-python tools/generate_homepage.py
+python tools/generate_homepage_simplified.py
 ```
 
-### 5. 项目版本管理工具 (`manage_versions.py`)
+### 4. 项目版本管理工具 (`manage_versions.py`)
 
 这个工具用于管理项目的版本信息，包括更新版本号、添加更新日志等。
 
@@ -75,7 +67,7 @@ python tools/manage_versions.py init <项目名称>
 python tools/manage_versions.py init-all
 ```
 
-### 6. 项目模板生成工具 (`create_project_template.py`)
+### 5. 项目模板生成工具 (`create_project_template.py`)
 
 这个工具用于生成新项目的模板，包括目录结构、HTML、CSS、JavaScript、Service Worker等文件。
 
@@ -83,6 +75,16 @@ python tools/manage_versions.py init-all
 ```bash
 # 创建新项目
 python tools/create_project_template.py <项目名称> <分类ID> [<描述>] [<标签1,标签2,...>]
+```
+
+### 6. 元数据管理工具 (`manage_metadata.py`)
+
+这个工具用于管理项目的分类和标签，包括添加分类、标准化标签等。
+
+**用法:**
+```bash
+# 启动交互式管理界面
+python tools/manage_metadata.py
 ```
 
 ### 7. 批处理工具 (`update_all_projects.py`)
@@ -95,12 +97,15 @@ python tools/create_project_template.py <项目名称> <分类ID> [<描述>] [<�
 python tools/update_all_projects.py
 ```
 
+### 8. 工具库 (`utils.py`)
+
+这个文件包含了各个工具共用的函数，如配置读取、项目查找、模板渲染等。不需要直接调用。
+
 ## 工作流程
 
-1. 使用 `update_project_metadata.py` 更新项目的元信息
-2. 使用 `generate_readme.py` 生成或更新项目的README文件
-3. 使用 `generate_project_details.py` 生成项目的详情页
-4. 使用 `generate_homepage.py` 更新主页
+1. 使用 `update_project_metadata.py` 更新项目的元信息和README
+2. 使用 `generate_project_details.py` 生成项目的详情页
+3. 使用 `generate_homepage_simplified.py` 更新主页
 
 或者，直接使用 `update_all_projects.py` 一次性完成所有步骤。
 
@@ -109,8 +114,9 @@ python tools/update_all_projects.py
 1. 使用 `create_project_template.py` 创建新项目的模板
 2. 开发项目
 3. 使用 `manage_versions.py` 更新项目的版本信息
-4. 使用 `generate_project_details.py` 生成项目的详情页
-5. 使用 `generate_homepage.py` 更新主页
+4. 使用 `update_project_metadata.py` 更新项目的元信息和README
+5. 使用 `generate_project_details.py` 生成项目的详情页
+6. 使用 `generate_homepage_simplified.py` 更新主页
 
 ## 注意事项
 
