@@ -85,6 +85,7 @@
     "赛博闪卡": "visual-effects",
     "Holo-Card-Tilt": "visual-effects",
     "镭射卡": "visual-effects",
+    "祈愿之光": "visual-effects",
     "find_emoji": "games-and-entertainment",
     "赛博流麻": "games-and-entertainment",
     "赛博流麻-Gemini": "games-and-entertainment",
@@ -226,7 +227,7 @@
     {
       "id": "粒子效果",
       "name": "粒子效果",
-      "count": 3
+      "count": 4
     },
     {
       "id": "触摸互动",
@@ -261,7 +262,7 @@
     {
       "id": "互动体验",
       "name": "互动体验",
-      "count": 1
+      "count": 2
     },
     {
       "id": "音效反馈",
@@ -336,7 +337,7 @@
     {
       "id": "图片特效",
       "name": "图片特效",
-      "count": 1
+      "count": 2
     },
     {
       "id": "赛博风格",

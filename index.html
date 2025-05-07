@@ -51,117 +51,145 @@
         }
 
         .team-name {
-            font-size: 2.5rem;
+            font-size: clamp(3rem, 8vw, 5rem);
             font-weight: 900;
             margin-bottom: 10px;
-            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color), var(--accent-color));
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 5px 15px rgba(98, 0, 234, 0.3);
+            letter-spacing: -1px;
         }
 
         .subtitle {
-            font-size: 1.2rem;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: 500;
             color: rgba(255, 255, 255, 0.8);
+            max-width: 800px;
+            margin: 0 auto;
             margin-bottom: 15px;
         }
 
+        .little-shock-link {
+            margin-top: 15px;
+        }
+
         .little-shock-link a {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
             color: var(--secondary-color);
             text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
+            border-radius: 20px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .little-shock-link a:hover {
-            color: var(--accent-color);
-            text-decoration: underline;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
+        /* 分类导航样式 */
         .category-nav {
-            display: flex;
-            align-items: center;
-            margin-bottom: 30px;
             position: relative;
+            margin-bottom: 40px;
+            overflow: hidden;
         }
 
         .category-nav-scroll {
             display: flex;
             overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
             scroll-behavior: smooth;
-            flex-grow: 1;
-            padding: 10px 0;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+            scrollbar-width: none; /* Firefox */
         }
 
         .category-nav-scroll::-webkit-scrollbar {
-            display: none;
+            display: none; /* Chrome, Safari, Edge */
         }
 
         .category-tab {
-            padding: 10px 20px;
+            flex: 0 0 auto;
+            padding: 12px 24px;
             margin-right: 10px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(30, 30, 40, 0.7);
+            color: rgba(255, 255, 255, 0.7);
             border-radius: 30px;
+            font-weight: 600;
             cursor: pointer;
-            white-space: nowrap;
             transition: var(--transition);
-            display: flex;
-            align-items: center;
-        }
-
-        .category-tab:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .category-tab.active {
-            background: var(--primary-color);
-            box-shadow: 0 4px 10px rgba(98, 0, 234, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
         }
 
         .category-icon {
             margin-right: 8px;
-            font-size: 1.2em;
+            font-size: 1.1em;
+        }
+
+        .category-tab:hover {
+            background: rgba(40, 40, 50, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .category-tab.active {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 176, 255, 0.3);
         }
 
         .nav-arrows {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
+            background: linear-gradient(90deg, rgba(18, 18, 18, 0.8), transparent);
+            z-index: 2;
             cursor: pointer;
             opacity: 0;
-            transition: var(--transition);
-            z-index: 2;
+            transition: opacity 0.3s ease;
         }
 
         .nav-arrows.visible {
             opacity: 1;
         }
 
-        .nav-arrows:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
         .nav-arrows.left {
-            margin-right: 10px;
+            left: 0;
         }
 
         .nav-arrows.right {
-            margin-left: 10px;
+            right: 0;
+            background: linear-gradient(270deg, rgba(18, 18, 18, 0.8), transparent);
         }
 
+        .nav-arrow-icon {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        /* 内容区域样式 */
         .content-area {
             position: relative;
+            min-height: 400px;
         }
 
         .category-content {
             display: none;
-            animation: fadeIn 0.5s ease;
+            animation: fadeIn 0.5s ease forwards;
         }
 
         .category-content.active {
@@ -169,43 +197,68 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .category-title {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-            color: var(--secondary-color);
-        }
-
-        .category-description {
-            margin-bottom: 30px;
-            color: rgba(255, 255, 255, 0.7);
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .toys-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .category-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary-color);
+            display: inline-block;
+        }
+
+        .category-description {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+            max-width: 800px;
+            font-size: 1rem;
+            line-height: 1.5;
         }
 
         .toy-card {
+            position: relative;
             background: var(--card-bg);
-            border-radius: 15px;
+            border-radius: 12px;
             overflow: hidden;
             transition: var(--transition);
             box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .toy-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .toy-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            z-index: 1;
         }
 
         .toy-link {
-            display: block;
+            display: flex;
+            flex-direction: column;
             padding: 25px;
             color: var(--text-light);
             text-decoration: none;
@@ -214,25 +267,27 @@
 
         .toy-title {
             font-size: 1.4rem;
-            margin-bottom: 15px;
-            color: var(--text-light);
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: white;
         }
 
         .toy-description {
-            margin-bottom: 15px;
-            color: rgba(255, 255, 255, 0.7);
             font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 15px;
+            flex-grow: 1;
         }
 
         .toy-tag {
             display: inline-block;
             padding: 5px 10px;
-            margin-right: 8px;
-            margin-bottom: 8px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(98, 0, 234, 0.2);
+            color: var(--secondary-color);
             border-radius: 20px;
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.9);
+            margin-right: 5px;
+            margin-bottom: 5px;
         }
 
         .toy-meta {
@@ -243,105 +298,38 @@
         }
 
         .toy-status {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--accent-color);
         }
 
         .toy-status.stable {
-            background: rgba(76, 175, 80, 0.2);
-            color: #81c784;
+            color: #00c853;
         }
 
         .toy-status.beta {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ffb74d;
+            color: #ffd600;
         }
 
         .toy-status.deprecated {
-            background: rgba(244, 67, 54, 0.2);
-            color: #e57373;
+            color: #757575;
         }
 
         .toy-version {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: rgba(255, 255, 255, 0.6);
+            text-align: right;
         }
 
-        /* 标签筛选器样式 */
-        .tag-filter {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
         }
 
-        .tag-filter-title {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: var(--secondary-color);
-        }
-
-        .tag-cloud {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .tag-item {
-            padding: 8px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .tag-item:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .tag-item.active {
-            background: var(--secondary-color);
-            color: var(--text-dark);
-        }
-
-        .tag-filter-actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 10px;
-        }
-
-        .tag-filter-button {
-            padding: 8px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 20px;
-            color: var(--text-light);
-            cursor: pointer;
-            transition: var(--transition);
-            margin-left: 10px;
-        }
-
-        .tag-filter-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .tag-filter-button.primary {
-            background: var(--primary-color);
-        }
-
-        .tag-filter-button.primary:hover {
-            background: #7c4dff;
-        }
-
-        /* 响应式设计 */
         @media (max-width: 768px) {
-            .team-name {
-                font-size: 2rem;
-            }
-
             .toys-container {
                 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
                 gap: 20px;
@@ -354,19 +342,9 @@
             .toy-title {
                 font-size: 1.2rem;
             }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px 10px;
-            }
-
-            .toys-container {
-                grid-template-columns: 1fr;
-            }
 
             .category-tab {
-                padding: 8px 15px;
+                padding: 10px 18px;
                 font-size: 0.9rem;
             }
         }
@@ -381,74 +359,11 @@
                 <a href="https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd" target="_blank">Little Shock 专区 @ WaytoAGI</a>
             </div>
         </header>
-        <div class="tag-filter">
-            <h3 class="tag-filter-title">标签筛选</h3>
-            <div class="tag-cloud">
-                <div class="tag-item" data-tag="touch-interaction">触摸互动 (8)</div>
-                <div class="tag-item" data-tag="particle-effects">粒子效果 (5)</div>
-                <div class="tag-item" data-tag="3d交互">3D交互 (5)</div>
-                <div class="tag-item" data-tag="物理模拟">物理模拟 (5)</div>
-                <div class="tag-item" data-tag="触摸互动">触摸互动 (5)</div>
-                <div class="tag-item" data-tag="physics-simulation">物理模拟 (4)</div>
-                <div class="tag-item" data-tag="光效">光效 (4)</div>
-                <div class="tag-item" data-tag="3d-interaction">3D交互 (3)</div>
-                <div class="tag-item" data-tag="light-effects">光效 (3)</div>
-                <div class="tag-item" data-tag="粒子效果">粒子效果 (3)</div>
-                <div class="tag-item" data-tag="audio-visualization">音频可视化 (2)</div>
-                <div class="tag-item" data-tag="interactive-music">互动音乐 (2)</div>
-                <div class="tag-item" data-tag="mobile-optimized">移动优化 (2)</div>
-                <div class="tag-item" data-tag="creative-drawing">创意绘画 (2)</div>
-                <div class="tag-item" data-tag="image-processing">图像处理 (2)</div>
-                <div class="tag-item" data-tag="game">游戏 (2)</div>
-                <div class="tag-item" data-tag="音频可视化">音频可视化 (2)</div>
-                <div class="tag-item" data-tag="互动音乐">互动音乐 (2)</div>
-                <div class="tag-item" data-tag="游戏">游戏 (2)</div>
-                <div class="tag-item" data-tag="旧版本">旧版本 (2)</div>
-                <div class="tag-item" data-tag="fluid-simulation">流体模拟 (1)</div>
-                <div class="tag-item" data-tag="webgl">WebGL (1)</div>
-                <div class="tag-item" data-tag="ai-enhanced">AI增强 (1)</div>
-                <div class="tag-item" data-tag="粒子连接">粒子连接 (1)</div>
-                <div class="tag-item" data-tag="动态网络">动态网络 (1)</div>
-                <div class="tag-item" data-tag="线条连接">线条连接 (1)</div>
-                <div class="tag-item" data-tag="鼠标互动">鼠标互动 (1)</div>
-                <div class="tag-item" data-tag="移动优化">移动优化 (1)</div>
-                <div class="tag-item" data-tag="自定义图像">自定义图像 (1)</div>
-                <div class="tag-item" data-tag="引力效果">引力效果 (1)</div>
-                <div class="tag-item" data-tag="辅助工具">辅助工具 (1)</div>
-                <div class="tag-item" data-tag="阅读助手">阅读助手 (1)</div>
-                <div class="tag-item" data-tag="webgl">WebGL (1)</div>
-                <div class="tag-item" data-tag="高性能">高性能 (1)</div>
-                <div class="tag-item" data-tag="波纹效果">波纹效果 (1)</div>
-                <div class="tag-item" data-tag="流体模拟">流体模拟 (1)</div>
-                <div class="tag-item" data-tag="东方美学">东方美学 (1)</div>
-                <div class="tag-item" data-tag="互动体验">互动体验 (1)</div>
-                <div class="tag-item" data-tag="音效反馈">音效反馈 (1)</div>
-                <div class="tag-item" data-tag="纹理生成">纹理生成 (1)</div>
-                <div class="tag-item" data-tag="图案设计">图案设计 (1)</div>
-                <div class="tag-item" data-tag="ai增强">AI增强 (1)</div>
-                <div class="tag-item" data-tag="创意绘画">创意绘画 (1)</div>
-                <div class="tag-item" data-tag="图像处理">图像处理 (1)</div>
-                <div class="tag-item" data-tag="故障艺术">故障艺术 (1)</div>
-                <div class="tag-item" data-tag="光效绘画">光效绘画 (1)</div>
-                <div class="tag-item" data-tag="创意工具">创意工具 (1)</div>
-                <div class="tag-item" data-tag="重力感应">重力感应 (1)</div>
-                <div class="tag-item" data-tag="图片特效">图片特效 (1)</div>
-                <div class="tag-item" data-tag="赛博风格">赛博风格 (1)</div>
-                <div class="tag-item" data-tag="emoji">emoji (1)</div>
-                <div class="tag-item" data-tag="find">find (1)</div>
-                <div class="tag-item" data-tag="不动的">不动的 (1)</div>
-            </div>
-            <div class="tag-filter-actions">
-                <button class="tag-filter-button" id="clearTags">清除筛选</button>
-                <button class="tag-filter-button primary" id="applyTags">应用筛选</button>
-            </div>
-        </div>
         <div class="category-nav">
             <div class="nav-arrows left">
                 <div class="nav-arrow-icon">◀</div>
             </div>
             <div class="category-nav-scroll">
-                <div class="category-tab" data-category="all"><span class="category-icon">🔍</span>全部项目</div>
                 <div class="category-tab" data-category="interactive-visuals"><span class="category-icon">✨</span>互动视觉</div>
                 <div class="category-tab" data-category="physics-simulations"><span class="category-icon">🔮</span>物理模拟</div>
                 <div class="category-tab" data-category="creative-tools"><span class="category-icon">🎨</span>创意工具</div>
@@ -463,372 +378,15 @@
             </div>
         </div>
         <div class="content-area">
-            <div class="category-content" id="content-all">
-                <h2 class="category-title">全部项目</h2>
-                <p class="category-description">所有创意网页玩具的完整集合</p>
-                <div class="toys-container">
-                <div class="toy-card" data-categories="visual-effects" data-tags="光效 3d交互">
-                    <a href="projects/visual-effects/赛博闪卡/index.html" class="toy-link">
-                        <h3 class="toy-title">赛博闪卡</h3>
-                        <p class="toy-description">模拟全息闪卡效果，随着视角变化呈现出炫彩光泽，支持自定义图片。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效</span>
-                            <span class="toy-tag">3D交互</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="visual-effects" data-tags="光效 3d交互">
-                    <a href="projects/visual-effects/Holo-Card-Tilt/index.html" class="toy-link">
-                        <h3 class="toy-title">Holo-Card Tilt</h3>
-                        <p class="toy-description">上传角色图，即刻生成可随手机姿态闪彩折射的全息卡，并能导出动图/短片</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效</span>
-                            <span class="toy-tag">3D交互</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="physics-simulations" data-tags="物理模拟 自定义图像">
-                    <a href="projects/physics-simulations/量子弹球/index.html" class="toy-link">
-                        <h3 class="toy-title">量子弹球</h3>
-                        <p class="toy-description">创造你的专属弹球世界，上传自定义图片作为弹球，绘制障碍物，体验物理碰撞的乐趣。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
-                            <span class="toy-tag">自定义图像</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="music-and-sound" data-tags="音频可视化 互动音乐">
-                    <a href="projects/music-and-sound/声音雕塑/index.html" class="toy-link">
-                        <h3 class="toy-title">声音雕塑</h3>
-                        <p class="toy-description">通过触摸和手势创造出独特的声音和视觉效果，将声音可视化为动态雕塑。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">音频可视化</span>
-                            <span class="toy-tag">互动音乐</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status beta">测试版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="archived" data-tags="光效 旧版本">
-                    <a href="projects/archived/Holofoil Card/index.html" class="toy-link">
-                        <h3 class="toy-title">闪卡效果 (旧版)</h3>
-                        <p class="toy-description">早期版本的全息闪卡效果，已被新版赛博闪卡替代。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效</span>
-                            <span class="toy-tag">旧版本</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status deprecated">已归档</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="games-and-entertainment" data-tags="emoji find 不动的">
-                    <a href="projects/games-and-entertainment/find_emoji/index.html" class="toy-link">
-                        <h3 class="toy-title">找到不动的 emoji</h3>
-                        <p class="toy-description">有一个 emoji 是没有动的，找到它！</p>
-                        <div class="toy-tags">                            <span class="toy-tag">emoji</span>
-                            <span class="toy-tag">find</span>
-                            <span class="toy-tag">不动的</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="visual-effects" data-tags="粒子连接 动态网络">
-                    <a href="projects/visual-effects/neuron/index.html" class="toy-link">
-                        <h3 class="toy-title">神经元模拟</h3>
-                        <p class="toy-description">模拟神经网络连接的视觉效果，创造出流动的神经元网络动画。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">粒子连接</span>
-                            <span class="toy-tag">动态网络</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="visual-effects" data-tags="光效 3d交互">
-                    <a href="projects/visual-effects/镭射卡/index.html" class="toy-link">
-                        <h3 class="toy-title">OC镭射卡片</h3>
-                        <p class="toy-description">上传图片创建具有镭射光效的角色卡片，支持不同稀有度的光效，可通过设备倾斜或鼠标移动交互。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效</span>
-                            <span class="toy-tag">3D交互</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="utility-tools" data-tags="辅助工具 阅读助手">
-                    <a href="projects/utility-tools/放大镜后/index.html" class="toy-link">
-                        <h3 class="toy-title">放大镜</h3>
-                        <p class="toy-description">网页内容放大工具，帮助查看细节或辅助阅读。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">辅助工具</span>
-                            <span class="toy-tag">阅读助手</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="粒子效果 触摸互动">
-                    <a href="projects/interactive-visuals/粒子花园/index.html" class="toy-link">
-                        <h3 class="toy-title">粒子花园</h3>
-                        <p class="toy-description">在画布上点击或触摸来播种粒子花朵，创造出绚丽多彩的粒子效果，可自定义颜色和密度。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">粒子效果</span>
-                            <span class="toy-tag">触摸互动</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="creative-tools" data-tags="图像处理 故障艺术">
-                    <a href="projects/creative-tools/赛博故障风/index.html" class="toy-link">
-                        <h3 class="toy-title">赛博故障风</h3>
-                        <p class="toy-description">为图片添加赛博朋克风格的故障艺术效果，可调节多种参数创造独特视觉体验。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">图像处理</span>
-                            <span class="toy-tag">故障艺术</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="creative-tools" data-tags="光效绘画 创意工具">
-                    <a href="projects/creative-tools/光绘/index.html" class="toy-link">
-                        <h3 class="toy-title">光绘</h3>
-                        <p class="toy-description">使用光线绘制出美丽的图案，创造出光的艺术作品。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效绘画</span>
-                            <span class="toy-tag">创意工具</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status beta">测试版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="archived" data-tags="游戏 旧版本">
-                    <a href="projects/archived/赛博流麻_old/index.html" class="toy-link">
-                        <h3 class="toy-title">赛博流麻 (旧版)</h3>
-                        <p class="toy-description">早期版本的赛博风格麻将游戏，已被新版赛博流麻替代。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">游戏</span>
-                            <span class="toy-tag">旧版本</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status deprecated">已归档</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="visual-effects" data-tags="线条连接 鼠标互动">
-                    <a href="projects/visual-effects/spiderweb/index.html" class="toy-link">
-                        <h3 class="toy-title">蜘蛛网效果</h3>
-                        <p class="toy-description">创造出动态的蜘蛛网状连接效果，随鼠标移动产生互动变化。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">线条连接</span>
-                            <span class="toy-tag">鼠标互动</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="粒子效果 触摸互动">
-                    <a href="projects/interactive-visuals/赛博流光/index.html" class="toy-link">
-                        <h3 class="toy-title">赛博流光</h3>
-                        <p class="toy-description">触摸屏幕创造流动的光效波纹，长按产生涟漪，点击爆发粒子，体验流光溢彩的视觉盛宴。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">粒子效果</span>
-                            <span class="toy-tag">触摸互动</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="music-and-sound" data-tags="音频可视化 互动音乐">
-                    <a href="projects/music-and-sound/节奏星图/index.html" class="toy-link">
-                        <h3 class="toy-title">节奏星图</h3>
-                        <p class="toy-description">将音乐节奏转化为星空图案的互动体验，通过触摸创造音乐和视觉效果。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">音频可视化</span>
-                            <span class="toy-tag">互动音乐</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status beta">测试版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="creative-tools" data-tags="纹理生成 图案设计">
-                    <a href="projects/creative-tools/织梦/index.html" class="toy-link">
-                        <h3 class="toy-title">织梦</h3>
-                        <p class="toy-description">编织梦幻般的图案和纹理，创造出独特的视觉艺术作品。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">纹理生成</span>
-                            <span class="toy-tag">图案设计</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status beta">测试版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="games-and-entertainment" data-tags="重力感应 图片特效">
-                    <a href="projects/games-and-entertainment/赛博流麻-Gemini/index.html" class="toy-link">
-                        <h3 class="toy-title">赛博流麻闪卡</h3>
-                        <p class="toy-description">上传一张图片，体验重力感应流麻效果</p>
-                        <div class="toy-tags">                            <span class="toy-tag">重力感应</span>
-                            <span class="toy-tag">图片特效</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="physics-simulations" data-tags="物理模拟 引力效果">
-                    <a href="projects/physics-simulations/blackhole/index.html" class="toy-link">
-                        <h3 class="toy-title">黑洞效果</h3>
-                        <p class="toy-description">模拟黑洞引力场效果，创造出吸引周围物体的视觉体验。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
-                            <span class="toy-tag">引力效果</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="流体模拟 东方美学">
-                    <a href="projects/interactive-visuals/墨韵/index.html" class="toy-link">
-                        <h3 class="toy-title">墨韵</h3>
-                        <p class="toy-description">模拟水墨在纸上的流动效果，创造出独特的东方美学风格的数字艺术作品。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">流体模拟</span>
-                            <span class="toy-tag">东方美学</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status beta">测试版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="creative-tools" data-tags="ai增强 创意绘画">
-                    <a href="projects/creative-tools/量子涂鸦/index.html" class="toy-link">
-                        <h3 class="toy-title">量子涂鸦</h3>
-                        <p class="toy-description">一个结合人工智能的创意绘画工具，用户的简单涂鸦会演变成复杂的量子风格艺术。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">AI增强</span>
-                            <span class="toy-tag">创意绘画</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status beta">测试版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="物理模拟" data-tags="物理模拟 3d交互 移动优化">
-                    <a href="projects/physics-simulations/新三体模拟/index.html" class="toy-link">
-                        <h3 class="toy-title">新三体模拟</h3>
-                        <p class="toy-description">基于经典三体问题的宇宙物理模拟，优化的移动端体验，观察三个恒星在引力作用下的轨迹变化和混沌行为。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
-                            <span class="toy-tag">3D交互</span>
-                            <span class="toy-tag">移动优化</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="physics-simulations" data-tags="物理模拟 3d交互">
-                    <a href="projects/physics-simulations/三体模拟/index.html" class="toy-link">
-                        <h3 class="toy-title">三体模拟</h3>
-                        <p class="toy-description">基于经典三体问题的宇宙物理模拟，观察三个恒星在引力作用下的轨迹变化和混沌行为。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
-                            <span class="toy-tag">3D交互</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="波纹效果 触摸互动">
-                    <a href="projects/interactive-visuals/元素波纹/index.html" class="toy-link">
-                        <h3 class="toy-title">元素波纹</h3>
-                        <p class="toy-description">创造出动态的元素波纹效果，通过触摸互动产生美丽的视觉波纹。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">波纹效果</span>
-                            <span class="toy-tag">触摸互动</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="music-and-sound" data-tags="互动体验 音效反馈">
-                    <a href="projects/music-and-sound/电子木鱼/index.html" class="toy-link">
-                        <h3 class="toy-title">电子木鱼</h3>
-                        <p class="toy-description">敲击木鱼积攒功德，连击有特效和音效，支持上传自定义角色图片，体验现代化的电子木鱼玩具。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">互动体验</span>
-                            <span class="toy-tag">音效反馈</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                            <span class="toy-version">v1.0.0 (2025-05-07)</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="games-and-entertainment" data-tags="游戏 赛博风格">
-                    <a href="projects/games-and-entertainment/赛博流麻/index.html" class="toy-link">
-                        <h3 class="toy-title">赛博流麻</h3>
-                        <p class="toy-description">赛博风格的麻将游戏体验，结合现代视觉效果的麻将玩法。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">游戏</span>
-                            <span class="toy-tag">赛博风格</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status beta">测试版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="物理模拟 触摸互动">
-                    <a href="projects/interactive-visuals/微光沙盘/index.html" class="toy-link">
-                        <h3 class="toy-title">微光沙盘</h3>
-                        <p class="toy-description">交互式发光沙粒模拟，通过触摸和设备倾斜与沙粒互动，创造美丽的光效沙景。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
-                            <span class="toy-tag">触摸互动</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status beta">测试版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="webgl 高性能">
-                    <a href="projects/interactive-visuals/微光沙盘_WebGL/index.html" class="toy-link">
-                        <h3 class="toy-title">微光沙盘 WebGL</h3>
-                        <p class="toy-description">高性能WebGL版微光沙盘，使用GPU加速渲染，提供更流畅的体验和更清晰的视觉效果。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">WebGL</span>
-                            <span class="toy-tag">高性能</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="粒子效果 触摸互动">
-                    <a href="projects/interactive-visuals/粒子交互-2/index.html" class="toy-link">
-                        <h3 class="toy-title">粒子交互</h3>
-                        <p class="toy-description">通过触摸或鼠标移动与粒子互动，创造出流动的视觉效果，粒子会对你的交互做出反应。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">粒子效果</span>
-                            <span class="toy-tag">触摸互动</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                        </div>
-                    </a>
-                </div>
-                </div>
-            </div>
             <div class="category-content" id="content-interactive-visuals">
                 <h2 class="category-title">互动视觉</h2>
                 <p class="category-description">通过触摸和交互创造的视觉体验，让你沉浸在流动的光影和动态效果中</p>
                 <div class="toys-container">
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="粒子效果 触摸互动">
+                <div class="toy-card">
                     <a href="projects/interactive-visuals/粒子花园/index.html" class="toy-link">
                         <h3 class="toy-title">粒子花园</h3>
                         <p class="toy-description">在画布上点击或触摸来播种粒子花朵，创造出绚丽多彩的粒子效果，可自定义颜色和密度。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">粒子效果</span>
+                        <div>                            <span class="toy-tag">粒子效果</span>
                             <span class="toy-tag">触摸互动</span>
                         </div>
                         <div class="toy-meta">
@@ -836,11 +394,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="粒子效果 触摸互动">
+                <div class="toy-card">
                     <a href="projects/interactive-visuals/赛博流光/index.html" class="toy-link">
                         <h3 class="toy-title">赛博流光</h3>
                         <p class="toy-description">触摸屏幕创造流动的光效波纹，长按产生涟漪，点击爆发粒子，体验流光溢彩的视觉盛宴。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">粒子效果</span>
+                        <div>                            <span class="toy-tag">粒子效果</span>
                             <span class="toy-tag">触摸互动</span>
                         </div>
                         <div class="toy-meta">
@@ -848,11 +406,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="流体模拟 东方美学">
+                <div class="toy-card">
                     <a href="projects/interactive-visuals/墨韵/index.html" class="toy-link">
                         <h3 class="toy-title">墨韵</h3>
                         <p class="toy-description">模拟水墨在纸上的流动效果，创造出独特的东方美学风格的数字艺术作品。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">流体模拟</span>
+                        <div>                            <span class="toy-tag">流体模拟</span>
                             <span class="toy-tag">东方美学</span>
                         </div>
                         <div class="toy-meta">
@@ -860,11 +418,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="波纹效果 触摸互动">
+                <div class="toy-card">
                     <a href="projects/interactive-visuals/元素波纹/index.html" class="toy-link">
                         <h3 class="toy-title">元素波纹</h3>
                         <p class="toy-description">创造出动态的元素波纹效果，通过触摸互动产生美丽的视觉波纹。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">波纹效果</span>
+                        <div>                            <span class="toy-tag">波纹效果</span>
                             <span class="toy-tag">触摸互动</span>
                         </div>
                         <div class="toy-meta">
@@ -872,11 +430,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="物理模拟 触摸互动">
+                <div class="toy-card">
                     <a href="projects/interactive-visuals/微光沙盘/index.html" class="toy-link">
                         <h3 class="toy-title">微光沙盘</h3>
                         <p class="toy-description">交互式发光沙粒模拟，通过触摸和设备倾斜与沙粒互动，创造美丽的光效沙景。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
+                        <div>                            <span class="toy-tag">物理模拟</span>
                             <span class="toy-tag">触摸互动</span>
                         </div>
                         <div class="toy-meta">
@@ -884,11 +442,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="webgl 高性能">
+                <div class="toy-card">
                     <a href="projects/interactive-visuals/微光沙盘_WebGL/index.html" class="toy-link">
                         <h3 class="toy-title">微光沙盘 WebGL</h3>
                         <p class="toy-description">高性能WebGL版微光沙盘，使用GPU加速渲染，提供更流畅的体验和更清晰的视觉效果。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">WebGL</span>
+                        <div>                            <span class="toy-tag">WebGL</span>
                             <span class="toy-tag">高性能</span>
                         </div>
                         <div class="toy-meta">
@@ -896,11 +454,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="粒子效果 触摸互动">
+                <div class="toy-card">
                     <a href="projects/interactive-visuals/粒子交互-2/index.html" class="toy-link">
                         <h3 class="toy-title">粒子交互</h3>
                         <p class="toy-description">通过触摸或鼠标移动与粒子互动，创造出流动的视觉效果，粒子会对你的交互做出反应。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">粒子效果</span>
+                        <div>                            <span class="toy-tag">粒子效果</span>
                             <span class="toy-tag">触摸互动</span>
                         </div>
                         <div class="toy-meta">
@@ -914,11 +472,11 @@
                 <h2 class="category-title">物理模拟</h2>
                 <p class="category-description">基于物理原理的模拟与交互，探索自然规律和科学现象</p>
                 <div class="toys-container">
-                <div class="toy-card" data-categories="physics-simulations" data-tags="物理模拟 自定义图像">
+                <div class="toy-card">
                     <a href="projects/physics-simulations/量子弹球/index.html" class="toy-link">
                         <h3 class="toy-title">量子弹球</h3>
                         <p class="toy-description">创造你的专属弹球世界，上传自定义图片作为弹球，绘制障碍物，体验物理碰撞的乐趣。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
+                        <div>                            <span class="toy-tag">物理模拟</span>
                             <span class="toy-tag">自定义图像</span>
                         </div>
                         <div class="toy-meta">
@@ -926,11 +484,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="physics-simulations" data-tags="物理模拟 引力效果">
+                <div class="toy-card">
                     <a href="projects/physics-simulations/blackhole/index.html" class="toy-link">
                         <h3 class="toy-title">黑洞效果</h3>
                         <p class="toy-description">模拟黑洞引力场效果，创造出吸引周围物体的视觉体验。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
+                        <div>                            <span class="toy-tag">物理模拟</span>
                             <span class="toy-tag">引力效果</span>
                         </div>
                         <div class="toy-meta">
@@ -938,11 +496,24 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="physics-simulations" data-tags="物理模拟 3d交互">
+                <div class="toy-card">
+                    <a href="projects/physics-simulations/新三体模拟/index.html" class="toy-link">
+                        <h3 class="toy-title">新三体模拟</h3>
+                        <p class="toy-description">基于经典三体问题的宇宙物理模拟，优化的移动端体验，观察三个恒星在引力作用下的轨迹变化和混沌行为。</p>
+                        <div>                            <span class="toy-tag">物理模拟</span>
+                            <span class="toy-tag">3D交互</span>
+                            <span class="toy-tag">移动优化</span>
+                        </div>
+                        <div class="toy-meta">
+                            <span class="toy-status stable">稳定版</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="toy-card">
                     <a href="projects/physics-simulations/三体模拟/index.html" class="toy-link">
                         <h3 class="toy-title">三体模拟</h3>
                         <p class="toy-description">基于经典三体问题的宇宙物理模拟，观察三个恒星在引力作用下的轨迹变化和混沌行为。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">物理模拟</span>
+                        <div>                            <span class="toy-tag">物理模拟</span>
                             <span class="toy-tag">3D交互</span>
                         </div>
                         <div class="toy-meta">
@@ -956,11 +527,11 @@
                 <h2 class="category-title">创意工具</h2>
                 <p class="category-description">释放你的创造力，用数字画笔和特效创作独特的艺术作品</p>
                 <div class="toys-container">
-                <div class="toy-card" data-categories="creative-tools" data-tags="图像处理 故障艺术">
+                <div class="toy-card">
                     <a href="projects/creative-tools/赛博故障风/index.html" class="toy-link">
                         <h3 class="toy-title">赛博故障风</h3>
                         <p class="toy-description">为图片添加赛博朋克风格的故障艺术效果，可调节多种参数创造独特视觉体验。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">图像处理</span>
+                        <div>                            <span class="toy-tag">图像处理</span>
                             <span class="toy-tag">故障艺术</span>
                         </div>
                         <div class="toy-meta">
@@ -968,11 +539,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="creative-tools" data-tags="光效绘画 创意工具">
+                <div class="toy-card">
                     <a href="projects/creative-tools/光绘/index.html" class="toy-link">
                         <h3 class="toy-title">光绘</h3>
                         <p class="toy-description">使用光线绘制出美丽的图案，创造出光的艺术作品。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效绘画</span>
+                        <div>                            <span class="toy-tag">光效绘画</span>
                             <span class="toy-tag">创意工具</span>
                         </div>
                         <div class="toy-meta">
@@ -980,11 +551,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="creative-tools" data-tags="纹理生成 图案设计">
+                <div class="toy-card">
                     <a href="projects/creative-tools/织梦/index.html" class="toy-link">
                         <h3 class="toy-title">织梦</h3>
                         <p class="toy-description">编织梦幻般的图案和纹理，创造出独特的视觉艺术作品。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">纹理生成</span>
+                        <div>                            <span class="toy-tag">纹理生成</span>
                             <span class="toy-tag">图案设计</span>
                         </div>
                         <div class="toy-meta">
@@ -992,11 +563,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="creative-tools" data-tags="ai增强 创意绘画">
+                <div class="toy-card">
                     <a href="projects/creative-tools/量子涂鸦/index.html" class="toy-link">
                         <h3 class="toy-title">量子涂鸦</h3>
                         <p class="toy-description">一个结合人工智能的创意绘画工具，用户的简单涂鸦会演变成复杂的量子风格艺术。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">AI增强</span>
+                        <div>                            <span class="toy-tag">AI增强</span>
                             <span class="toy-tag">创意绘画</span>
                         </div>
                         <div class="toy-meta">
@@ -1010,11 +581,11 @@
                 <h2 class="category-title">音乐与声音</h2>
                 <p class="category-description">探索声音与视觉的结合，创造独特的听觉和视觉体验</p>
                 <div class="toys-container">
-                <div class="toy-card" data-categories="music-and-sound" data-tags="音频可视化 互动音乐">
+                <div class="toy-card">
                     <a href="projects/music-and-sound/声音雕塑/index.html" class="toy-link">
                         <h3 class="toy-title">声音雕塑</h3>
                         <p class="toy-description">通过触摸和手势创造出独特的声音和视觉效果，将声音可视化为动态雕塑。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">音频可视化</span>
+                        <div>                            <span class="toy-tag">音频可视化</span>
                             <span class="toy-tag">互动音乐</span>
                         </div>
                         <div class="toy-meta">
@@ -1022,11 +593,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="music-and-sound" data-tags="音频可视化 互动音乐">
+                <div class="toy-card">
                     <a href="projects/music-and-sound/节奏星图/index.html" class="toy-link">
                         <h3 class="toy-title">节奏星图</h3>
                         <p class="toy-description">将音乐节奏转化为星空图案的互动体验，通过触摸创造音乐和视觉效果。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">音频可视化</span>
+                        <div>                            <span class="toy-tag">音频可视化</span>
                             <span class="toy-tag">互动音乐</span>
                         </div>
                         <div class="toy-meta">
@@ -1034,11 +605,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="music-and-sound" data-tags="互动体验 音效反馈">
+                <div class="toy-card">
                     <a href="projects/music-and-sound/电子木鱼/index.html" class="toy-link">
                         <h3 class="toy-title">电子木鱼</h3>
                         <p class="toy-description">敲击木鱼积攒功德，连击有特效和音效，支持上传自定义角色图片，体验现代化的电子木鱼玩具。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">互动体验</span>
+                        <div>                            <span class="toy-tag">互动体验</span>
                             <span class="toy-tag">音效反馈</span>
                         </div>
                         <div class="toy-meta">
@@ -1053,11 +624,11 @@
                 <h2 class="category-title">视觉特效</h2>
                 <p class="category-description">令人惊叹的视觉效果和特效展示，带来视觉上的震撼体验</p>
                 <div class="toys-container">
-                <div class="toy-card" data-categories="visual-effects" data-tags="光效 3d交互">
+                <div class="toy-card">
                     <a href="projects/visual-effects/赛博闪卡/index.html" class="toy-link">
                         <h3 class="toy-title">赛博闪卡</h3>
                         <p class="toy-description">模拟全息闪卡效果，随着视角变化呈现出炫彩光泽，支持自定义图片。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效</span>
+                        <div>                            <span class="toy-tag">光效</span>
                             <span class="toy-tag">3D交互</span>
                         </div>
                         <div class="toy-meta">
@@ -1065,11 +636,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="visual-effects" data-tags="光效 3d交互">
+                <div class="toy-card">
                     <a href="projects/visual-effects/Holo-Card-Tilt/index.html" class="toy-link">
                         <h3 class="toy-title">Holo-Card Tilt</h3>
                         <p class="toy-description">上传角色图，即刻生成可随手机姿态闪彩折射的全息卡，并能导出动图/短片</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效</span>
+                        <div>                            <span class="toy-tag">光效</span>
                             <span class="toy-tag">3D交互</span>
                         </div>
                         <div class="toy-meta">
@@ -1077,11 +648,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="visual-effects" data-tags="粒子连接 动态网络">
+                <div class="toy-card">
                     <a href="projects/visual-effects/neuron/index.html" class="toy-link">
                         <h3 class="toy-title">神经元模拟</h3>
                         <p class="toy-description">模拟神经网络连接的视觉效果，创造出流动的神经元网络动画。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">粒子连接</span>
+                        <div>                            <span class="toy-tag">粒子连接</span>
                             <span class="toy-tag">动态网络</span>
                         </div>
                         <div class="toy-meta">
@@ -1089,11 +660,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="visual-effects" data-tags="光效 3d交互">
+                <div class="toy-card">
                     <a href="projects/visual-effects/镭射卡/index.html" class="toy-link">
                         <h3 class="toy-title">OC镭射卡片</h3>
                         <p class="toy-description">上传图片创建具有镭射光效的角色卡片，支持不同稀有度的光效，可通过设备倾斜或鼠标移动交互。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效</span>
+                        <div>                            <span class="toy-tag">光效</span>
                             <span class="toy-tag">3D交互</span>
                         </div>
                         <div class="toy-meta">
@@ -1101,11 +672,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="visual-effects" data-tags="线条连接 鼠标互动">
+                <div class="toy-card">
                     <a href="projects/visual-effects/spiderweb/index.html" class="toy-link">
                         <h3 class="toy-title">蜘蛛网效果</h3>
                         <p class="toy-description">创造出动态的蜘蛛网状连接效果，随鼠标移动产生互动变化。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">线条连接</span>
+                        <div>                            <span class="toy-tag">线条连接</span>
                             <span class="toy-tag">鼠标互动</span>
                         </div>
                         <div class="toy-meta">
@@ -1119,11 +690,11 @@
                 <h2 class="category-title">游戏与娱乐</h2>
                 <p class="category-description">有趣的互动游戏和娱乐体验，带来轻松愉快的时光</p>
                 <div class="toys-container">
-                <div class="toy-card" data-categories="games-and-entertainment" data-tags="emoji find 不动的">
+                <div class="toy-card">
                     <a href="projects/games-and-entertainment/find_emoji/index.html" class="toy-link">
                         <h3 class="toy-title">找到不动的 emoji</h3>
                         <p class="toy-description">有一个 emoji 是没有动的，找到它！</p>
-                        <div class="toy-tags">                            <span class="toy-tag">emoji</span>
+                        <div>                            <span class="toy-tag">emoji</span>
                             <span class="toy-tag">find</span>
                             <span class="toy-tag">不动的</span>
                         </div>
@@ -1132,11 +703,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="games-and-entertainment" data-tags="重力感应 图片特效">
+                <div class="toy-card">
                     <a href="projects/games-and-entertainment/赛博流麻-Gemini/index.html" class="toy-link">
                         <h3 class="toy-title">赛博流麻闪卡</h3>
                         <p class="toy-description">上传一张图片，体验重力感应流麻效果</p>
-                        <div class="toy-tags">                            <span class="toy-tag">重力感应</span>
+                        <div>                            <span class="toy-tag">重力感应</span>
                             <span class="toy-tag">图片特效</span>
                         </div>
                         <div class="toy-meta">
@@ -1144,11 +715,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="games-and-entertainment" data-tags="游戏 赛博风格">
+                <div class="toy-card">
                     <a href="projects/games-and-entertainment/赛博流麻/index.html" class="toy-link">
                         <h3 class="toy-title">赛博流麻</h3>
                         <p class="toy-description">赛博风格的麻将游戏体验，结合现代视觉效果的麻将玩法。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">游戏</span>
+                        <div>                            <span class="toy-tag">游戏</span>
                             <span class="toy-tag">赛博风格</span>
                         </div>
                         <div class="toy-meta">
@@ -1162,11 +733,11 @@
                 <h2 class="category-title">实用工具</h2>
                 <p class="category-description">实用的功能性工具，解决特定需求的小应用</p>
                 <div class="toys-container">
-                <div class="toy-card" data-categories="utility-tools" data-tags="辅助工具 阅读助手">
+                <div class="toy-card">
                     <a href="projects/utility-tools/放大镜后/index.html" class="toy-link">
                         <h3 class="toy-title">放大镜</h3>
                         <p class="toy-description">网页内容放大工具，帮助查看细节或辅助阅读。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">辅助工具</span>
+                        <div>                            <span class="toy-tag">辅助工具</span>
                             <span class="toy-tag">阅读助手</span>
                         </div>
                         <div class="toy-meta">
@@ -1180,11 +751,11 @@
                 <h2 class="category-title">归档项目</h2>
                 <p class="category-description">历史项目和早期版本，见证我们的发展历程</p>
                 <div class="toys-container">
-                <div class="toy-card" data-categories="archived" data-tags="光效 旧版本">
+                <div class="toy-card">
                     <a href="projects/archived/Holofoil Card/index.html" class="toy-link">
                         <h3 class="toy-title">闪卡效果 (旧版)</h3>
                         <p class="toy-description">早期版本的全息闪卡效果，已被新版赛博闪卡替代。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">光效</span>
+                        <div>                            <span class="toy-tag">光效</span>
                             <span class="toy-tag">旧版本</span>
                         </div>
                         <div class="toy-meta">
@@ -1192,11 +763,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="archived" data-tags="游戏 旧版本">
+                <div class="toy-card">
                     <a href="projects/archived/赛博流麻_old/index.html" class="toy-link">
                         <h3 class="toy-title">赛博流麻 (旧版)</h3>
                         <p class="toy-description">早期版本的赛博风格麻将游戏，已被新版赛博流麻替代。</p>
-                        <div class="toy-tags">                            <span class="toy-tag">游戏</span>
+                        <div>                            <span class="toy-tag">游戏</span>
                             <span class="toy-tag">旧版本</span>
                         </div>
                         <div class="toy-meta">
@@ -1208,7 +779,7 @@
             </div>
         </div>
         <footer>
-            <p class="copyright">© 2025 Little Shock 团队 | 所有项目均为开源网页玩具</p>
+            © 2025 Little Shock 团队 | 所有项目均为开源网页玩具
         </footer>
     </div>
 
@@ -1220,42 +791,49 @@
             const navScroll = document.querySelector('.category-nav-scroll');
             const leftArrow = document.querySelector('.nav-arrows.left');
             const rightArrow = document.querySelector('.nav-arrows.right');
-            
-            // 默认激活"全部"分类
+
+            // 默认激活第一个分类
             if (categoryTabs.length > 0 && categoryContents.length > 0) {
                 categoryTabs[0].classList.add('active');
-                document.getElementById('content-all').classList.add('active');
+                const firstCategoryId = categoryTabs[0].getAttribute('data-category');
+                document.getElementById('content-' + firstCategoryId).classList.add('active');
             }
-            
-            // 分类标签点击事件
+
+            // 分类切换功能
             categoryTabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     // 移除所有激活状态
                     categoryTabs.forEach(t => t.classList.remove('active'));
                     categoryContents.forEach(c => c.classList.remove('active'));
-                    
-                    // 激活当前分类
+
+                    // 添加当前激活状态
                     this.classList.add('active');
                     const categoryId = this.getAttribute('data-category');
                     document.getElementById('content-' + categoryId).classList.add('active');
-                    
-                    // 应用当前标签筛选
-                    applyTagFilters();
+
+                    // 滚动到视图中央
+                    const tabRect = this.getBoundingClientRect();
+                    const navRect = navScroll.getBoundingClientRect();
+                    const scrollLeft = navScroll.scrollLeft + tabRect.left - navRect.left - (navRect.width / 2) + (tabRect.width / 2);
+                    navScroll.scrollTo({
+                        left: scrollLeft,
+                        behavior: 'smooth'
+                    });
                 });
             });
-            
+
             // 导航箭头功能
             function updateArrowsVisibility() {
                 leftArrow.classList.toggle('visible', navScroll.scrollLeft > 0);
                 rightArrow.classList.toggle('visible', navScroll.scrollLeft < navScroll.scrollWidth - navScroll.clientWidth - 10);
             }
-            
+
             navScroll.addEventListener('scroll', updateArrowsVisibility);
             window.addEventListener('resize', updateArrowsVisibility);
-            
+
             // 初始检查
             updateArrowsVisibility();
-            
+
             // 左右箭头点击事件
             leftArrow.addEventListener('click', function() {
                 navScroll.scrollBy({
@@ -1263,60 +841,13 @@
                     behavior: 'smooth'
                 });
             });
-            
+
             rightArrow.addEventListener('click', function() {
                 navScroll.scrollBy({
                     left: 200,
                     behavior: 'smooth'
                 });
             });
-            
-            // 标签筛选功能
-            const tagItems = document.querySelectorAll('.tag-item');
-            const clearTagsButton = document.getElementById('clearTags');
-            const applyTagsButton = document.getElementById('applyTags');
-            
-            // 标签点击事件
-            tagItems.forEach(tag => {
-                tag.addEventListener('click', function() {
-                    this.classList.toggle('active');
-                });
-            });
-            
-            // 清除标签筛选
-            clearTagsButton.addEventListener('click', function() {
-                tagItems.forEach(tag => tag.classList.remove('active'));
-                applyTagFilters();
-            });
-            
-            // 应用标签筛选
-            applyTagsButton.addEventListener('click', applyTagFilters);
-            
-            // 应用标签筛选函数
-            function applyTagFilters() {
-                const selectedTags = Array.from(document.querySelectorAll('.tag-item.active')).map(tag => tag.getAttribute('data-tag'));
-                const toyCards = document.querySelectorAll('.toy-card');
-                
-                // 获取当前激活的分类
-                const activeCategory = document.querySelector('.category-tab.active').getAttribute('data-category');
-                
-                toyCards.forEach(card => {
-                    // 检查分类匹配
-                    const cardCategories = card.getAttribute('data-categories').split(' ');
-                    const categoryMatch = activeCategory === 'all' || cardCategories.includes(activeCategory);
-                    
-                    // 检查标签匹配
-                    const cardTags = card.getAttribute('data-tags').split(' ');
-                    const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => cardTags.includes(tag));
-                    
-                    // 显示或隐藏卡片
-                    if (categoryMatch && tagMatch) {
-                        card.style.display = '';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            }
         });
     </script>
 </body>
