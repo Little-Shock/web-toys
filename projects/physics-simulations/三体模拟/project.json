@@ -6,6 +6,7 @@
         "3D交互"
     ],
     "status": "stable",
-    "category": "物理模拟",
-    "order": 5
+    "order": 5,
+    "primary_category": "physics-simulations",
+    "secondary_categories": []
 }

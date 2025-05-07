@@ -6,6 +6,7 @@
         "赛博风格"
     ],
     "status": "beta",
-    "category": "游戏与娱乐",
-    "order": 5
+    "order": 5,
+    "primary_category": "games-and-entertainment",
+    "secondary_categories": []
 }

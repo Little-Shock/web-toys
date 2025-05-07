@@ -6,6 +6,7 @@
         "创意绘画"
     ],
     "status": "beta",
-    "category": "创意工具",
-    "order": 4
+    "order": 4,
+    "primary_category": "creative-tools",
+    "secondary_categories": []
 }

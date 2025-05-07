@@ -6,6 +6,7 @@
         "动态网络"
     ],
     "status": "stable",
-    "category": "特效展示",
-    "order": 2
+    "order": 2,
+    "primary_category": "visual-effects",
+    "secondary_categories": []
 }

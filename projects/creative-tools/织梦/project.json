@@ -6,6 +6,7 @@
         "图案设计"
     ],
     "status": "beta",
-    "category": "创意工具",
-    "order": 3
+    "order": 3,
+    "primary_category": "creative-tools",
+    "secondary_categories": []
 }

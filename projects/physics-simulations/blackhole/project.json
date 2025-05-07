@@ -6,6 +6,7 @@
         "引力效果"
     ],
     "status": "stable",
-    "category": "物理模拟",
-    "order": 4
+    "order": 4,
+    "primary_category": "physics-simulations",
+    "secondary_categories": []
 }

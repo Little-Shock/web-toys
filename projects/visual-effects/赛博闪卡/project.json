@@ -6,6 +6,7 @@
         "3D交互"
     ],
     "status": "stable",
-    "category": "视觉特效",
-    "order": 1
+    "order": 1,
+    "primary_category": "visual-effects",
+    "secondary_categories": []
 }

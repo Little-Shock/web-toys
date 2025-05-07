@@ -6,6 +6,7 @@
         "旧版本"
     ],
     "status": "deprecated",
-    "category": "归档项目",
-    "order": 1
+    "order": 1,
+    "primary_category": "archived",
+    "secondary_categories": []
 }

@@ -27,7 +27,8 @@ web-toys/
 │   ├── utility-tools/           # 实用工具类项目
 │   └── archived/                # 归档项目
 ├── tools/                       # 脚本和工具
-│   ├── generate_homepage.py  # 主页生成脚本
+│   ├── generate_homepage_with_tags.py  # 支持标签的主页生成脚本
+│   ├── manage_tags.py           # 标签管理工具
 │   ├── site_config.json         # 站点配置文件
 │   └── 开发过程/                 # 开发过程文档
 ├── common/                      # 共享资源和库
@@ -40,15 +41,18 @@ web-toys/
 
 ### 主要文件
 
-- `index.html`: 主页，展示所有项目，支持分类导航
-- `site_config.json`: 网站配置文件，包含分类定义和项目分配
-- `tools/generate_homepage_restructured.py`: 新的主页生成器脚本
+- `index.html`: 主页，展示所有项目，支持分类导航和标签筛选
+- `site_config.json`: 网站配置文件，包含分类定义、标签定义和项目分配
+- `tools/generate_homepage_with_tags.py`: 支持标签和多分类的主页生成器脚本
+- `tools/manage_tags.py`: 标签管理工具，用于标准化标签和建议次要分类
 
-每个项目目录中都包含一个 `project.json` 文件，用于定义项目的元数据，如标题、描述、标签等。
+每个项目目录中都包含一个 `project.json` 文件，用于定义项目的元数据，如标题、描述、标签、主分类、次要分类等。
 
-### 分类系统
+### 分类与标签系统
 
-项目使用以下分类组织：
+项目使用混合的分类和标签系统：
+
+#### 主要分类
 
 1. **互动视觉 (interactive-visuals)**: 通过触摸和交互创造的视觉体验
 2. **物理模拟 (physics-simulations)**: 基于物理原理的模拟与交互
@@ -58,6 +62,14 @@ web-toys/
 6. **游戏与娱乐 (games-and-entertainment)**: 互动游戏和娱乐体验
 7. **实用工具 (utility-tools)**: 功能性工具
 8. **归档项目 (archived)**: 历史项目和早期版本
+
+#### 标签系统
+
+项目可以有多个标签，用于更细粒度的分类和筛选。标签反映了项目的特性、技术或主题，如"粒子效果"、"触摸互动"、"3D交互"等。
+
+#### 多分类支持
+
+项目可以有一个主分类和多个次要分类，使项目能够在多个分类中显示，提高项目的可发现性。
 
 ## 如何提交新玩具
 
@@ -80,7 +92,20 @@ web-toys/
   "description": "简短的描述，说明玩具的功能和特点",
   "tags": ["标签1", "标签2"],
   "status": "beta",  // 可选值: "stable", "beta", "deprecated"
-  "order": 1  // 在分类中的显示顺序（可选）
+  "primary_category": "interactive-visuals",  // 主要分类ID
+  "secondary_categories": ["physics-simulations"],  // 次要分类ID列表（可选）
+  "order": 1,  // 在主分类中的显示顺序（可选）
+
+  // 版本管理相关字段
+  "version": "0.1.0",  // 语义化版本号
+  "last_updated": "2025-01-15",  // 最后更新日期
+
+  // 兼容性信息（可选）
+  "compatibility": {
+    "mobile": true,  // 是否支持移动设备
+    "desktop": true,  // 是否支持桌面设备
+    "performance_impact": "medium"  // 性能影响: "low", "medium", "high"
+  }
 }
 ```
 
@@ -94,20 +119,26 @@ projects/interactive-visuals/your-toy-name/
 
 ### 4. 更新分类配置
 
-在 `site_config.json` 文件的 `category_assignments` 部分添加你的项目分类：
+使用标签管理工具更新项目的分类和标签：
+
+```bash
+python tools/manage_tags.py
+```
+
+或者手动编辑 `site_config.json` 文件，确保项目在 `category_assignments` 部分有正确的主分类：
 
 ```json
 "category_assignments": {
-  "your-toy-name": "分类ID"  // 例如: "interactive-visuals", "creative-tools" 等
+  "your-toy-name": "primary-category-id"  // 例如: "interactive-visuals", "creative-tools" 等
 }
 ```
 
 ### 5. 生成新的主页
 
-运行主页生成器脚本更新主页：
+运行支持标签的主页生成器脚本更新主页：
 
 ```bash
-python tools/generate_homepage.py
+python tools/generate_homepage_with_tags.py
 ```
 
 ## 设计理念

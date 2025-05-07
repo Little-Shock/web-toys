@@ -1,8 +1,12 @@
 {
     "title": "粒子交互",
     "description": "通过触摸或鼠标移动与粒子互动，创造出流动的视觉效果，粒子会对你的交互做出反应。",
-    "tags": ["粒子效果", "触摸互动"],
+    "tags": [
+        "粒子效果",
+        "触摸互动"
+    ],
     "status": "stable",
-    "category": "互动视觉",
-    "order": 7
+    "order": 7,
+    "primary_category": "interactive-visuals",
+    "secondary_categories": []
 }

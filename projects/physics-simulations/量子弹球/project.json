@@ -6,6 +6,7 @@
         "自定义图像"
     ],
     "status": "stable",
-    "category": "物理模拟",
-    "order": 1
+    "order": 1,
+    "primary_category": "physics-simulations",
+    "secondary_categories": []
 }

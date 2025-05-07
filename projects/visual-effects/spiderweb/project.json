@@ -6,6 +6,7 @@
         "鼠标互动"
     ],
     "status": "stable",
-    "category": "特效展示",
-    "order": 3
+    "order": 3,
+    "primary_category": "visual-effects",
+    "secondary_categories": []
 }

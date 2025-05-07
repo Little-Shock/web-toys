@@ -6,6 +6,7 @@
         "互动音乐"
     ],
     "status": "beta",
-    "category": "音乐与声音",
-    "order": 3
+    "order": 3,
+    "primary_category": "music-and-sound",
+    "secondary_categories": []
 }

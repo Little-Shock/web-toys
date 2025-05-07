@@ -1,0 +1,57 @@
+{
+    "title": "项目名称",
+    "description": "项目描述文本",
+    "tags": ["标签1", "标签2"],
+    "status": "stable",  // 可选值: "stable", "beta", "deprecated"
+    
+    // 分类信息
+    "primary_category": "interactive-visuals",  // 主要分类ID
+    "secondary_categories": ["physics-simulations"],  // 次要分类ID列表（可选）
+    "order": 1,  // 在主分类中的显示顺序
+    
+    // 版本管理相关字段
+    "version": "1.0.0",  // 语义化版本号
+    "last_updated": "2025-01-15",  // 最后更新日期
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-01-15",
+            "changes": [
+                "首次发布",
+                "实现基本功能"
+            ]
+        },
+        {
+            "version": "0.9.0",
+            "date": "2024-12-20",
+            "changes": [
+                "Beta测试版本",
+                "修复已知问题"
+            ]
+        }
+    ],
+    
+    // 兼容性信息
+    "compatibility": {
+        "mobile": true,  // 是否支持移动设备
+        "desktop": true,  // 是否支持桌面设备
+        "min_screen_width": 320,  // 最小屏幕宽度
+        "performance_impact": "medium"  // 性能影响: "low", "medium", "high"
+    },
+    
+    // 作者信息
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    
+    // 其他元信息
+    "features": [
+        "特性1",
+        "特性2"
+    ],
+    "dependencies": [
+        "依赖1",
+        "依赖2"
+    ]
+}

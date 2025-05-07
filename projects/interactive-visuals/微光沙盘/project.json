@@ -6,6 +6,7 @@
         "触摸互动"
     ],
     "status": "beta",
-    "category": "互动视觉",
-    "order": 6
+    "order": 6,
+    "primary_category": "interactive-visuals",
+    "secondary_categories": []
 }

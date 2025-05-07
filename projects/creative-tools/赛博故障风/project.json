@@ -6,6 +6,7 @@
         "故障艺术"
     ],
     "status": "stable",
-    "category": "创意工具",
-    "order": 2
+    "order": 2,
+    "primary_category": "creative-tools",
+    "secondary_categories": []
 }

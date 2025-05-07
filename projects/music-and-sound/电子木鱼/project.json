@@ -6,7 +6,6 @@
         "音效反馈"
     ],
     "status": "stable",
-    "category": "音乐与声音",
     "order": 5,
     "version": "1.0.0",
     "last_updated": "2025-05-07",
@@ -44,5 +43,7 @@
         "图像处理",
         "本地存储",
         "移动优化"
-    ]
+    ],
+    "primary_category": "music-and-sound",
+    "secondary_categories": []
 }

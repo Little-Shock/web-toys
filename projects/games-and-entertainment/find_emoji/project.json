@@ -7,6 +7,7 @@
         "不动的"
     ],
     "status": "stable",
-    "category": "游戏与娱乐",
-    "order": 1
+    "order": 1,
+    "primary_category": "games-and-entertainment",
+    "secondary_categories": []
 }
