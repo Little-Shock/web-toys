@@ -27,9 +27,11 @@ web-toys/
 │   ├── utility-tools/           # 实用工具类项目
 │   └── archived/                # 归档项目
 ├── tools/                       # 脚本和工具
-│   ├── generate_homepage_with_tags.py  # 支持标签的主页生成脚本
+│   ├── generate_homepage_simplified.py  # 支持精简标签系统的主页生成脚本
+│   ├── generate_homepage_with_tags.py  # 支持完整标签系统的主页生成脚本
 │   ├── manage_tags.py           # 标签管理工具
 │   ├── site_config.json         # 站点配置文件
+│   ├── site_config_simplified.json  # 精简标签系统配置文件
 │   └── 开发过程/                 # 开发过程文档
 ├── common/                      # 共享资源和库
 │   ├── js/                      # 共享JavaScript库
@@ -43,8 +45,10 @@ web-toys/
 
 - `index.html`: 主页，展示所有项目，支持分类导航和标签筛选
 - `site_config.json`: 网站配置文件，包含分类定义、标签定义和项目分配
-- `tools/generate_homepage_with_tags.py`: 支持标签和多分类的主页生成器脚本
+- `tools/generate_homepage_simplified.py`: 支持精简标签系统的主页生成器脚本
+- `tools/generate_homepage_with_tags.py`: 支持完整标签和多分类的主页生成器脚本
 - `tools/manage_tags.py`: 标签管理工具，用于标准化标签和建议次要分类
+- `tools/site_config_simplified.json`: 包含精简标签系统的站点配置文件
 
 每个项目目录中都包含一个 `project.json` 文件，用于定义项目的元数据，如标题、描述、标签、主分类、次要分类等。
 
@@ -66,6 +70,19 @@ web-toys/
 #### 标签系统
 
 项目可以有多个标签，用于更细粒度的分类和筛选。标签反映了项目的特性、技术或主题，如"粒子效果"、"触摸互动"、"3D交互"等。
+
+为了保持界面简洁和提高用户体验，特别是在移动设备上，我们将标签系统精简为10个核心标签：
+
+1. **触摸互动**：需要用户触摸或点击交互的项目
+2. **粒子效果**：使用粒子系统创造视觉效果的项目
+3. **3D交互**：提供三维空间交互体验的项目
+4. **物理模拟**：模拟现实世界物理规律的项目
+5. **光效**：以光线和发光效果为特色的项目
+6. **音频可视化**：将声音转化为视觉效果的项目
+7. **互动音乐**：允许用户创造或交互音乐的项目
+8. **移动优化**：专为移动设备优化的项目
+9. **游戏**：具有游戏玩法元素的项目
+10. **创意绘画**：允许用户创作视觉艺术的项目
 
 #### 多分类支持
 
@@ -138,8 +155,10 @@ python tools/manage_tags.py
 运行支持标签的主页生成器脚本更新主页：
 
 ```bash
-python tools/generate_homepage_with_tags.py
+python tools/generate_homepage_simplified.py
 ```
+
+这个脚本会生成一个优化的主页，包含精简的标签系统，特别适合移动设备浏览。
 
 ## 设计理念
 
