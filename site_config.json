@@ -3,7 +3,7 @@
   "site_description": "创意网页玩具合集 - 探索互动视觉与声音的奇妙世界",
   "team_name": "Little Shock",
   "team_link": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
-  "copyright": "© 2023-2024 Little Shock 团队 | 所有项目均为开源网页玩具",
+  "copyright": "© 2025 Little Shock 团队 | 所有项目均为开源网页玩具",
 
   "categories": [
     {
@@ -71,6 +71,7 @@
     "微光沙盘": "interactive-visuals",
     "微光沙盘_WebGL": "interactive-visuals",
     "粒子花园": "interactive-visuals",
+    "粒子交互-2": "interactive-visuals",
 
     "量子弹球": "physics-simulations",
     "blackhole": "physics-simulations",
