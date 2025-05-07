@@ -13,13 +13,36 @@
 
 ## 项目结构
 
-项目采用分类系统组织，所有分类和项目分配都集中在 `site_config.json` 文件中管理。
+项目采用分类目录结构，便于管理和维护：
+
+```
+web-toys/
+├── projects/                    # 所有项目目录
+│   ├── interactive-visuals/     # 互动视觉类项目
+│   ├── physics-simulations/     # 物理模拟类项目
+│   ├── creative-tools/          # 创意工具类项目
+│   ├── music-and-sound/         # 音乐与声音类项目
+│   ├── visual-effects/          # 视觉特效类项目
+│   ├── games-and-entertainment/ # 游戏与娱乐类项目
+│   ├── utility-tools/           # 实用工具类项目
+│   └── archived/                # 归档项目
+├── tools/                       # 脚本和工具
+│   ├── generate_homepage.py  # 主页生成脚本
+│   ├── site_config.json         # 站点配置文件
+│   └── 开发过程/                 # 开发过程文档
+├── common/                      # 共享资源和库
+│   ├── js/                      # 共享JavaScript库
+│   ├── css/                     # 共享CSS样式
+│   ├── assets/                  # 共享资源文件
+│   └── templates/               # 共享模板
+└── index.html                   # 主页
+```
 
 ### 主要文件
 
 - `index.html`: 主页，展示所有项目，支持分类导航
 - `site_config.json`: 网站配置文件，包含分类定义和项目分配
-- `generate_homepage_new.py`: 主页生成器脚本
+- `tools/generate_homepage_restructured.py`: 新的主页生成器脚本
 
 每个项目目录中都包含一个 `project.json` 文件，用于定义项目的元数据，如标题、描述、标签等。
 
@@ -61,7 +84,15 @@
 }
 ```
 
-### 3. 更新分类配置
+### 3. 将项目放入正确的分类目录
+
+将你的项目目录放入对应的分类目录中，例如：
+
+```
+projects/interactive-visuals/your-toy-name/
+```
+
+### 4. 更新分类配置
 
 在 `site_config.json` 文件的 `category_assignments` 部分添加你的项目分类：
 
@@ -71,12 +102,12 @@
 }
 ```
 
-### 4. 生成新的主页
+### 5. 生成新的主页
 
 运行主页生成器脚本更新主页：
 
 ```bash
-python generate_homepage_new.py
+python tools/generate_homepage.py
 ```
 
 ## 设计理念

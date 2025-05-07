@@ -15,16 +15,28 @@ STATUS_TEXT = {
 
 def read_site_config():
     """读取站点配置文件"""
-    try:
-        with open('site_config.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"读取站点配置文件时出错: {e}")
-        return None
+    # 首先尝试读取根目录的配置文件
+    if os.path.exists('site_config.json'):
+        try:
+            with open('site_config.json', 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"读取根目录站点配置文件时出错: {e}")
 
-def read_project_config(project_dir):
+    # 如果根目录没有，尝试读取tools目录的配置文件
+    if os.path.exists('tools/site_config.json'):
+        try:
+            with open('tools/site_config.json', 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"读取tools目录站点配置文件时出错: {e}")
+
+    print("无法找到站点配置文件")
+    return None
+
+def read_project_config(project_path):
     """读取项目配置文件"""
-    config_path = os.path.join(project_dir, "project.json")
+    config_path = os.path.join(project_path, "project.json")
     if os.path.exists(config_path):
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
@@ -34,16 +46,30 @@ def read_project_config(project_dir):
             return None
     return None
 
-def generate_project_card(project_dir, config):
+def generate_project_card(project_path, config):
     """生成项目卡片HTML"""
-    title = config.get("title", os.path.basename(project_dir))
+    # 获取项目目录名
+    project_dir = os.path.basename(project_path)
+
+    title = config.get("title", project_dir)
     description = config.get("description", "")
     tags = config.get("tags", [])
     status = config.get("status", "beta")
 
+    # 获取版本信息
+    version = config.get("version", "")
+    last_updated = config.get("last_updated", "")
+
+    # 构建版本信息字符串
+    version_info = ""
+    if version:
+        version_info = f"v{version}"
+        if last_updated:
+            version_info += f" ({last_updated})"
+
     # 构建项目卡片HTML
     card_html = f"""                <div class="toy-card">
-                    <a href="{project_dir}/index.html" class="toy-link">
+                    <a href="{project_path}/index.html" class="toy-link">
                         <h3 class="toy-title">{title}</h3>
                         <p class="toy-description">{description}</p>
                         <div>"""
@@ -52,10 +78,19 @@ def generate_project_card(project_dir, config):
     for tag in tags:
         card_html += f'                            <span class="toy-tag">{tag}</span>\n'
 
-    # 添加状态
+    # 添加状态和版本信息
     status_text = STATUS_TEXT.get(status, "测试版")
     card_html += f"""                        </div>
-                        <div class="toy-status {status}">{status_text}</div>
+                        <div class="toy-meta">
+                            <span class="toy-status {status}">{status_text}</span>"""
+
+    # 如果有版本信息，添加到卡片中
+    if version_info:
+        card_html += f"""
+                            <span class="toy-version">{version_info}</span>"""
+
+    card_html += """
+                        </div>
                     </a>
                 </div>"""
     return card_html
@@ -72,30 +107,38 @@ def generate_homepage():
     categories = site_config.get("categories", [])
     category_assignments = site_config.get("category_assignments", {})
 
-    # 获取所有项目目录
-    project_dirs = [d for d in os.listdir('.') if os.path.isdir(d) and not d.startswith('.') and d != "开发过程"]
-
     # 按分类组织项目
     projects_by_category = defaultdict(list)
 
-    for project_dir in project_dirs:
-        config = read_project_config(project_dir)
-        if config:
-            # 从中央配置获取分类ID
-            category_id = category_assignments.get(project_dir, "other")
+    # 项目根目录
+    projects_root = "projects"
 
-            # 如果找不到分类，使用项目配置中的分类
-            if category_id == "other" and "category" in config:
-                old_category = config.get("category")
-                # 尝试根据名称匹配分类
-                for cat in categories:
-                    if cat["name"] == old_category:
-                        category_id = cat["id"]
-                        break
+    # 遍历分类目录
+    for category_dir in os.listdir(projects_root):
+        category_path = os.path.join(projects_root, category_dir)
+        if os.path.isdir(category_path):
+            # 找到对应的分类ID
+            category_id = None
+            for cat in categories:
+                if cat["id"] == category_dir:
+                    category_id = category_dir
+                    break
 
-            # 获取项目在分类中的顺序
-            order = config.get("order", 999)
-            projects_by_category[category_id].append((project_dir, config, order))
+            if not category_id:
+                print(f"警告: 找不到目录 {category_dir} 对应的分类ID")
+                continue
+
+            # 遍历该分类下的所有项目
+            for project_dir in os.listdir(category_path):
+                project_path = os.path.join(category_path, project_dir)
+                if os.path.isdir(project_path):
+                    config = read_project_config(project_path)
+                    if config:
+                        # 获取项目在分类中的顺序
+                        order = config.get("order", 999)
+                        projects_by_category[category_id].append((project_path, config, order))
+                    else:
+                        print(f"警告: 项目 {project_path} 没有配置文件或配置文件无效")
 
     # 开始生成HTML
     html = []
@@ -397,8 +440,14 @@ def generate_homepage():
             margin-bottom: 5px;
         }
 
-        .toy-status {
+        .toy-meta {
             margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toy-status {
             font-size: 0.85rem;
             color: var(--accent-color);
         }
@@ -413,6 +462,12 @@ def generate_homepage():
 
         .toy-status.deprecated {
             color: #757575;
+        }
+
+        .toy-version {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: right;
         }
 
         footer {
@@ -496,144 +551,93 @@ def generate_homepage():
                 <div class="toys-container">""")
 
             # 生成每个项目的卡片
-            for project_dir, config, _ in projects:
-                html.append(generate_project_card(project_dir, config))
+            for project_path, config, _ in projects:
+                html.append(generate_project_card(project_path, config))
 
             html.append("""                </div>
             </div>""")
 
-    html.append("        </div>")
+    html.append("""        </div>
+        <footer>""")
+    html.append(f'            {site_config.get("copyright", "© 2025 Little Shock 团队 | 所有项目均为开源网页玩具")}')
+    html.append("""        </footer>
+    </div>
 
-    # 添加页脚
-    html.append(f"""        <footer>
-            <p>{site_config.get("copyright", "© 2025 Little Shock 团队 | 所有项目均为开源网页玩具")}</p>
-        </footer>
-    </div>""")
-
-    # 添加脚本
-    html.append("""    <script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化分类标签和内容
-            const tabs = document.querySelectorAll('.category-tab');
-            const contents = document.querySelectorAll('.category-content');
+            // 获取所有分类标签和内容区域
+            const categoryTabs = document.querySelectorAll('.category-tab');
+            const categoryContents = document.querySelectorAll('.category-content');
             const navScroll = document.querySelector('.category-nav-scroll');
             const leftArrow = document.querySelector('.nav-arrows.left');
             const rightArrow = document.querySelector('.nav-arrows.right');
 
             // 默认激活第一个分类
-            if (tabs.length > 0) {
-                tabs[0].classList.add('active');
-                contents[0].classList.add('active');
+            if (categoryTabs.length > 0 && categoryContents.length > 0) {
+                categoryTabs[0].classList.add('active');
+                const firstCategoryId = categoryTabs[0].getAttribute('data-category');
+                document.getElementById('content-' + firstCategoryId).classList.add('active');
             }
 
-            // 标签点击事件
-            tabs.forEach((tab, index) => {
-                tab.addEventListener('click', () => {
+            // 分类切换功能
+            categoryTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
                     // 移除所有激活状态
-                    tabs.forEach(t => t.classList.remove('active'));
-                    contents.forEach(c => c.classList.remove('active'));
+                    categoryTabs.forEach(t => t.classList.remove('active'));
+                    categoryContents.forEach(c => c.classList.remove('active'));
 
-                    // 激活当前标签和内容
-                    tab.classList.add('active');
-                    contents[index].classList.add('active');
+                    // 添加当前激活状态
+                    this.classList.add('active');
+                    const categoryId = this.getAttribute('data-category');
+                    document.getElementById('content-' + categoryId).classList.add('active');
 
-                    // 滚动到视图中
-                    tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    // 滚动到视图中央
+                    const tabRect = this.getBoundingClientRect();
+                    const navRect = navScroll.getBoundingClientRect();
+                    const scrollLeft = navScroll.scrollLeft + tabRect.left - navRect.left - (navRect.width / 2) + (tabRect.width / 2);
+                    navScroll.scrollTo({
+                        left: scrollLeft,
+                        behavior: 'smooth'
+                    });
                 });
             });
 
-            // 检查是否需要显示导航箭头
-            function checkScrollArrows() {
-                if (navScroll.scrollWidth > navScroll.clientWidth) {
-                    leftArrow.classList.add('visible');
-                    rightArrow.classList.add('visible');
-                } else {
-                    leftArrow.classList.remove('visible');
-                    rightArrow.classList.remove('visible');
-                }
-
-                // 检查滚动位置
-                if (navScroll.scrollLeft <= 10) {
-                    leftArrow.style.opacity = '0.3';
-                } else {
-                    leftArrow.style.opacity = '1';
-                }
-
-                if (navScroll.scrollLeft + navScroll.clientWidth >= navScroll.scrollWidth - 10) {
-                    rightArrow.style.opacity = '0.3';
-                } else {
-                    rightArrow.style.opacity = '1';
-                }
+            // 导航箭头功能
+            function updateArrowsVisibility() {
+                leftArrow.classList.toggle('visible', navScroll.scrollLeft > 0);
+                rightArrow.classList.toggle('visible', navScroll.scrollLeft < navScroll.scrollWidth - navScroll.clientWidth - 10);
             }
+
+            navScroll.addEventListener('scroll', updateArrowsVisibility);
+            window.addEventListener('resize', updateArrowsVisibility);
 
             // 初始检查
-            checkScrollArrows();
-            window.addEventListener('resize', checkScrollArrows);
+            updateArrowsVisibility();
 
-            // 导航箭头点击事件
-            leftArrow.addEventListener('click', () => {
-                navScroll.scrollBy({ left: -200, behavior: 'smooth' });
+            // 左右箭头点击事件
+            leftArrow.addEventListener('click', function() {
+                navScroll.scrollBy({
+                    left: -200,
+                    behavior: 'smooth'
+                });
             });
 
-            rightArrow.addEventListener('click', () => {
-                navScroll.scrollBy({ left: 200, behavior: 'smooth' });
+            rightArrow.addEventListener('click', function() {
+                navScroll.scrollBy({
+                    left: 200,
+                    behavior: 'smooth'
+                });
             });
-
-            // 滚动事件监听
-            navScroll.addEventListener('scroll', checkScrollArrows);
-
-            // 触摸滑动支持
-            let touchStartX = 0;
-            let touchEndX = 0;
-
-            document.querySelector('.content-area').addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-            }, false);
-
-            document.querySelector('.content-area').addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            }, false);
-
-            function handleSwipe() {
-                const threshold = 100; // 最小滑动距离
-
-                if (touchEndX < touchStartX - threshold) {
-                    // 向左滑动 - 下一个分类
-                    const activeTab = document.querySelector('.category-tab.active');
-                    const nextTab = activeTab.nextElementSibling;
-                    if (nextTab) {
-                        nextTab.click();
-                    }
-                }
-
-                if (touchEndX > touchStartX + threshold) {
-                    // 向右滑动 - 上一个分类
-                    const activeTab = document.querySelector('.category-tab.active');
-                    const prevTab = activeTab.previousElementSibling;
-                    if (prevTab) {
-                        prevTab.click();
-                    }
-                }
-            }
         });
     </script>
 </body>
 </html>""")
 
-    # 写入文件
+    # 将HTML写入文件
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write('\n'.join(html))
 
     print("主页生成完成！")
 
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) > 1 and sys.argv[1] == "--update-categories":
-        print("使用 site_config.json 中的分类配置更新项目分类")
-        # 这里可以添加更新项目分类的代码
-    else:
-        # 生成主页
-        generate_homepage()
-        print("使用 --update-categories 参数可以更新项目分类")
+    generate_homepage()
