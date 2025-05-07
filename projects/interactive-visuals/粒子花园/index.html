@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>粒子花园 - v2.8</title>
+    <title>粒子花园 - v2.9.7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
@@ -12,36 +12,34 @@
             font-family: 'Noto Sans SC', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #000010; /* 更深的宇宙背景 */
+            background-color: #000010; 
             color: #e0e0e0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* 从顶部开始布局 */
+            justify-content: flex-start; 
             min-height: 100vh;
             overflow-x: hidden; 
             text-align: center;
-            padding-top: 10px; /* 给顶部留出一些空间 */
+            padding-top: 10px; 
         }
         canvas {
             display: block;
-            background-color: #0a0826; /* 夏夜星空基础色 */
             border-radius: 8px;
             box-shadow: 0 0 20px rgba(0, 180, 255, 0.4);
             cursor: crosshair;
             width: 95%; 
             max-width: 800px; 
-            /* aspect-ratio: 16 / 9; REMOVED to allow more flexible height */
-            height: 65vh; /* MODIFIED: Increased height relative to viewport height */
-            max-height: 500px; /* MODIFIED: Set a max-height for very tall screens, can be adjusted */
+            height: 65vh; 
+            max-height: 500px; 
             margin-bottom: 10px;
         }
         #title-banner {
-            font-size: 1.6rem; /* Further reduce title font size */
+            font-size: 1.6rem; 
             font-weight: 700;
             color: #ffffff;
-            margin-top: 25px; /* Adjusted for back-link */
-            margin-bottom: 8px; /* Reduced margin */
+            margin-top: 25px; 
+            margin-bottom: 8px; 
             text-shadow: 0 0 8px #00ffff, 0 0 15px #00ffff;
         }
         .back-link {
@@ -66,11 +64,11 @@
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 7px 14px; /* Slightly smaller button */
+            padding: 7px 14px; 
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.85rem; /* Smaller font */
-            margin-bottom: 8px; /* Reduced margin */
+            font-size: 0.85rem; 
+            margin-bottom: 8px; 
             transition: background-color 0.3s ease;
             z-index: 999; 
         }
@@ -79,13 +77,13 @@
         }
 
         #controlsPanelWrapper { 
-            width: 95%; /* Match canvas width for alignment */
-            max-width: 800px; /* Match canvas max-width */
+            width: 95%; 
+            max-width: 800px; 
             overflow: hidden;
             transition: max-height 0.5s ease-in-out, padding-top 0.5s ease-in-out, padding-bottom 0.5s ease-in-out, opacity 0.5s ease-in-out;
             max-height: 1000px; 
             opacity: 1;
-            margin-bottom: 10px; /* Space before info text */
+            margin-bottom: 10px; 
         }
         #controlsPanelWrapper.collapsed {
             max-height: 0;
@@ -99,9 +97,9 @@
         .controls-container { 
             display: flex;
             flex-wrap: wrap;
-            gap: 6px; /* Reduced gap */
+            gap: 6px; 
             justify-content: center;
-            padding: 10px; /* Reduced padding */
+            padding: 10px; 
             background-color: rgba(25, 25, 55, 0.85);
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.4);
@@ -110,26 +108,45 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            padding: 5px; /* Reduced padding */
+            padding: 5px; 
             background-color: rgba(40, 40, 70, 0.7);
             border-radius: 6px;
         }
         .control-group label, .control-group .label-like {
-            margin-bottom: 3px; /* Reduced margin */
-            font-size: 0.7rem; /* Further reduced font size */
+            margin-bottom: 3px; 
+            font-size: 0.7rem; 
             color: #c0c0e0;
         }
         .controls-container input[type="color"],
         .controls-container input[type="range"],
         .controls-container select,
-        .controls-container button {
+        .controls-container button,
+        .controls-container input[type="file"] { 
             padding: 2px; 
             border-radius: 3px;
             border: 1px solid #505070;
             background-color: #2a2a4e;
             color: #e0e0e0;
             font-size: 0.7rem; 
+            max-width: 120px; 
         }
+        .controls-container input[type="file"]::-webkit-file-upload-button { 
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 2px 5px;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .controls-container input[type="file"]::file-selector-button { 
+             background: #007bff;
+            color: white;
+            border: none;
+            padding: 2px 5px;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
         .controls-container input[type="color"] {
             width: 35px; 
             height: 22px;
@@ -187,8 +204,8 @@
         }
 
         .info-text {
-            margin-top: 5px; /* Reduced margin */
-            font-size: 0.75rem; /* Reduced font size */
+            margin-top: 5px; 
+            font-size: 0.75rem; 
             color: #a0a0c0;
         }
     </style>
@@ -239,6 +256,21 @@
                 <label for="windStrength">风力 (-10 至 10):</label>
                 <input type="range" id="windStrength" min="-10" max="10" value="0" step="0.1">
             </div>
+             <div class="control-group">
+                <label for="backgroundImageUpload">上传背景图:</label>
+                <input type="file" id="backgroundImageUpload" accept="image/*">
+            </div>
+            <div class="control-group">
+                 <label for="removeBgImageButton" style="opacity:0;">&nbsp;</label> 
+                <button id="removeBgImageButton">移除背景图</button>
+            </div>
+            <div class="control-group">
+                <span class="label-like">显示星空:</span>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="starrySkyToggle" checked>
+                    <label for="starrySkyToggle">Toggle Starry Sky</label>
+                </div>
+            </div>
             <div class="control-group">
                 <span class="label-like">鼠标尾迹:</span>
                 <div class="toggle-switch">
@@ -280,11 +312,28 @@
         const ctx = canvas.getContext('2d');
         const controlsToggleButton = document.getElementById('controlsToggleButton');
         const controlsPanelWrapper = document.getElementById('controlsPanelWrapper'); 
+        const backgroundImageUpload = document.getElementById('backgroundImageUpload');
+        const removeBgImageButton = document.getElementById('removeBgImageButton');
+        const starrySkyToggle = document.getElementById('starrySkyToggle');
 
-        const synth = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: "triangle" },
-            envelope: { attack: 0.005, decay: 0.15, sustain: 0.01, release: 0.25 },
-            volume: -12
+        const launchWhistle = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.01, decay: 0.3, sustain: 0.05, release: 0.2 },
+            volume: -15
+        }).toDestination();
+
+        const explosionBoom = new Tone.MembraneSynth({
+            pitchDecay: 0.08,
+            octaves: 5,
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.001, decay: 0.5, sustain: 0.01, release: 0.5, attackCurve: 'exponential'},
+            volume: -10
+        }).toDestination();
+
+        const crackleNoise = new Tone.NoiseSynth({
+            noise: { type: 'white' }, 
+            envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 }, 
+            volume: -25
         }).toDestination();
         
         let currentParticleColor = document.getElementById('particleColor').value;
@@ -297,6 +346,8 @@
         let colorShiftEnabled = document.getElementById('colorShiftToggle').checked;
         let randomizeColorAfterBloom = document.getElementById('randomizeColorAfterBloomToggle').checked;
         let randomizePatternAfterBloom = document.getElementById('randomizePatternAfterBloomToggle').checked;
+        let starrySkyEnabled = starrySkyToggle.checked; 
+        let customBgImage = null; 
 
         let bloomPatternOptions = [];
         function updateBloomPatternOptions() {
@@ -309,6 +360,7 @@
         let mouseParticles = [];
         let stars = [];
         const NUM_STARS = 100;
+        const DEFAULT_CANVAS_BG_COLOR = '#0a0826'; 
 
         function setupStars() {
             stars = [];
@@ -337,8 +389,6 @@
         }
         
         function resizeCanvas() {
-            // CSS handles the width and aspect ratio / initial height.
-            // JS needs to set the internal drawing dimensions.
             canvas.width = canvas.clientWidth;
             canvas.height = canvas.clientHeight;
             setupStars(); 
@@ -413,7 +463,9 @@
                 this.life = this.initialLife;
                 
                 this.gravity = 0.025 * (isMouseParticle ? 0.4 : 1);
-                this.decay = (Math.random() * 0.005 + 0.008) / Math.max(0.1, longevityFactor) * (isMouseParticle ? 1.6 : 1) ; 
+                // *** MODIFIED: Simplified decay for testing ***
+                // this.decay = (Math.random() * 0.005 + 0.008) / Math.max(0.1, longevityFactor) * (isMouseParticle ? 1.6 : 1) ; 
+                this.decay = 0; // Let alpha be solely controlled by life fraction for now
                 this.colorShiftSpeed = (Math.random() - 0.5) * 0.006;
 
                 let baseSpeed = (Math.random() * (flowerDensity / 28) + 1.2) * (isMouseParticle ? 0.5 : 1);
@@ -487,30 +539,54 @@
                     this.h = (this.h + this.colorShiftSpeed + 1) % 1;
                 }
                 
-                const fadeStartFraction = 0.7;
-                const fadeDuration = this.initialLife * (1 - fadeStartFraction);
-
-                if (fadeDuration > 0 && this.life < fadeDuration ) { 
-                     this.alpha = (this.life / fadeDuration) * (this.isMouseParticle ? 0.5 : 1.0);
-                } else if (fadeDuration <= 0) { 
-                     this.alpha = (this.isMouseParticle ? 0.5 : 1.0); 
-                } else { 
-                     this.alpha = (this.isMouseParticle ? 0.5 : 1.0);
+                // *** MODIFIED: Simplified linear alpha decay ***
+                if (this.initialLife > 0) {
+                     this.alpha = Math.max(0, (this.life / this.initialLife) * (this.isMouseParticle ? 0.6 : 1.0) );
+                } else {
+                    this.alpha = 0; // Instantly gone if initialLife is 0
                 }
-                this.alpha = Math.max(0, this.alpha - this.decay);
+                // Removed the constant this.decay subtraction for now
+                
                 this.life--;
             }
 
             draw() {
                 const [r_val, g_val, b_val] = hslToRgb(this.h, this.s, this.l); 
                 ctx.beginPath();
-                ctx.globalCompositeOperation = 'lighter';
+                
+                const originalCompositeOperation = ctx.globalCompositeOperation;
+                if (customBgImage && customBgImage.complete) { 
+                    ctx.globalCompositeOperation = 'source-over'; 
+                } else {
+                    ctx.globalCompositeOperation = 'lighter'; 
+                }
+                
                 const sizeMultiplier = this.initialLife > 0 ? Math.max(0, this.life / this.initialLife) : 0;
                 ctx.arc(this.x, this.y, Math.max(0.5, this.size * sizeMultiplier), 0, Math.PI * 2, false);
                 ctx.fillStyle = `rgba(${r_val}, ${g_val}, ${b_val}, ${Math.max(0, this.alpha)})`;
                 ctx.fill();
-                ctx.globalCompositeOperation = 'source-over';
+
+                ctx.globalCompositeOperation = originalCompositeOperation; 
             }
+        }
+
+        function playFireworkSound() {
+            try {
+                const now = Tone.now();
+                launchWhistle.triggerAttackRelease("C6", "0.3s", now); 
+                launchWhistle.frequency.rampTo("C7", 0.3, now); 
+
+                const boomDelay = 0.2 + Math.random() * 0.1;
+                explosionBoom.triggerAttackRelease("C2", "0.8s", now + boomDelay);
+
+                const numCrackles = 5 + Math.floor(Math.random() * 5);
+                for (let i = 0; i < numCrackles; i++) {
+                    const crackleDelay = boomDelay + 0.05 + Math.random() * 0.2;
+                    const crackleVolume = -25 - Math.random() * 10; 
+                    crackleNoise.volume.value = crackleVolume;
+                    crackleNoise.triggerAttackRelease("0.05s", now + crackleDelay);
+                }
+            } catch (e) { console.warn("Tone.js error: ", e); }
         }
 
         function createFlower(x, y) {
@@ -530,15 +606,7 @@
             for (let i = 0; i < particleCount; i++) {
                 particles.push(new Particle(x, y, currentParticleColor, currentParticleSizeFactor, currentFlowerDensity, currentBloomPattern, currentParticleLongevity));
             }
-            try {
-                let noteBase = 300;
-                if (currentBloomPattern === 'willow') noteBase = 200;
-                else if (currentBloomPattern === 'chrysanthemum' || currentBloomPattern === 'peony') noteBase = 400;
-                else if (currentBloomPattern === 'ring') noteBase = 500;
-
-                const note = Tone.Frequency(Math.random() * 150 + noteBase, "hz").toNote();
-                synth.triggerAttackRelease(note, "16n", Tone.now() + Math.random() * 0.05);
-            } catch (e) { console.warn("Tone.js error: ", e); }
+            playFireworkSound(); 
         }
         
         function createMouseTrailParticle(x, y) {
@@ -549,10 +617,19 @@
         }
 
         function animate() {
-            const trailOverlayAlpha = Math.max(0.04, 0.15 - currentParticleLongevity * 0.025);
-            ctx.fillStyle = `rgba(10, 8, 38, ${trailOverlayAlpha})`; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            if(canvas.width && canvas.height) drawStars(); 
+            // *** MODIFIED: Simplified background drawing logic ***
+            if (customBgImage && customBgImage.complete) {
+                // Draw custom background directly, NO overlay for trails
+                ctx.drawImage(customBgImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                // Default background logic (with trails and stars)
+                const trailOverlayAlphaForDefaultBg = Math.max(0.04, 0.15 - currentParticleLongevity * 0.025);
+                ctx.fillStyle = `rgba(10, 8, 38, ${trailOverlayAlphaForDefaultBg})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                if (starrySkyEnabled && canvas.width && canvas.height) {
+                     drawStars();
+                }
+            }
 
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
@@ -586,7 +663,6 @@
             }
         }
 
-        // Global event listeners (v2.2 style)
         canvas.addEventListener('click', handleInteraction);
         canvas.addEventListener('touchstart', handleInteraction, { passive: false });
         canvas.addEventListener('mousemove', (event) => {
@@ -614,15 +690,53 @@
         document.getElementById('colorShiftToggle').addEventListener('change', (e) => colorShiftEnabled = e.target.checked);
         document.getElementById('randomizeColorAfterBloomToggle').addEventListener('change', (e) => randomizeColorAfterBloom = e.target.checked);
         document.getElementById('randomizePatternAfterBloomToggle').addEventListener('change', (e) => randomizePatternAfterBloom = e.target.checked);
+        
+        starrySkyToggle.addEventListener('change', (e) => {
+            starrySkyEnabled = e.target.checked;
+            if (starrySkyEnabled) {
+                 customBgImage = null; 
+                 canvas.style.backgroundColor = DEFAULT_CANVAS_BG_COLOR; 
+            }
+        });
+
+        backgroundImageUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) { 
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = () => {
+                        customBgImage = img; 
+                        starrySkyToggle.checked = false; 
+                        starrySkyEnabled = false;
+                        canvas.style.backgroundColor = 'transparent'; 
+                    };
+                    img.onerror = () => {
+                        console.error("Error loading image.");
+                        customBgImage = null; 
+                        canvas.style.backgroundColor = DEFAULT_CANVAS_BG_COLOR;
+                    };
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                 backgroundImageUpload.value = null; 
+                 alert("请选择一个图片文件。");
+            }
+        });
+
+        removeBgImageButton.addEventListener('click', function() {
+            customBgImage = null; 
+            canvas.style.backgroundColor = DEFAULT_CANVAS_BG_COLOR; 
+            starrySkyToggle.checked = true; 
+            starrySkyEnabled = true;
+            backgroundImageUpload.value = null; 
+        });
+        
         document.getElementById('clearCanvasButton').addEventListener('click', () => {
             particles = [];
             mouseParticles = [];
-            const canvasBgColor = getComputedStyle(canvas).backgroundColor || '#0a0826';
-            ctx.fillStyle = canvasBgColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            if (canvas.width && canvas.height) drawStars();
         });
-        // --- End of v2.2 style variable initialization and listeners ---
 
         // Collapsible controls logic
         if(controlsToggleButton && controlsPanelWrapper) {
@@ -635,7 +749,7 @@
                 }
             });
 
-            if (window.innerWidth < 768) { // Default collapse on mobile
+            if (window.innerWidth < 768) { 
                 controlsPanelWrapper.classList.add('collapsed');
                 controlsToggleButton.textContent = '显示选项';
             }
@@ -647,7 +761,8 @@
             updateBloomPatternOptions();
             resizeCanvas(); 
             
-            // Re-set DOM control values from JS variables (v2.2 style)
+            canvas.style.backgroundColor = DEFAULT_CANVAS_BG_COLOR; 
+
             document.getElementById('particleColor').value = currentParticleColor;
             document.getElementById('particleSize').value = currentParticleSizeFactor;
             document.getElementById('flowerDensity').value = currentFlowerDensity;
@@ -658,10 +773,11 @@
             document.getElementById('colorShiftToggle').checked = colorShiftEnabled;
             document.getElementById('randomizeColorAfterBloomToggle').checked = randomizeColorAfterBloom;
             document.getElementById('randomizePatternAfterBloomToggle').checked = randomizePatternAfterBloom;
+            starrySkyToggle.checked = starrySkyEnabled;
             
             animate();
         };
 
     </script>
 </body>
-</ht
+</html>
