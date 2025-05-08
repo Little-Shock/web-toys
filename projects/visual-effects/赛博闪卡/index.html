@@ -20,7 +20,7 @@
 <body>
 
 <!-- 返回主菜单链接 -->
-<a href="../index.html" class="back-link">返回主菜单</a>
+<a href="/" class="back-link" id="backToHome">返回主菜单</a>
 
 <!-- 简洁 UI：中央一个上传按钮 -->
 <div id="ui">
@@ -150,5 +150,6 @@ window.addEventListener('deviceorientation', e=>{
 
 function windowResized(){ resizeCanvas(windowWidth, windowHeight); }
 </script>
+<script src="../../js/back-link-fix.js"></script>
 </body>
 </html>
