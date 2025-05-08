@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>宇宙星空</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            margin: 0;
+            overflow: hidden;
+            background-color: #010108;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #e5e7eb;
+        }
+
+        #nebulaCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.4;
+        }
+
+        #particleCanvas {
+            display: block;
+            background-color: transparent;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #d1d5db;
+            max-width: calc(100% - 40px);
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .info-panel h1 {
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+            color: #a7c7e7;
+        }
+
+        /* Settings Panel Styles */
+        .settings-toggle-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(55, 65, 81, 0.8);
+            color: #e5e7eb;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: background-color 0.3s ease;
+        }
+        .settings-toggle-button:hover {
+            background-color: rgba(75, 85, 99, 0.9);
+        }
+
+        .settings-panel {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background-color: rgba(31, 41, 55, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            z-index: 1000;
+            color: #e5e7eb;
+            width: 340px; /* Wider for new settings */
+            max-width: calc(100% - 40px);
+            display: none;
+            flex-direction: column;
+            gap: 12px; /* Slightly reduced gap */
+        }
+        .settings-panel.open {
+            display: flex;
+        }
+        .settings-panel h2 {
+            font-size: 1.25rem;
+            color: #93c5fd;
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .settings-panel label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #d1d5db;
+        }
+         .settings-panel label.checkbox-label { /* Style for checkbox labels */
+             justify-content: flex-start; /* Align checkbox to the left */
+             gap: 10px;
+         }
+        .settings-panel input[type="range"], .settings-panel select {
+            width: 130px;
+            cursor: pointer;
+        }
+         .settings-panel select {
+            background-color: #374151;
+            color: #e5e7eb;
+            border: 1px solid #4b5563;
+            border-radius: 4px;
+            padding: 2px 5px;
+        }
+        .settings-panel input[type="checkbox"] {
+            cursor: pointer;
+            transform: scale(1.2);
+            accent-color: #60a5fa; /* Tailwind blue-400 */
+        }
+        .settings-panel .value-display {
+            min-width: 30px;
+            text-align: right;
+        }
+        .settings-panel .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .settings-panel .close-button:hover {
+            color: #e5e7eb;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="info-panel">
+        <h1>宇宙星空</h1>
+        <p>拖拽可平移视角。轻触、点击或移动鼠标与光点互动。</p>
+    </div>
+
+    <canvas id="nebulaCanvas"></canvas>
+    <canvas id="particleCanvas"></canvas>
+
+    <button class="settings-toggle-button" id="settingsToggleBtn">⚙️</button>
+
+    <div class="settings-panel" id="settingsPanel">
+        <button class="close-button" id="settingsCloseBtn">&times;</button>
+        <h2>显示设置</h2>
+
+        <label>
+            <span>粒子数量:</span>
+            <div>
+                <input type="range" id="particleCount" min="30" max="500" step="10">
+                <span class="value-display" id="particleCountValue">100</span>
+            </div>
+        </label>
+
+        <label>
+            <span>显示连接线:</span>
+            <input type="checkbox" id="showConnections">
+        </label>
+
+        <label>
+            <span>连接距离:</span>
+            <div>
+                <input type="range" id="connectionDistance" min="30" max="200" step="5">
+                <span class="value-display" id="connectionDistanceValue">100</span>
+            </div>
+        </label>
+
+        <label>
+            <span>鼠标影响范围:</span>
+            <div>
+                <input type="range" id="mouseRadius" min="30" max="250" step="10">
+                <span class="value-display" id="mouseRadiusValue">120</span>
+            </div>
+        </label>
+
+        <label>
+            <span>回归柔和度:</span>
+            <div>
+                <input type="range" id="returnGentleness" min="1" max="10" step="1">
+                <span class="value-display" id="returnGentlenessValue">7</span>
+            </div>
+        </label>
+        <label>
+            <span>流星频率:</span>
+            <select id="shootingStarFrequency">
+                <option value="0">无</option>
+                <option value="0.001">低</option>
+                <option value="0.003">中</option>
+                <option value="0.006">高</option>
+            </select>
+        </label>
+         <hr class="border-gray-600 my-2">
+         <label class="checkbox-label">
+            <input type="checkbox" id="enablePulsars">
+            <span>启用脉冲星</span>
+        </label>
+        <label class="checkbox-label">
+            <input type="checkbox" id="enableSpin">
+            <span>启用粒子旋转</span>
+        </label>
+        <label class="checkbox-label">
+            <input type="checkbox" id="enableSound">
+            <span>启用声音 (需交互)</span>
+        </label>
+    </div>
+
+    <script>
+        const particleCanvas = document.getElementById('particleCanvas');
+        const pCtx = particleCanvas.getContext('2d');
+        const nebulaCanvas = document.getElementById('nebulaCanvas');
+        const nCtx = nebulaCanvas.getContext('2d');
+
+        let particlesArray = [];
+        let galaxyDustArray = [];
+        let ripplesArray = [];
+        let shootingStarsArray = [];
+        let gravityWells = [];
+
+        const view = {
+            x: 0, y: 0, angle: 0,
+            panSpeedX: 0.03, panSpeedY: 0.02,
+            rotationSpeed: 0.00005,
+            isDragging: false, lastDragX: 0, lastDragY: 0,
+            dragSensitivity: 0.7
+        };
+
+        const mouse = {
+            screenX: null, screenY: null,
+            worldX: null,  worldY: null,
+            radius: 120
+        };
+
+        const settings = {
+            particleCount: 100, galaxyDustCount: 150,
+            showConnections: true, connectionDistance: 100, connectionOpacity: 0.35,
+            mouseRadius: 120, returnGentleness: 7,
+            returnForceDivisorBase: 220, particleDamping: 0.94,
+            particleMaxLife: 2000, particleFadeDuration: 300,
+            shootingStarFrequency: 0.003,
+            minParticleDepth: 0.2, maxParticleDepth: 1.0,
+            gravityWellDuration: 60, gravityWellStrength: 0.05,
+            nebulaBaseScrollX: 0.015, nebulaBaseScrollY: 0.01,
+            nebulaParallaxFactorX: 0.05, nebulaParallaxFactorY: 0.05,
+            nebulaRotationFactor: 0.05,
+            offscreenParticleBuffer: 100,
+            enablePulsars: true, // Default enabled
+            pulsarChance: 0.02, // 2% chance for a particle to be a pulsar
+            pulsarPeriodBase: 300, // Base frames between pulses
+            pulsarPeriodVariance: 200,
+            pulsarDuration: 15, // Frames the pulse effect lasts
+            enableSpin: false, // Default disabled for performance
+            enableSound: false // Default disabled, user must enable
+        };
+
+        // --- Audio ---
+        let audioInitialized = false;
+        let synthAmbience, synthRipple, synthStar, synthPulsar;
+        let reverb;
+
+        async function initAudio() {
+            if (audioInitialized || !settings.enableSound) return;
+            try {
+                 await Tone.start(); // Request audio context start on user gesture
+                 console.log("Audio context started");
+
+                 reverb = new Tone.Reverb(1.5).toDestination(); // Subtle reverb
+
+                 // Ambient sound - very low volume, evolving pad
+                 synthAmbience = new Tone.FMSynth({
+                     modulationIndex: 10,
+                     envelope: { attack: 2, decay: 1, sustain: 1, release: 4 },
+                     modulation: { type: "sine" },
+                     modulationEnvelope: { attack: 0.5, decay: 0, sustain: 1, release: 0.5 }
+                 }).connect(reverb);
+                 synthAmbience.volume.value = -45; // Very quiet
+                 // Trigger ambient notes very sparsely
+                 Tone.Transport.scheduleRepeat(time => {
+                     if (settings.enableSound) {
+                         const note = Tone.Frequency(Math.random() * 100 + 40, "hz").toNote(); // Low random frequency
+                         synthAmbience.triggerAttackRelease(note, "8n", time);
+                     }
+                 }, "15s"); // Every 15 seconds approx
+
+                 // Ripple/Gravity Well sound - soft pluck
+                 synthRipple = new Tone.PluckSynth({
+                     attackNoise: 0.5,
+                     dampening: 4000,
+                     resonance: 0.8
+                 }).connect(reverb);
+                 synthRipple.volume.value = -18;
+
+                 // Shooting Star sound - quick descending ping
+                 synthStar = new Tone.Synth({
+                     oscillator: { type: "triangle" },
+                     envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.2 }
+                 }).connect(reverb);
+                 synthStar.volume.value = -20;
+
+                 // Pulsar sound - distinct but soft pulse
+                 synthPulsar = new Tone.MembraneSynth({
+                     pitchDecay: 0.01,
+                     octaves: 5,
+                     oscillator: { type: "sine" },
+                     envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.1, attackCurve: "exponential" }
+                 }).connect(reverb);
+                 synthPulsar.volume.value = -15;
+
+
+                 Tone.Transport.start();
+                 audioInitialized = true;
+                 console.log("Audio initialized successfully.");
+            } catch (e) {
+                 console.error("Could not start audio context:", e);
+                 settings.enableSound = false; // Disable sound if failed
+                 const soundCheckbox = document.getElementById('enableSound');
+                 if(soundCheckbox) soundCheckbox.checked = false;
+            }
+        }
+
+        function playRippleSound(worldX) {
+             if (!audioInitialized || !settings.enableSound) return;
+             const freq = mapValue(worldX % 500, 0, 500, 200, 600); // Pitch based on world X
+             synthRipple.triggerAttack(Tone.Frequency(freq, "hz").toNote(), Tone.now());
+        }
+        function playStarSound() {
+            if (!audioInitialized || !settings.enableSound) return;
+            synthStar.triggerAttackRelease("C5", "0.2");
+            synthStar.frequency.rampTo("C4", 0.2); // Descending pitch
+        }
+        function playPulsarSound() {
+             if (!audioInitialized || !settings.enableSound) return;
+             synthPulsar.triggerAttackRelease("C3", "0.1");
+        }
+
+
+        const settingsToggleBtn = document.getElementById('settingsToggleBtn');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+        const particleCountSlider = document.getElementById('particleCount');
+        const particleCountValueDisplay = document.getElementById('particleCountValue');
+        const showConnectionsCheckbox = document.getElementById('showConnections');
+        const connectionDistanceSlider = document.getElementById('connectionDistance');
+        const connectionDistanceValueDisplay = document.getElementById('connectionDistanceValue');
+        const mouseRadiusSlider = document.getElementById('mouseRadius');
+        const mouseRadiusValueDisplay = document.getElementById('mouseRadiusValue');
+        const returnGentlenessSlider = document.getElementById('returnGentleness');
+        const returnGentlenessValueDisplay = document.getElementById('returnGentlenessValue');
+        const shootingStarFrequencySelect = document.getElementById('shootingStarFrequency');
+        const enablePulsarsCheckbox = document.getElementById('enablePulsars');
+        const enableSpinCheckbox = document.getElementById('enableSpin');
+        const enableSoundCheckbox = document.getElementById('enableSound');
+
+
+        let nebulaImage;
+        let nebulaScrollX_accumulator = 0;
+        let nebulaScrollY_accumulator = 0;
+
+        function createNebulaPattern(width, height) {
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = width;
+            offscreenCanvas.height = height;
+            const offCtx = offscreenCanvas.getContext('2d');
+
+            const colors = ["rgba(30, 30, 100, 0.4)", "rgba(70, 30, 90, 0.3)", "rgba(30, 70, 90, 0.35)"];
+
+            for (let c = 0; c < colors.length; c++) {
+                const baseColorForBlob = colors[c];
+                for (let i = 0; i < Math.floor((width * height) / 15000); i++) {
+                    const rVal = Math.random() * (Math.min(width, height) / 1.5) + (Math.min(width,height) / 8) ;
+                    const blobX_master = Math.random() * width;
+                    const blobY_master = Math.random() * height;
+
+                    for (let dx_wrap of [-1, 0, 1]) {
+                        for (let dy_wrap of [-1, 0, 1]) {
+                            const currentDrawCenterX = blobX_master + dx_wrap * width;
+                            const currentDrawCenterY = blobY_master + dy_wrap * height;
+
+                            const grad = offCtx.createRadialGradient(currentDrawCenterX, currentDrawCenterY, rVal * 0.02, currentDrawCenterX, currentDrawCenterY, rVal);
+                            grad.addColorStop(0, baseColorForBlob);
+                            grad.addColorStop(1, "rgba(0,0,0,0)");
+                            offCtx.fillStyle = grad;
+                            offCtx.fillRect(currentDrawCenterX - rVal, currentDrawCenterY - rVal, rVal * 2, rVal * 2);
+                        }
+                    }
+                }
+            }
+
+            const starBaseColor = "rgba(210, 210, 255, 0.25)";
+            for (let i = 0; i < Math.floor((width*height)/8000); i++) {
+                const starX_master = Math.random() * width;
+                const starY_master = Math.random() * height;
+                const starW = Math.random() * 1.3 + 0.2;
+                const starH = Math.random() * 1.3 + 0.2;
+                offCtx.fillStyle = starBaseColor;
+
+                for (let dx_wrap of [-1, 0, 1]) {
+                    for (let dy_wrap of [-1, 0, 1]) {
+                        offCtx.fillRect(starX_master + dx_wrap * width - starW/2, starY_master + dy_wrap * height - starH/2, starW, starH);
+                    }
+                }
+            }
+            return offscreenCanvas;
+        }
+
+        function drawNebula() {
+            if (!nebulaImage || nebulaImage.width === 0 || nebulaImage.height === 0) return;
+            nCtx.clearRect(0, 0, nebulaCanvas.width, nebulaCanvas.height);
+
+            nebulaScrollX_accumulator += (settings.nebulaBaseScrollX + view.panSpeedX * settings.nebulaParallaxFactorX) * dtNormalized;
+            nebulaScrollY_accumulator += (settings.nebulaBaseScrollY + view.panSpeedY * settings.nebulaParallaxFactorY) * dtNormalized;
+
+            nCtx.save();
+            nCtx.translate(nebulaCanvas.width / 2, nebulaCanvas.height / 2);
+            nCtx.rotate(view.angle * settings.nebulaRotationFactor);
+            nCtx.translate(-nebulaCanvas.width / 2, -nebulaCanvas.height / 2);
+
+            let drawX = (-nebulaScrollX_accumulator % nebulaImage.width);
+            if (drawX > 0) drawX -= nebulaImage.width;
+
+            let drawY = (-nebulaScrollY_accumulator % nebulaImage.height);
+            if (drawY > 0) drawY -= nebulaImage.height;
+
+            const coverageXStart = -nebulaCanvas.width * 0.5;
+            const coverageYStart = -nebulaCanvas.height * 0.5;
+            const coverageXEnd = nebulaCanvas.width * 1.5;
+            const coverageYEnd = nebulaCanvas.height * 1.5;
+
+            for (let x_offset = drawX; x_offset < coverageXEnd; x_offset += nebulaImage.width) {
+                 for (let y_offset = drawY; y_offset < coverageYEnd; y_offset += nebulaImage.height) {
+                    if (x_offset + nebulaImage.width > coverageXStart && x_offset < coverageXEnd &&
+                        y_offset + nebulaImage.height > coverageYStart && y_offset < coverageYEnd) {
+                         nCtx.drawImage(nebulaImage, Math.round(x_offset), Math.round(y_offset));
+                    }
+                }
+            }
+            nCtx.restore();
+        }
+
+
+        function mapValue(value, inMin, inMax, outMin, outMax) {
+            if (inMin === inMax) return outMin;
+            return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+        }
+
+        function updateReturnPhysicsParams() {
+            settings.returnForceDivisorBase = mapValue(settings.returnGentleness, 1, 10, 80, 400);
+            settings.particleDamping = mapValue(settings.returnGentleness, 1, 10, 0.988, 0.93);
+        }
+
+        function initializeSettingsControls() {
+            particleCountSlider.value = settings.particleCount;
+            particleCountValueDisplay.textContent = settings.particleCount;
+            showConnectionsCheckbox.checked = settings.showConnections;
+            connectionDistanceSlider.value = settings.connectionDistance;
+            connectionDistanceValueDisplay.textContent = settings.connectionDistance;
+            connectionDistanceSlider.disabled = !settings.showConnections;
+            mouseRadiusSlider.value = settings.mouseRadius;
+            mouseRadiusValueDisplay.textContent = settings.mouseRadius;
+            mouse.radius = settings.mouseRadius;
+            returnGentlenessSlider.value = settings.returnGentleness;
+            returnGentlenessValueDisplay.textContent = settings.returnGentleness;
+            shootingStarFrequencySelect.value = settings.shootingStarFrequency;
+            enablePulsarsCheckbox.checked = settings.enablePulsars;
+            enableSpinCheckbox.checked = settings.enableSpin;
+            enableSoundCheckbox.checked = settings.enableSound;
+            updateReturnPhysicsParams();
+        }
+
+        settingsToggleBtn.addEventListener('click', () => settingsPanel.classList.toggle('open'));
+        settingsCloseBtn.addEventListener('click', () => settingsPanel.classList.remove('open'));
+        particleCountSlider.addEventListener('input', (e) => {
+            settings.particleCount = parseInt(e.target.value);
+            particleCountValueDisplay.textContent = settings.particleCount;
+            initInteractiveParticles();
+        });
+        showConnectionsCheckbox.addEventListener('change', (e) => {
+            settings.showConnections = e.target.checked;
+            connectionDistanceSlider.disabled = !settings.showConnections;
+        });
+        connectionDistanceSlider.addEventListener('input', (e) => {
+            settings.connectionDistance = parseInt(e.target.value);
+            connectionDistanceValueDisplay.textContent = settings.connectionDistance;
+        });
+        mouseRadiusSlider.addEventListener('input', (e) => {
+            settings.mouseRadius = parseInt(e.target.value);
+            mouseRadiusValueDisplay.textContent = settings.mouseRadius;
+            mouse.radius = settings.mouseRadius;
+        });
+        returnGentlenessSlider.addEventListener('input', (e) => {
+            settings.returnGentleness = parseInt(e.target.value);
+            returnGentlenessValueDisplay.textContent = settings.returnGentleness;
+            updateReturnPhysicsParams();
+        });
+        shootingStarFrequencySelect.addEventListener('change', (e) => {
+            settings.shootingStarFrequency = parseFloat(e.target.value);
+        });
+        enablePulsarsCheckbox.addEventListener('change', (e) => {
+            settings.enablePulsars = e.target.checked;
+            // Re-initialize particles to apply pulsar chance immediately if needed, or just let existing ones continue
+            // initInteractiveParticles(); // Optional: re-init to get new pulsars immediately
+        });
+         enableSpinCheckbox.addEventListener('change', (e) => {
+            settings.enableSpin = e.target.checked;
+        });
+        enableSoundCheckbox.addEventListener('change', (e) => {
+            settings.enableSound = e.target.checked;
+            if (settings.enableSound && !audioInitialized) {
+                // Prompt user or wait for next interaction to initAudio()
+                console.log("Sound enabled, waiting for user interaction to initialize audio context.");
+                // We will call initAudio() on the first interaction event if sound is enabled.
+            } else if (!settings.enableSound && audioInitialized) {
+                 // Optional: Stop sounds if disabled? Or just let them fade out.
+                 // Tone.Transport.stop(); // Might be too abrupt
+            }
+        });
+
+
+        function worldToScreen(worldX, worldY) {
+            const dx = worldX - (view.x + particleCanvas.width / 2);
+            const dy = worldY - (view.y + particleCanvas.height / 2);
+            const cosA = Math.cos(-view.angle);
+            const sinA = Math.sin(-view.angle);
+            const screenX = (dx * cosA - dy * sinA) + particleCanvas.width / 2;
+            const screenY = (dx * sinA + dy * cosA) + particleCanvas.height / 2;
+            return { x: screenX, y: screenY };
+        }
+
+        function screenToWorld(screenX, screenY) {
+            const dx = screenX - particleCanvas.width / 2;
+            const dy = screenY - particleCanvas.height / 2;
+            const cosA = Math.cos(view.angle);
+            const sinA = Math.sin(view.angle);
+            const worldX = (dx * cosA - dy * sinA) + (view.x + particleCanvas.width / 2);
+            const worldY = (dx * sinA + dy * cosA) + (view.y + particleCanvas.height / 2);
+            return { x: worldX, y: worldY };
+        }
+
+        function isOffscreen(screenPos, buffer = settings.offscreenParticleBuffer) {
+             return screenPos.x < -buffer || screenPos.x > particleCanvas.width + buffer ||
+                    screenPos.y < -buffer || screenPos.y > particleCanvas.height + buffer;
+        }
+
+
+        function resizeCanvas() {
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+            nebulaCanvas.width = window.innerWidth;
+            nebulaCanvas.height = window.innerHeight;
+
+            const nebulaTextureSide = Math.min(2500, Math.max(particleCanvas.width, particleCanvas.height) * 1.25);
+            nebulaImage = createNebulaPattern(Math.floor(nebulaTextureSide), Math.floor(nebulaTextureSide));
+
+            initInteractiveParticles();
+            initGalaxyDust();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function getEventCoordinates(event) {
+            if (event.touches && event.touches.length > 0) {
+                return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+            }
+            return { x: event.clientX, y: event.clientY };
+        }
+
+        function onInteractionStart(event) {
+            if (event.target.closest('.settings-panel') || event.target.closest('.settings-toggle-button')) return;
+             if (event.touches) event.preventDefault();
+
+             // Attempt to initialize audio on first interaction if enabled
+             if (settings.enableSound && !audioInitialized) {
+                 initAudio();
+             }
+
+            const coords = getEventCoordinates(event);
+            mouse.screenX = coords.x;
+            mouse.screenY = coords.y;
+            const worldCoords = screenToWorld(coords.x, coords.y);
+            mouse.worldX = worldCoords.x;
+            mouse.worldY = worldCoords.y;
+
+            view.isDragging = true;
+            view.lastDragX = coords.x;
+            view.lastDragY = coords.y;
+
+            createRipple(mouse.worldX, mouse.worldY);
+            createGravityWell(mouse.worldX, mouse.worldY);
+            playRippleSound(mouse.worldX); // Play sound on interaction
+        }
+
+        function onInteractionMove(event) {
+            if (event.target.closest('.settings-panel') || event.target.closest('.settings-toggle-button')) {
+                if (mouse.worldX !== null) { mouse.screenX = null; mouse.screenY = null; mouse.worldX = null; mouse.worldY = null; }
+                view.isDragging = false;
+                return;
+            }
+             if (event.touches) event.preventDefault();
+
+            const coords = getEventCoordinates(event);
+            mouse.screenX = coords.x;
+            mouse.screenY = coords.y;
+            const worldCoords = screenToWorld(coords.x, coords.y);
+            mouse.worldX = worldCoords.x;
+            mouse.worldY = worldCoords.y;
+
+            if (view.isDragging) {
+                const dx = coords.x - view.lastDragX;
+                const dy = coords.y - view.lastDragY;
+
+                const cosA = Math.cos(view.angle);
+                const sinA = Math.sin(view.angle);
+
+                view.x -= (dx * cosA + dy * sinA) * view.dragSensitivity;
+                view.y -= (dy * cosA - dx * sinA) * view.dragSensitivity;
+
+                view.lastDragX = coords.x;
+                view.lastDragY = coords.y;
+            }
+        }
+
+        function onInteractionEnd() {
+            mouse.screenX = null; mouse.screenY = null; mouse.worldX = null; mouse.worldY = null;
+            view.isDragging = false;
+        }
+
+        particleCanvas.addEventListener('mousedown', onInteractionStart);
+        particleCanvas.addEventListener('touchstart', onInteractionStart, { passive: false });
+        window.addEventListener('mousemove', onInteractionMove);
+        window.addEventListener('touchmove', onInteractionMove, { passive: false });
+        window.addEventListener('mouseup', onInteractionEnd);
+        window.addEventListener('touchend', onInteractionEnd);
+        window.addEventListener('mouseleave', onInteractionEnd);
+
+        function createRipple(worldX, worldY) {
+            ripplesArray.push({
+                worldX: worldX, worldY: worldY, radius: 10, maxRadius: 70, speed: 2.5,
+                opacity: 0.7, baseColor: '#ADD8E6', lineWidth: 2,
+            });
+        }
+        function createGravityWell(worldX, worldY) {
+            gravityWells.push({
+                worldX: worldX, worldY: worldY,
+                life: settings.gravityWellDuration,
+                currentStrength: settings.gravityWellStrength
+            });
+        }
+
+        class Particle {
+             constructor(worldX, worldY, baseSize, color, weight, isGalaxyDust = false) {
+                this.worldX = worldX;
+                this.worldY = worldY;
+                this.baseSize = baseSize;
+                this.color = color;
+                this.baseColor = color;
+                this.weight = weight;
+                this.originalWorldX = worldX;
+                this.originalWorldY = worldY;
+                this.density = (Math.random() * 15 + 5) * (isGalaxyDust ? 0.1 : 1);
+                this.vx = (Math.random() - 0.5) * (isGalaxyDust ? 0.005 : 0.03);
+                this.vy = (Math.random() - 0.5) * (isGalaxyDust ? 0.005 : 0.03);
+                this.isInteracting = false;
+                this.life = settings.particleMaxLife * (0.5 + Math.random() * 0.5);
+                this.opacity = 0;
+                this.depth = Math.random() * (settings.maxParticleDepth - settings.minParticleDepth) + settings.minParticleDepth;
+                this.size = this.baseSize * this.depth;
+                this.isGalaxyDust = isGalaxyDust;
+
+                 // Spin properties
+                 this.angle = Math.random() * Math.PI * 2;
+                 this.rotationSpeed = (Math.random() - 0.5) * 0.01; // Very slow random spin
+
+                 // Pulsar properties
+                 this.isPulsar = !isGalaxyDust && settings.enablePulsars && Math.random() < settings.pulsarChance;
+                 this.pulsarTimer = Math.random() * settings.pulsarPeriodBase;
+                 this.pulsarPeriod = settings.pulsarPeriodBase + (Math.random() - 0.5) * settings.pulsarPeriodVariance;
+                 this.isPulsing = false;
+                 this.pulsingTimer = 0;
+
+
+                if (isGalaxyDust) {
+                    this.life = Infinity;
+                    this.depth = Math.random() * 0.25 + 0.02;
+                    this.size = this.baseSize * this.depth;
+                    this.opacity = 0.05 + Math.random() * 0.3;
+                    this.isPulsar = false; // Galaxy dust cannot be pulsars
+                }
+                 this.screenPos = { x: 0, y: 0 };
+                 this.isOnScreen = true;
+            }
+
+            reset(spawnInView = true) {
+                const spawnBuffer = particleCanvas.width * 0.3;
+                const spawnAreaWidth = particleCanvas.width + spawnBuffer * 2;
+                const spawnAreaHeight = particleCanvas.height + spawnBuffer * 2;
+
+                if (spawnInView) {
+                    this.worldX = view.x + (Math.random() * spawnAreaWidth) - spawnBuffer + particleCanvas.width/2 - spawnAreaWidth/2;
+                    this.worldY = view.y + (Math.random() * spawnAreaHeight) - spawnBuffer + particleCanvas.height/2 - spawnAreaHeight/2;
+                } else {
+                    this.worldX = (Math.random() * particleCanvas.width * 3) - particleCanvas.width;
+                    this.worldY = (Math.random() * particleCanvas.height * 3) - particleCanvas.height;
+                }
+
+                this.originalWorldX = this.worldX;
+                this.originalWorldY = this.worldY;
+                this.depth = Math.random() * (settings.maxParticleDepth - settings.minParticleDepth) + settings.minParticleDepth;
+                if (this.isGalaxyDust) {
+                    this.depth = Math.random() * 0.25 + 0.02;
+                    this.opacity = 0.05 + Math.random() * 0.3;
+                } else {
+                     this.opacity = 0;
+                     this.isPulsar = settings.enablePulsars && Math.random() < settings.pulsarChance; // Re-roll pulsar status on reset
+                     this.pulsarTimer = Math.random() * this.pulsarPeriod; // Reset timer
+                }
+                this.size = this.baseSize * this.depth;
+                this.vx = (Math.random() - 0.5) * (this.isGalaxyDust ? 0.005 : 0.03);
+                this.vy = (Math.random() - 0.5) * (this.isGalaxyDust ? 0.005 : 0.03);
+                if (!this.isGalaxyDust) this.life = settings.particleMaxLife * (0.7 + Math.random()*0.6);
+                this.angle = Math.random() * Math.PI * 2; // Reset angle
+            }
+
+            draw() {
+                let currentOpacity = this.opacity;
+                if (!this.isGalaxyDust) {
+                    if (this.life > settings.particleMaxLife - settings.particleFadeDuration) {
+                        currentOpacity = mapValue(this.life, settings.particleMaxLife, settings.particleMaxLife - settings.particleFadeDuration, 0, 1);
+                    } else if (this.life < settings.particleFadeDuration) {
+                        currentOpacity = mapValue(this.life, settings.particleFadeDuration, 0, 1, 0);
+                    } else {
+                        currentOpacity = 1;
+                    }
+                }
+                let finalDrawingOpacity = Math.max(0, Math.min(1, currentOpacity * (0.2 + this.depth * 0.8)));
+
+                // Pulsar visual effect
+                let pulsarBrightness = 1.0;
+                let pulsarShadowFactor = 1.0;
+                if (this.isPulsing) {
+                    const pulseProgress = this.pulsingTimer / settings.pulsarDuration; // 0 to 1
+                    pulsarBrightness = 1.0 + Math.sin(pulseProgress * Math.PI) * 1.5; // Brighter core (up to 2.5x)
+                    finalDrawingOpacity = Math.min(1, finalDrawingOpacity * (1 + Math.sin(pulseProgress * Math.PI)*0.5)); // Increase opacity during pulse
+                    pulsarShadowFactor = 1.0 + Math.sin(pulseProgress * Math.PI) * 2.0; // Larger shadow
+                }
+
+                if (finalDrawingOpacity < 0.005) return;
+
+                pCtx.save(); // Save context for potential rotation
+                pCtx.translate(this.screenPos.x, this.screenPos.y); // Translate to particle position
+
+                // Apply rotation if enabled
+                if (settings.enableSpin && !this.isGalaxyDust) {
+                     pCtx.rotate(this.angle);
+                }
+
+                pCtx.beginPath();
+                let dynamicColor = this.baseColor;
+                if (this.isInteracting && !this.isGalaxyDust) {
+                    const interactionStrength = 1 - (Math.sqrt((mouse.worldX - this.worldX)**2 + (mouse.worldY - this.worldY)**2) / settings.mouseRadius);
+                    dynamicColor = lightenColor(this.baseColor, 15 + 15 * interactionStrength);
+                }
+                const activeColor = (this.isInteracting && !this.isGalaxyDust) ? dynamicColor : this.color;
+                const activeShadowBlur = ((this.isInteracting && !this.isGalaxyDust) ? 8 : 4) * this.depth * pulsarShadowFactor;
+
+                const finalColor = hexToRgba(activeColor, finalDrawingOpacity);
+                const finalSize = Math.max(0.1, this.size * pulsarBrightness);
+
+                pCtx.arc(0, 0, finalSize, 0, Math.PI * 2, false); // Draw arc at translated/rotated origin (0,0)
+                pCtx.fillStyle = finalColor;
+
+                if (this.depth > 0.25) {
+                    pCtx.shadowBlur = activeShadowBlur * finalDrawingOpacity;
+                    pCtx.shadowColor = finalColor;
+                }
+                pCtx.fill();
+
+                 // Draw spin indicator line if spin is enabled
+                 if (settings.enableSpin && !this.isGalaxyDust && this.depth > 0.3) { // Only for closer particles
+                     pCtx.beginPath();
+                     pCtx.moveTo(0, 0);
+                     pCtx.lineTo(finalSize * 0.6, 0); // Line pointing along the particle's angle
+                     pCtx.lineWidth = 0.5;
+                     pCtx.strokeStyle = hexToRgba("#ffffff", finalDrawingOpacity * 0.5); // Faint white line
+                     pCtx.stroke();
+                 }
+
+                pCtx.restore(); // Restore context state (removes translation/rotation)
+                pCtx.shadowBlur = 0;
+                this.isInteracting = false;
+            }
+
+            update(dtNormalized) {
+                if (!this.isGalaxyDust) this.life -= dtNormalized;
+                if (this.life <= 0 && !this.isGalaxyDust) {
+                    this.reset();
+                    return;
+                }
+
+                // Update Spin Angle
+                if (settings.enableSpin) {
+                    this.angle += this.rotationSpeed * dtNormalized;
+                }
+
+                // Update Pulsar State
+                if (this.isPulsar && settings.enablePulsars) {
+                    if (this.isPulsing) {
+                        this.pulsingTimer -= dtNormalized;
+                        if (this.pulsingTimer <= 0) {
+                            this.isPulsing = false;
+                        }
+                    } else {
+                        this.pulsarTimer -= dtNormalized;
+                        if (this.pulsarTimer <= 0) {
+                            this.isPulsing = true;
+                            this.pulsingTimer = settings.pulsarDuration;
+                            this.pulsarTimer = this.pulsarPeriod + (Math.random() - 0.5) * settings.pulsarPeriodVariance; // Reset period timer
+                            if(this.isOnScreen) playPulsarSound(); // Play sound only if pulsar is on screen
+                        }
+                    }
+                } else {
+                    this.isPulsing = false; // Ensure not pulsing if disabled or not a pulsar
+                }
+
+
+                this.originalWorldX += (Math.random() - 0.5) * 0.015 * (this.isGalaxyDust ? 0.05 : 1) * dtNormalized;
+                this.originalWorldY += (Math.random() - 0.5) * 0.015 * (this.isGalaxyDust ? 0.05 : 1) * dtNormalized;
+
+                this.screenPos = worldToScreen(this.worldX, this.worldY);
+                this.isOnScreen = !isOffscreen(this.screenPos, settings.offscreenParticleBuffer);
+
+                let effectiveReturnForceDiv = (settings.returnForceDivisorBase / Math.pow(this.depth, 0.7));
+                let returnForceX = (this.originalWorldX - this.worldX) / (effectiveReturnForceDiv * this.weight);
+                let returnForceY = (this.originalWorldY - this.worldY) / (effectiveReturnForceDiv * this.weight);
+
+                this.vx += returnForceX * dtNormalized;
+                this.vy += returnForceY * dtNormalized;
+
+                // Apply interaction forces only if potentially visible and not galaxy dust
+                if (this.isOnScreen && !this.isGalaxyDust) {
+                    for (const well of gravityWells) {
+                        const dxWell = well.worldX - this.worldX;
+                        const dyWell = well.worldY - this.worldY;
+                        const distSqWell = dxWell * dxWell + dyWell * dyWell;
+                        const wellRadiusSq = (settings.mouseRadius * 1.5)**2;
+                        if (distSqWell < wellRadiusSq && distSqWell > 1) {
+                            const distanceWell = Math.sqrt(distSqWell);
+                            const force = (well.currentStrength * this.weight) / (distanceWell * 0.5 + 10);
+                            this.vx += (dxWell / distanceWell) * force * (this.depth + 0.5) * dtNormalized;
+                            this.vy += (dyWell / distanceWell) * force * (this.depth + 0.5) * dtNormalized;
+                        }
+                    }
+
+                    if (mouse.worldX !== null) {
+                        let dxMouse = mouse.worldX - this.worldX;
+                        let dyMouse = mouse.worldY - this.worldY;
+                        let distanceMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+                        const effectiveMouseRadius = settings.mouseRadius * (0.3 + this.depth * 0.7);
+                        if (distanceMouse < effectiveMouseRadius && distanceMouse > 1) {
+                            this.isInteracting = true;
+                            let forceDirectionX = dxMouse / distanceMouse;
+                            let forceDirectionY = dyMouse / distanceMouse;
+                            let force = (effectiveMouseRadius - distanceMouse) / effectiveMouseRadius;
+                            let pushStrength = this.density * Math.pow(this.depth, 2.0);
+                            if (this.depth < 0.25) pushStrength *= 0.05;
+                            let directionX = forceDirectionX * force * pushStrength;
+                            let directionY = forceDirectionY * force * pushStrength;
+                            this.worldX -= (directionX / (this.weight * 4)) * dtNormalized;
+                            this.worldY -= (directionY / (this.weight * 4)) * dtNormalized;
+                        }
+                    }
+
+                    for (let i = 0; i < ripplesArray.length; i++) {
+                        const ripple = ripplesArray[i];
+                        let dxRipple = ripple.worldX - this.worldX;
+                        let dyRipple = ripple.worldY - this.worldY;
+                        let distanceRipple = Math.sqrt(dxRipple * dxRipple + dyRipple * dyRipple);
+                        if (distanceRipple < ripple.radius && distanceRipple > ripple.radius - (ripple.maxRadius * 0.35) ) {
+                            this.vx += (Math.random() - 0.5) * 0.04 * ripple.opacity / this.weight * this.depth * dtNormalized;
+                            this.vy += (Math.random() - 0.5) * 0.04 * ripple.opacity / this.weight * this.depth * dtNormalized;
+                        }
+                    }
+                }
+
+                // Apply Damping and Update Position
+                let effectiveDamping = settings.particleDamping - (this.depth - settings.minParticleDepth) * 0.01;
+                this.vx *= Math.pow(Math.max(0.85, effectiveDamping), dtNormalized);
+                this.vy *= Math.pow(Math.max(0.85, effectiveDamping), dtNormalized);
+                this.worldX += this.vx * dtNormalized;
+                this.worldY += this.vy * dtNormalized;
+
+                // Size Update
+                let currentSizePulseFactor = this.baseSize * this.depth;
+                this.size = currentSizePulseFactor + Math.sin(Date.now() * 0.0006 * this.weight + this.originalWorldX) * (currentSizePulseFactor * 0.1);
+                this.size = Math.max(0.1, this.size);
+
+                // Draw if on screen
+                if (this.isOnScreen) {
+                    this.draw();
+                } else {
+                     if (!this.isGalaxyDust && this.life > settings.particleFadeDuration * 3) {
+                         const distSqFromViewCenter = (this.worldX - view.x)**2 + (this.worldY - view.y)**2;
+                         const maxDistSq = (particleCanvas.width * 1.5)**2;
+                         if (distSqFromViewCenter > maxDistSq) {
+                              this.reset();
+                         }
+                     }
+                }
+            }
+        }
+
+        class ShootingStar {
+            constructor() { this.reset(); }
+            reset() {
+                const edge = Math.floor(Math.random() * 4);
+                const spawnOffset = 80;
+                let startScrX, startScrY;
+                if (edge === 0) { startScrX = Math.random() * particleCanvas.width; startScrY = -spawnOffset; }
+                else if (edge === 1) { startScrX = particleCanvas.width + spawnOffset; startScrY = Math.random() * particleCanvas.height; }
+                else if (edge === 2) { startScrX = Math.random() * particleCanvas.width; startScrY = particleCanvas.height + spawnOffset; }
+                else { startScrX = -spawnOffset; startScrY = Math.random() * particleCanvas.height; }
+
+                const startWorld = screenToWorld(startScrX, startScrY);
+                this.worldX = startWorld.x; this.worldY = startWorld.y;
+
+                const endScrX = particleCanvas.width - startScrX + (Math.random()-0.5)*particleCanvas.width*0.8;
+                const endScrY = particleCanvas.height - startScrY + (Math.random()-0.5)*particleCanvas.height*0.8;
+                const endWorld = screenToWorld(endScrX, endScrY);
+
+                const angle = Math.atan2(endWorld.y - this.worldY, endWorld.x - this.worldX);
+                const speed = (Math.random() * 4 + 4) * (0.6 + Math.random()*0.4);
+
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.life = 80 + Math.random() * 80;
+                this.size = Math.random() * 2.5 + 1.5;
+                this.color = `rgba(255, 255, ${Math.floor(Math.random()*80 + 175)}, ${Math.random()*0.4 + 0.6})`;
+                this.tail = []; this.tailLength = 20 + Math.random() * 20;
+            }
+            update(dtNormalized) {
+                this.life -= dtNormalized;
+                if (this.life <= 0) return false;
+                this.tail.unshift({ x: this.worldX, y: this.worldY, size: this.size * (0.3 + (this.life / 100) * 0.7) });
+                if (this.tail.length > this.tailLength) this.tail.pop();
+                this.worldX += this.vx * dtNormalized;
+                this.worldY += this.vy * dtNormalized;
+                return true;
+            }
+            draw() {
+                const screenPos = worldToScreen(this.worldX, this.worldY);
+                if (isOffscreen(screenPos, 50)) return; // Cull shooting stars too
+
+                if (this.tail.length > 1) {
+                    pCtx.beginPath();
+                    const firstTailScreen = worldToScreen(this.tail[0].x, this.tail[0].y);
+                    pCtx.moveTo(firstTailScreen.x, firstTailScreen.y);
+                    for (let i = 1; i < this.tail.length; i++) {
+                        const tailScreenPos = worldToScreen(this.tail[i].x, this.tail[i].y);
+                        const prevTailScreen = worldToScreen(this.tail[i-1].x, this.tail[i-1].y);
+                        const xc = (tailScreenPos.x + prevTailScreen.x) / 2;
+                        const yc = (tailScreenPos.y + prevTailScreen.y) / 2;
+                        pCtx.quadraticCurveTo(prevTailScreen.x, prevTailScreen.y, xc, yc);
+                    }
+                    pCtx.lineWidth = this.size * 0.3 * Math.min(1, this.life / 50);
+                    pCtx.strokeStyle = `rgba(220, 220, 255, ${Math.max(0, (this.life / 100) * 0.25 + 0.05)})`;
+                    pCtx.stroke();
+                }
+
+                pCtx.beginPath();
+                pCtx.arc(screenPos.x, screenPos.y, this.size * Math.min(1, this.life/20), 0, Math.PI * 2);
+                pCtx.fillStyle = this.color.replace(/,\s*\d?\.?\d+\)$/, `, ${Math.max(0, this.life/100 * 0.7 + 0.3)})`);
+                pCtx.shadowBlur = 10;
+                pCtx.shadowColor = "rgba(255,255,255,0.8)";
+                pCtx.fill();
+                pCtx.shadowBlur = 0;
+            }
+        }
+
+        const particleColors = ['#A3D9FF', '#CADCFC', '#B0E0E6', '#FFDAB9', '#FFC0CB', '#E6E6FA', '#D8BFD8', '#F0E6FF', '#C9A0DC', '#B19CD9'];
+        const galaxyColors = ['#303050', '#404070', '#505080', '#282848', '#383868'];
+
+
+        function initInteractiveParticles() {
+            particlesArray = [];
+            const numberOfParticles = settings.particleCount;
+            for (let i = 0; i < numberOfParticles; i++) {
+                let worldX = view.x + Math.random() * particleCanvas.width;
+                let worldY = view.y + Math.random() * particleCanvas.height;
+                let baseSize = Math.random() * 2.0 + 0.5;
+                let color = particleColors[Math.floor(Math.random() * particleColors.length)];
+                let weight = Math.random() * 1.0 + 0.5;
+                particlesArray.push(new Particle(worldX, worldY, baseSize, color, weight));
+            }
+        }
+        function initGalaxyDust() {
+            galaxyDustArray = [];
+            const spreadFactor = 2.5;
+            for (let i = 0; i < settings.galaxyDustCount; i++) {
+                let worldX = view.x + (Math.random() * particleCanvas.width * spreadFactor) - (particleCanvas.width * (spreadFactor -1) / 2);
+                let worldY = view.y + (Math.random() * particleCanvas.height * spreadFactor) - (particleCanvas.height * (spreadFactor -1) / 2);
+                let baseSize = Math.random() * 0.7 + 0.1;
+                let color = galaxyColors[Math.floor(Math.random() * galaxyColors.length)];
+                galaxyDustArray.push(new Particle(worldX, worldY, baseSize, color, 10, true));
+            }
+        }
+
+        function drawConnections() {
+            if (!settings.showConnections) return;
+            const buffer = 50;
+            for (let i = 0; i < particlesArray.length; i++) {
+                const p1 = particlesArray[i];
+                if (!p1.isOnScreen || p1.opacity < 0.05 || p1.isGalaxyDust) continue;
+
+                for (let j = i + 1; j < particlesArray.length; j++) {
+                    const p2 = particlesArray[j];
+                    if (p2.opacity < 0.05 || p2.isGalaxyDust) continue;
+
+                    const approxDistX = Math.abs(p1.worldX - p2.worldX);
+                    const approxDistY = Math.abs(p1.worldY - p2.worldY);
+                    const maxPossibleConnectionDist = settings.connectionDistance * (settings.maxParticleDepth + 0.5);
+                    if (approxDistX > maxPossibleConnectionDist || approxDistY > maxPossibleConnectionDist) continue;
+
+                    // Check if p2 is potentially on screen before calculating distance
+                    const p2ScreenTemp = worldToScreen(p2.worldX, p2.worldY);
+                    if (isOffscreen(p2ScreenTemp, buffer)) continue;
+
+
+                    const dx = p1.worldX - p2.worldX;
+                    const dy = p1.worldY - p2.worldY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const effectiveConnectionDistance = settings.connectionDistance * ((p1.depth + p2.depth)/1.5 + 0.3);
+
+                    if (distance < effectiveConnectionDistance ) {
+                        const p1Screen = p1.screenPos;
+                        const p2Screen = p2ScreenTemp; // Use already calculated screen pos
+
+                        pCtx.beginPath();
+                        const avgDepth = (p1.depth + p2.depth) / 2;
+                        const lineOpacity = (1 - distance / effectiveConnectionDistance) * settings.connectionOpacity * p1.opacity * p2.opacity * (0.15 + avgDepth * 0.85);
+                        pCtx.strokeStyle = `rgba(200, 220, 255, ${Math.max(0, lineOpacity)})`;
+                        pCtx.lineWidth = Math.max(0.1, 0.35 * avgDepth);
+                        pCtx.moveTo(p1Screen.x, p1Screen.y);
+                        pCtx.lineTo(p2Screen.x, p2Screen.y);
+                        pCtx.stroke();
+                        pCtx.closePath();
+                    }
+                }
+            }
+        }
+
+        function drawRipples() {
+            for (let i = ripplesArray.length - 1; i >= 0; i--) {
+                const ripple = ripplesArray[i];
+                const rgb = hexToRgb(ripple.baseColor);
+                const screenPos = worldToScreen(ripple.worldX, ripple.worldY);
+
+                 if (isOffscreen(screenPos, ripple.radius + 50)) {
+                     // Don't draw if offscreen
+                 } else {
+                    pCtx.beginPath();
+                    pCtx.arc(screenPos.x, screenPos.y, ripple.radius, 0, Math.PI * 2, false);
+                    pCtx.lineWidth = ripple.lineWidth * ripple.opacity;
+                    pCtx.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${ripple.opacity})`;
+                    pCtx.stroke();
+                 }
+
+                ripple.radius += ripple.speed * dtNormalized;
+                ripple.opacity -= 0.025 * dtNormalized;
+
+                if (ripple.opacity <= 0 || ripple.radius >= ripple.maxRadius) {
+                    ripplesArray.splice(i, 1);
+                }
+            }
+        }
+
+        function hexToRgb(hex) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) hex = hex.split('').map(char => char + char).join('');
+            const bigint = parseInt(hex, 16);
+            return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+        }
+        function hexToRgba(hex, alpha) {
+            const {r,g,b} = hexToRgb(hex);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+        function lightenColor(hex, percent) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) hex = hex.split('').map(char => char + char).join('');
+            let r = parseInt(hex.substring(0, 2), 16);
+            let g = parseInt(hex.substring(2, 4), 16);
+            let b = parseInt(hex.substring(4, 6), 16);
+            r = Math.min(255, Math.floor(r * (1 + percent / 100)));
+            g = Math.min(255, Math.floor(g * (1 + percent / 100)));
+            b = Math.min(255, Math.floor(b * (1 + percent / 100)));
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+        let lastTimestamp = 0;
+        let dtNormalized = 1;
+        function animate(timestamp) {
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            const dt = Math.min(50, deltaTime);
+            dtNormalized = dt / 16.67;
+
+            pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+            drawNebula();
+
+            if (!view.isDragging) {
+                view.x += view.panSpeedX * dtNormalized;
+                view.y += view.panSpeedY * dtNormalized;
+            }
+            view.angle += view.rotationSpeed * dtNormalized;
+
+            for (let i = gravityWells.length - 1; i >= 0; i--) {
+                gravityWells[i].life -= dtNormalized;
+                gravityWells[i].currentStrength = settings.gravityWellStrength * (gravityWells[i].life / settings.gravityWellDuration);
+                if (gravityWells[i].life <= 0) {
+                    gravityWells.splice(i, 1);
+                }
+            }
+
+            // Update particles - they handle their own drawing if on screen
+            for (let i = 0; i < galaxyDustArray.length; i++) {
+                galaxyDustArray[i].update(dtNormalized);
+            }
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update(dtNormalized);
+            }
+
+            drawConnections(); // Connections drawn after particles ensure they are on top
+            drawRipples();
+
+            if (settings.shootingStarFrequency > 0 && Math.random() < settings.shootingStarFrequency * dtNormalized) {
+                if (shootingStarsArray.length < 5) {
+                     const newStar = new ShootingStar();
+                     shootingStarsArray.push(newStar);
+                     playStarSound(); // Play sound when star appears
+                }
+            }
+            for (let i = shootingStarsArray.length - 1; i >= 0; i--) {
+                if (!shootingStarsArray[i].update(dtNormalized)) {
+                    shootingStarsArray.splice(i, 1);
+                } else {
+                    shootingStarsArray[i].draw();
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        window.onload = function() {
+            initializeSettingsControls();
+            resizeCanvas();
+            lastTimestamp = performance.now();
+            animate(lastTimestamp);
+        };
+    </script>
+</body>
+</html>

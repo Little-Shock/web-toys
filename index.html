@@ -358,7 +358,7 @@
             .toy-title {
                 font-size: 1.2rem;
             }
-
+            
             .tag-cloud {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             }
@@ -377,7 +377,7 @@
                 padding: 8px 15px;
                 font-size: 0.9rem;
             }
-
+            
             .tag-cloud {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -463,6 +463,17 @@
                         <div class="toy-tags">                        </div>
                         <div class="toy-meta">
                             <span class="toy-status stable">稳定版</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="toy-card" data-categories="interactive-visuals" data-tags="">
+                    <a href="projects/interactive-visuals/宇宙星空/index.html" class="toy-link">
+                        <h3 class="toy-title">宇宙星空</h3>
+                        <p class="toy-description">沉浸式宇宙星空体验，拖拽可平移视角，触摸互动产生光点涟漪，支持脉冲星音效和流星特效。</p>
+                        <div class="toy-tags">                        </div>
+                        <div class="toy-meta">
+                            <span class="toy-status stable">稳定版</span>
+                            <span class="toy-version">v1.0.0 (2025-05-15)</span>
                         </div>
                     </a>
                 </div>
@@ -727,12 +738,34 @@
                         </div>
                     </a>
                 </div>
+                <div class="toy-card" data-categories="interactive-visuals" data-tags="">
+                    <a href="projects/interactive-visuals/光影粒子/index.html" class="toy-link">
+                        <h3 class="toy-title">光影粒子</h3>
+                        <p class="toy-description">全功能趣味配置的粒子互动效果，支持多种行为模式、形状和颜色，可自定义连接线和点击效果。</p>
+                        <div class="toy-tags">                        </div>
+                        <div class="toy-meta">
+                            <span class="toy-status stable">稳定版</span>
+                            <span class="toy-version">v1.0 (2023-05-08)</span>
+                        </div>
+                    </a>
+                </div>
                 </div>
             </div>
             <div class="category-content" id="content-interactive-visuals">
                 <h2 class="category-title">互动视觉</h2>
                 <p class="category-description">通过触摸和交互创造的视觉体验，让你沉浸在流动的光影和动态效果中</p>
                 <div class="toys-container">
+                <div class="toy-card" data-categories="interactive-visuals" data-tags="">
+                    <a href="projects/interactive-visuals/宇宙星空/index.html" class="toy-link">
+                        <h3 class="toy-title">宇宙星空</h3>
+                        <p class="toy-description">沉浸式宇宙星空体验，拖拽可平移视角，触摸互动产生光点涟漪，支持脉冲星音效和流星特效。</p>
+                        <div class="toy-tags">                        </div>
+                        <div class="toy-meta">
+                            <span class="toy-status stable">稳定版</span>
+                            <span class="toy-version">v1.0.0 (2025-05-15)</span>
+                        </div>
+                    </a>
+                </div>
                 <div class="toy-card" data-categories="interactive-visuals" data-tags="">
                     <a href="projects/interactive-visuals/粒子花园/index.html" class="toy-link">
                         <h3 class="toy-title">粒子花园</h3>
@@ -803,15 +836,11 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="touch-interaction particle-effects light-effects mobile-optimized">
+                <div class="toy-card" data-categories="interactive-visuals" data-tags="">
                     <a href="projects/interactive-visuals/光影粒子/index.html" class="toy-link">
                         <h3 class="toy-title">光影粒子</h3>
                         <p class="toy-description">全功能趣味配置的粒子互动效果，支持多种行为模式、形状和颜色，可自定义连接线和点击效果。</p>
-                        <div class="toy-tags">
-                            <span class="toy-tag">触摸互动</span>
-                            <span class="toy-tag">粒子效果</span>
-                            <span class="toy-tag">光效</span>
-                        </div>
+                        <div class="toy-tags">                        </div>
                         <div class="toy-meta">
                             <span class="toy-status stable">稳定版</span>
                             <span class="toy-version">v1.0 (2023-05-08)</span>
@@ -1029,21 +1058,6 @@
                         </div>
                     </a>
                 </div>
-                <div class="toy-card" data-categories="interactive-visuals" data-tags="touch-interaction particle-effects light-effects mobile-optimized">
-                    <a href="projects/interactive-visuals/光影粒子/index.html" class="toy-link">
-                        <h3 class="toy-title">光影粒子</h3>
-                        <p class="toy-description">全功能趣味配置的粒子互动效果，支持多种行为模式、形状和颜色，可自定义连接线和点击效果。</p>
-                        <div class="toy-tags">
-                            <span class="toy-tag">触摸互动</span>
-                            <span class="toy-tag">粒子效果</span>
-                            <span class="toy-tag">光效</span>
-                        </div>
-                        <div class="toy-meta">
-                            <span class="toy-status stable">稳定版</span>
-                            <span class="toy-version">v1.0 (2023-05-08)</span>
-                        </div>
-                    </a>
-                </div>
                 </div>
             </div>
             <div class="category-content" id="content-utility-tools">
@@ -1102,42 +1116,42 @@
             const navScroll = document.querySelector('.category-nav-scroll');
             const leftArrow = document.querySelector('.nav-arrows.left');
             const rightArrow = document.querySelector('.nav-arrows.right');
-
+            
             // 默认激活"全部"分类
             if (categoryTabs.length > 0 && categoryContents.length > 0) {
                 categoryTabs[0].classList.add('active');
                 document.getElementById('content-all').classList.add('active');
             }
-
+            
             // 分类标签点击事件
             categoryTabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     // 移除所有激活状态
                     categoryTabs.forEach(t => t.classList.remove('active'));
                     categoryContents.forEach(c => c.classList.remove('active'));
-
+                    
                     // 激活当前分类
                     this.classList.add('active');
                     const categoryId = this.getAttribute('data-category');
                     document.getElementById('content-' + categoryId).classList.add('active');
-
+                    
                     // 应用当前标签筛选
                     applyTagFilters();
                 });
             });
-
+            
             // 导航箭头功能
             function updateArrowsVisibility() {
                 leftArrow.classList.toggle('visible', navScroll.scrollLeft > 0);
                 rightArrow.classList.toggle('visible', navScroll.scrollLeft < navScroll.scrollWidth - navScroll.clientWidth - 10);
             }
-
+            
             navScroll.addEventListener('scroll', updateArrowsVisibility);
             window.addEventListener('resize', updateArrowsVisibility);
-
+            
             // 初始检查
             updateArrowsVisibility();
-
+            
             // 左右箭头点击事件
             leftArrow.addEventListener('click', function() {
                 navScroll.scrollBy({
@@ -1145,52 +1159,52 @@
                     behavior: 'smooth'
                 });
             });
-
+            
             rightArrow.addEventListener('click', function() {
                 navScroll.scrollBy({
                     left: 200,
                     behavior: 'smooth'
                 });
             });
-
+            
             // 标签筛选功能
             const tagItems = document.querySelectorAll('.tag-item');
             const clearTagsButton = document.getElementById('clearTags');
             const applyTagsButton = document.getElementById('applyTags');
-
+            
             // 标签点击事件
             tagItems.forEach(tag => {
                 tag.addEventListener('click', function() {
                     this.classList.toggle('active');
                 });
             });
-
+            
             // 清除标签筛选
             clearTagsButton.addEventListener('click', function() {
                 tagItems.forEach(tag => tag.classList.remove('active'));
                 applyTagFilters();
             });
-
+            
             // 应用标签筛选
             applyTagsButton.addEventListener('click', applyTagFilters);
-
+            
             // 应用标签筛选函数
             function applyTagFilters() {
                 const selectedTags = Array.from(document.querySelectorAll('.tag-item.active')).map(tag => tag.getAttribute('data-tag'));
                 const toyCards = document.querySelectorAll('.toy-card');
-
+                
                 // 获取当前激活的分类
                 const activeCategory = document.querySelector('.category-tab.active').getAttribute('data-category');
-
+                
                 toyCards.forEach(card => {
                     // 检查分类匹配
                     const cardCategories = card.getAttribute('data-categories').split(' ');
                     const categoryMatch = activeCategory === 'all' || cardCategories.includes(activeCategory);
-
+                    
                     // 检查标签匹配
                     const cardTags = card.getAttribute('data-tags').split(' ');
                     const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => cardTags.includes(tag));
-
+                    
                     // 显示或隐藏卡片
                     if (categoryMatch && tagMatch) {
                         card.style.display = '';
@@ -1201,7 +1215,5 @@
             }
         });
     </script>
-    <!-- 修复移动端返回问题的脚本 -->
-    <script src="js/navigation-fix.js"></script>
 </body>
 </html>

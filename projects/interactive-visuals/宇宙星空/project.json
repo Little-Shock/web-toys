@@ -1,0 +1,54 @@
+{
+    "title": "宇宙星空",
+    "description": "沉浸式宇宙星空体验，拖拽可平移视角，触摸互动产生光点涟漪，支持脉冲星音效和流星特效。",
+    "tags": [
+        "触摸互动",
+        "粒子效果",
+        "光效",
+        "音频可视化",
+        "移动优化"
+    ],
+    "status": "stable",
+    "order": 1,
+    "version": "1.0.0",
+    "last_updated": "2025-05-15",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-15",
+            "changes": [
+                "初始版本发布",
+                "实现星空粒子系统",
+                "添加脉冲星音效",
+                "添加流星特效",
+                "支持移动端触摸交互"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    "features": [
+        "星空粒子系统",
+        "脉冲星效果",
+        "流星特效",
+        "星系背景",
+        "触摸互动",
+        "音效反馈",
+        "视角平移",
+        "可调节参数"
+    ],
+    "dependencies": [
+        "Web Audio API",
+        "Canvas API"
+    ],
+    "primary_category": "interactive-visuals",
+    "secondary_categories": []
+}
