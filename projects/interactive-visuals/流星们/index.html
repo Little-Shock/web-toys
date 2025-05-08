@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>流星们 - Little Shock</title>
+  <meta name="description" content="互动流星粒子效果，触摸屏幕创造流星轨迹，支持多种颜色主题和行为模式">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #121212;
+    }
+
+    /* 返回链接 */
+    .back-link {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 1000;
+      background: rgba(30, 30, 40, 0.7);
+      color: #e0e0e0;
+      padding: 8px 15px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+      background: rgba(60, 60, 90, 0.8);
+      border-color: rgba(98, 0, 234, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="/" class="back-link" id="backToHome">返回主菜单</a>
+
+  <script src="sketch.js"></script>
+  <script src="../../js/back-link-fix.js"></script>
+</body>
+</html>

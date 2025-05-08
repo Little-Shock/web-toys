@@ -1,0 +1,49 @@
+{
+    "title": "流星们",
+    "description": "互动流星粒子效果，触摸屏幕创造流星轨迹，支持多种颜色主题和行为模式，可自定义粒子数量和效果。",
+    "tags": [
+        "粒子效果",
+        "触摸互动",
+        "光效",
+        "移动优化"
+    ],
+    "status": "stable",
+    "version": "1.0.0",
+    "last_updated": "2025-05-20",
+    "primary_category": "interactive-visuals",
+    "secondary_categories": [],
+    "order": 9,
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-20",
+            "changes": [
+                "初始版本发布",
+                "实现流星粒子系统",
+                "添加多种颜色主题",
+                "支持移动端触摸交互",
+                "添加设置面板"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    "features": [
+        "流星粒子系统",
+        "多种颜色主题",
+        "触摸互动效果",
+        "可调节参数",
+        "移动端优化"
+    ],
+    "dependencies": [
+        "p5.js"
+    ]
+}
