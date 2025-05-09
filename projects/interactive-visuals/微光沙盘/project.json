@@ -8,5 +8,42 @@
     "status": "beta",
     "order": 6,
     "primary_category": "interactive-visuals",
-    "secondary_categories": []
+    "secondary_categories": [],
+    "version": "1.0.0",
+    "last_updated": "2025-05-10",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-10",
+            "changes": [
+                "初始版本"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    "features": [
+        "多种互动工具",
+        "多彩沙粒",
+        "设备倾斜控制",
+        "预设模板",
+        "保存与分享",
+        "多感官反馈"
+    ],
+    "dependencies": [
+        "物理引擎",
+        "Canvas 2D API",
+        "空间哈希",
+        "设备方向API",
+        "触摸优化",
+        "响应式设计"
+    ]
 }

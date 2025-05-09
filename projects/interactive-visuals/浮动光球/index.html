@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浮动光球 - Little Shock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #0D1117;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+            background-color: transparent;
+            border-radius: 8px;
+        }
+        .info-text {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(200, 200, 220, 0.7);
+            font-size: 0.8rem;
+            padding: 8px 16px;
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            pointer-events: none;
+            text-align: center;
+            z-index: 10;
+        }
+        #settingsPanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(25, 30, 40, 0.85); /* 更深邃的面板背景 */
+            backdrop-filter: blur(10px); /* 毛玻璃效果 */
+            padding: 15px;
+            border-radius: 12px; /* 更圆润的边角 */
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            color: #E0E0E0; /* 浅色文字 */
+            width: 280px;
+            z-index: 100;
+            transition: transform 0.3s ease-in-out;
+        }
+        #settingsPanel.collapsed {
+            transform: translateX(calc(100% - 40px)); /* 收起时只显示一部分和按钮 */
+        }
+        #settingsPanel h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+        .control-group {
+            margin-bottom: 12px;
+        }
+        .control-group label {
+            display: block;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            color: #B0B0B0; /* 标签颜色稍暗 */
+        }
+        .control-group input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            outline: none;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #82aaff; /* 滑块颜色 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #82aaff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        .control-group input[type="checkbox"] {
+            margin-right: 8px;
+            accent-color: #82aaff; /* 复选框颜色 */
+        }
+        .control-group .value-display {
+            font-size: 0.8em;
+            color: #A0A0A0;
+            float: right;
+        }
+        #togglePanelButton {
+            position: absolute;
+            top: -5px;
+            left: -30px; /* 调整到面板左侧 */
+            transform: translateY(50%) rotate(-90deg); /* 旋转按钮 */
+            transform-origin: bottom left;
+            background-color: #82aaff;
+            color: #0D1117;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 8px 8px 0 0; /* 圆角调整适应旋转 */
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            box-shadow: -2px 0px 5px rgba(0,0,0,0.2);
+        }
+        .button-group button {
+            background-color: #4A5568; /* 按钮背景 */
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-right: 5px;
+            transition: background-color 0.2s;
+        }
+        .button-group button.active {
+            background-color: #82aaff; /* 激活按钮颜色 */
+            color: #0D1117;
+        }
+        .button-group button:hover {
+            background-color: #718096;
+        }
+        .button-group button.active:hover {
+            background-color: #6c9bff;
+        }
+        /* 返回按钮样式 */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(25, 30, 40, 0.85);
+            backdrop-filter: blur(10px);
+            color: #E0E0E0;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            z-index: 100;
+        }
+        .back-button:hover {
+            background-color: rgba(35, 40, 50, 0.9);
+            transform: translateY(-2px);
+        }
+        .back-button:active {
+            transform: translateY(0);
+        }
+        .back-button-icon {
+            margin-right: 6px;
+        }
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            #settingsPanel {
+                width: 250px;
+            }
+            .back-button {
+                padding: 8px 12px;
+                font-size: 0.85em;
+            }
+            .info-text {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+                bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="orbsCanvas"></canvas>
+    <div class="info-text">轻触或移动鼠标与光球互动<br>点击/触摸屏幕释放冲击波 (排斥模式)</div>
+
+    <a href="../../.." class="back-button">
+        <span class="back-button-icon">←</span>返回主页
+    </a>
+
+    <div id="settingsPanel" class="collapsed">
+        <button id="togglePanelButton">设置</button>
+        <h3>效果控制</h3>
+        <div class="control-group">
+            <label for="numOrbs">光球数量: <span id="numOrbsValue" class="value-display">25</span></label>
+            <input type="range" id="numOrbs" min="5" max="100" value="25">
+        </div>
+        <div class="control-group">
+            <label for="trailAlpha">拖尾效果: <span id="trailAlphaValue" class="value-display">0.1</span></label>
+            <input type="range" id="trailAlpha" min="0.01" max="0.5" step="0.01" value="0.1">
+        </div>
+        <div class="control-group">
+            <label for="orbRepulsion">光球互斥力: <span id="orbRepulsionValue" class="value-display">0.15</span></label>
+            <input type="range" id="orbRepulsion" min="0" max="0.5" step="0.01" value="0.15">
+        </div>
+        <div class="control-group">
+            <label for="shockwaveForce">冲击波强度: <span id="shockwaveForceValue" class="value-display">0.5</span></label>
+            <input type="range" id="shockwaveForce" min="0.1" max="2" step="0.05" value="0.5">
+        </div>
+        <div class="control-group">
+            <input type="checkbox" id="enableConnections" checked>
+            <label for="enableConnections">启用光球连接线</label>
+        </div>
+        <div class="control-group">
+            <label for="connectionDistance">连接距离: <span id="connectionDistanceValue" class="value-display">100</span></label>
+            <input type="range" id="connectionDistance" min="20" max="200" value="100">
+        </div>
+        <div class="control-group">
+            <label>交互模式:</label>
+            <div class="button-group">
+                <button id="repulsionModeButton" class="active">排斥</button>
+                <button id="gravityModeButton">引力</button>
+            </div>
+        </div>
+         <div class="control-group">
+            <label for="mouseForce">鼠标交互力: <span id="mouseForceValue" class="value-display">0.7</span></label>
+            <input type="range" id="mouseForce" min="0.1" max="2" step="0.05" value="0.7">
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('orbsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let orbs = [];
+        let shockwaves = [];
+
+        // 默认设置
+        let settings = {
+            numOrbs: 25,
+            minRadius: 8,
+            maxRadius: 20,
+            mouseInteractionRadius: 120,
+            mouseForce: 0.7, // 用于排斥和吸引
+            orbRepulsionForce: 0.15,
+            shockwavePushForce: 0.5,
+            damping: 0.93,
+            baseSpeed: 0.15,
+            trailAlpha: 0.1,
+            enableConnections: true,
+            connectionDistance: 100,
+            connectionOpacity: 0.3,
+            interactionMode: 'repulsion', // 'repulsion' or 'gravity'
+            gravityWellStrength: 0.05, // 引力强度
+        };
+
+        let mouse = { x: undefined, y: undefined, isDown: false };
+
+        class Orb {
+            constructor(x, y, radius, color) {
+                this.x = x;
+                this.y = y;
+                this.originX = x;
+                this.originY = y;
+                this.radius = radius;
+                this.color = color;
+                this.vx = (Math.random() - 0.5) * settings.baseSpeed * 2;
+                this.vy = (Math.random() - 0.5) * settings.baseSpeed * 2;
+            }
+
+            draw() {
+                ctx.beginPath();
+                const gradient = ctx.createRadialGradient(this.x, this.y, this.radius * 0.1, this.x, this.y, this.radius);
+                gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 1)`);
+                gradient.addColorStop(0.7, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.6)`);
+                gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            update() {
+                // 1. 鼠标/触摸交互
+                if (mouse.x !== undefined && mouse.y !== undefined) {
+                    const dxMouse = this.x - mouse.x;
+                    const dyMouse = this.y - mouse.y;
+                    let distanceMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+                    if (distanceMouse < 0.1) distanceMouse = 0.1; // Avoid division by zero
+
+                    if (settings.interactionMode === 'repulsion') {
+                        if (distanceMouse < settings.mouseInteractionRadius + this.radius) {
+                            const angle = Math.atan2(dyMouse, dxMouse);
+                            const force = (settings.mouseInteractionRadius + this.radius - distanceMouse) / (settings.mouseInteractionRadius + this.radius);
+                            this.vx += Math.cos(angle) * force * settings.mouseForce;
+                            this.vy += Math.sin(angle) * force * settings.mouseForce;
+                        }
+                    } else if (settings.interactionMode === 'gravity') {
+                         // 引力作用范围可以更大一些，或者与mouseInteractionRadius一致
+                        if (distanceMouse < settings.mouseInteractionRadius * 1.5 + this.radius) { // 假设引力范围更大
+                            const angle = Math.atan2(dyMouse, dxMouse);
+                             // 引力随距离平方反比减小，但为了效果更柔和，这里用线性减弱或固定强度
+                            const force = settings.gravityWellStrength * (mouse.isDown ? 2.5 : 1); // 点击时引力增强
+                            this.vx -= Math.cos(angle) * force * settings.mouseForce / (distanceMouse / 50 +1); // 除以距离使其衰减
+                            this.vy -= Math.sin(angle) * force * settings.mouseForce / (distanceMouse / 50 +1);
+                        }
+                    }
+                }
+
+                // 2. 光球间相互作用 (排斥)
+                if (settings.orbRepulsionForce > 0) {
+                    for (let otherOrb of orbs) {
+                        if (this === otherOrb) continue;
+                        const dxOrb = this.x - otherOrb.x;
+                        const dyOrb = this.y - otherOrb.y;
+                        const distanceOrb = Math.sqrt(dxOrb * dxOrb + dyOrb * dyOrb);
+                        const minDistance = this.radius + otherOrb.radius + 5;
+                        if (distanceOrb < minDistance && distanceOrb > 0) {
+                            const angle = Math.atan2(dyOrb, dxOrb);
+                            const force = (minDistance - distanceOrb) / minDistance;
+                            this.vx += Math.cos(angle) * force * settings.orbRepulsionForce;
+                            this.vy += Math.sin(angle) * force * settings.orbRepulsionForce;
+                        }
+                    }
+                }
+
+                // 3. 与冲击波的交互 (仅在排斥模式下)
+                if (settings.interactionMode === 'repulsion') {
+                    for (let shockwave of shockwaves) {
+                        const dxShock = this.x - shockwave.x;
+                        const dyShock = this.y - shockwave.y;
+                        const distToShockwaveCenter = Math.sqrt(dxShock * dxShock + dyShock * dyShock);
+                        if (Math.abs(distToShockwaveCenter - shockwave.currentRadius) < shockwave.lineWidth / 2 + this.radius && shockwave.currentRadius > 0) {
+                            const angle = Math.atan2(dyShock, dxShock);
+                            this.vx += Math.cos(angle) * settings.shockwavePushForce * shockwave.alpha;
+                            this.vy += Math.sin(angle) * settings.shockwavePushForce * shockwave.alpha;
+                        }
+                    }
+                }
+
+                // 轻微地向初始位置回归
+                this.vx += (this.originX - this.x) * 0.0001; // 减弱回归，让交互主导
+                this.vy += (this.originY - this.y) * 0.0001;
+
+                this.vx *= settings.damping;
+                this.vy *= settings.damping;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 边界检测
+                if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -0.7; }
+                else if (this.x + this.radius > canvas.width) { this.x = canvas.width - this.radius; this.vx *= -0.7; }
+                if (this.y - this.radius < 0) { this.y = this.radius; this.vy *= -0.7; }
+                else if (this.y + this.radius > canvas.height) { this.y = canvas.height - this.radius; this.vy *= -0.7; }
+
+                this.draw();
+            }
+        }
+
+        class Shockwave {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.currentRadius = 0;
+                this.maxRadius = Math.min(canvas.width, canvas.height) * 0.7;
+                this.speed = 6;
+                this.alpha = 1;
+                this.lineWidth = 18;
+                this.color = { r: 200, g: 200, b: 255 };
+            }
+            update() {
+                this.currentRadius += this.speed;
+                this.alpha -= 0.018;
+                if (this.alpha < 0) this.alpha = 0;
+            }
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.currentRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.alpha * 0.6})`;
+                ctx.lineWidth = Math.max(1, this.lineWidth * this.alpha);
+                ctx.stroke();
+            }
+        }
+
+        function init(fullReset = true) {
+            const padding = window.innerWidth < 768 ? 10 : 20;
+            canvas.width = window.innerWidth - padding * 2;
+            canvas.height = window.innerHeight - padding * 2;
+
+            if (fullReset) {
+                orbs = [];
+                const colors = [
+                    { r: 173, g: 216, b: 230 }, { r: 135, g: 206, b: 250 },
+                    { r: 0, g: 191, b: 255 }, { r: 70, g: 130, b: 180 },
+                    { r: 100, g: 149, b: 237 }, { r: 221, g: 160, b: 221 },
+                    { r: 255, g: 105, b: 180 }, { r: 255, g: 182, b: 193 } // 添加粉色系
+                ];
+
+                // 根据设备性能和屏幕尺寸优化粒子数量
+                let effectiveNumOrbs = settings.numOrbs;
+
+                // 移动设备优化
+                if (window.innerWidth < 480 || window.innerHeight < 480) {
+                    effectiveNumOrbs = Math.floor(settings.numOrbs * 0.5); // 小屏幕减少50%
+                } else if (window.innerWidth < 768 || window.innerHeight < 768) {
+                    effectiveNumOrbs = Math.floor(settings.numOrbs * 0.7); // 中等屏幕减少30%
+                }
+
+                // 确保至少有最小数量的光球
+                effectiveNumOrbs = Math.max(effectiveNumOrbs, 5);
+
+                // 根据屏幕尺寸调整光球大小
+                const screenSizeFactor = Math.min(canvas.width, canvas.height) / 1000;
+                const adjustedMinRadius = settings.minRadius * screenSizeFactor * (window.innerWidth < 480 ? 0.8 : 1);
+                const adjustedMaxRadius = settings.maxRadius * screenSizeFactor * (window.innerWidth < 480 ? 0.8 : 1);
+
+                for (let i = 0; i < effectiveNumOrbs; i++) {
+                    const radius = Math.random() * (adjustedMaxRadius - adjustedMinRadius) + adjustedMinRadius;
+                    const x = Math.random() * (canvas.width - radius * 2) + radius;
+                    const y = Math.random() * (canvas.height - radius * 2) + radius;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    orbs.push(new Orb(x, y, radius, color));
+                }
+            }
+            shockwaves = []; // 清空冲击波，即使非完全重置
+        }
+
+        function drawConnections() {
+            if (!settings.enableConnections || orbs.length < 2) return;
+
+            for (let i = 0; i < orbs.length; i++) {
+                for (let j = i + 1; j < orbs.length; j++) {
+                    const orbA = orbs[i];
+                    const orbB = orbs[j];
+                    const dx = orbA.x - orbB.x;
+                    const dy = orbA.y - orbB.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < settings.connectionDistance) {
+                        const opacity = settings.connectionOpacity * (1 - distance / settings.connectionDistance);
+                        ctx.beginPath();
+                        ctx.moveTo(orbA.x, orbA.y);
+                        ctx.lineTo(orbB.x, orbB.y);
+                        // 基于光球颜色混合或使用固定颜色
+                        const r = Math.floor((orbA.color.r + orbB.color.r) / 2);
+                        const g = Math.floor((orbA.color.g + orbB.color.g) / 2);
+                        const b = Math.floor((orbA.color.b + orbB.color.b) / 2);
+                        ctx.strokeStyle = `rgba(${r},${g},${b}, ${opacity})`;
+                        ctx.lineWidth = 1; //Math.max(0.5, 2 * (1 - distance / settings.connectionDistance));
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = `rgba(13, 17, 23, ${settings.trailAlpha})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (settings.enableConnections) {
+                drawConnections();
+            }
+
+            for (let i = shockwaves.length - 1; i >= 0; i--) {
+                shockwaves[i].update();
+                shockwaves[i].draw();
+                if (shockwaves[i].alpha <= 0 || shockwaves[i].currentRadius > shockwaves[i].maxRadius) {
+                    shockwaves.splice(i, 1);
+                }
+            }
+
+            orbs.forEach(orb => orb.update());
+            requestAnimationFrame(animate);
+        }
+
+        // --- UI Panel Logic ---
+        const settingsPanel = document.getElementById('settingsPanel');
+        const togglePanelButton = document.getElementById('togglePanelButton');
+
+        togglePanelButton.addEventListener('click', () => {
+            settingsPanel.classList.toggle('collapsed');
+            togglePanelButton.textContent = settingsPanel.classList.contains('collapsed') ? '展开' : '收起';
+        });
+
+        // Helper to update value display
+        function updateValueDisplay(sliderId, displayId, isFloat = false, multiplier = 1) {
+            const slider = document.getElementById(sliderId);
+            const display = document.getElementById(displayId);
+            let value = parseFloat(slider.value) * multiplier;
+            display.textContent = isFloat ? value.toFixed(2) : Math.round(value);
+            return parseFloat(slider.value); // Return original slider value for settings
+        }
+
+        // Link UI controls to settings
+        const numOrbsSlider = document.getElementById('numOrbs');
+        numOrbsSlider.addEventListener('input', () => {
+            settings.numOrbs = parseInt(updateValueDisplay('numOrbs', 'numOrbsValue'));
+        });
+        numOrbsSlider.addEventListener('change', () => init(true)); // Full reset on change
+
+        const trailAlphaSlider = document.getElementById('trailAlpha');
+        trailAlphaSlider.addEventListener('input', () => {
+            settings.trailAlpha = updateValueDisplay('trailAlpha', 'trailAlphaValue', true);
+        });
+
+        const orbRepulsionSlider = document.getElementById('orbRepulsion');
+        orbRepulsionSlider.addEventListener('input', () => {
+            settings.orbRepulsionForce = updateValueDisplay('orbRepulsion', 'orbRepulsionValue', true);
+        });
+
+        const shockwaveForceSlider = document.getElementById('shockwaveForce');
+        shockwaveForceSlider.addEventListener('input', () => {
+            settings.shockwavePushForce = updateValueDisplay('shockwaveForce', 'shockwaveForceValue', true);
+        });
+
+        const enableConnectionsCheckbox = document.getElementById('enableConnections');
+        enableConnectionsCheckbox.addEventListener('change', () => {
+            settings.enableConnections = enableConnectionsCheckbox.checked;
+        });
+
+        const connectionDistanceSlider = document.getElementById('connectionDistance');
+        connectionDistanceSlider.addEventListener('input', () => {
+            settings.connectionDistance = parseInt(updateValueDisplay('connectionDistance', 'connectionDistanceValue'));
+        });
+
+        const mouseForceSlider = document.getElementById('mouseForce');
+        mouseForceSlider.addEventListener('input', () => {
+            settings.mouseForce = updateValueDisplay('mouseForce', 'mouseForceValue', true);
+        });
+
+
+        // Interaction Mode Buttons
+        const repulsionModeButton = document.getElementById('repulsionModeButton');
+        const gravityModeButton = document.getElementById('gravityModeButton');
+        const infoText = document.querySelector('.info-text');
+
+        repulsionModeButton.addEventListener('click', () => {
+            settings.interactionMode = 'repulsion';
+            repulsionModeButton.classList.add('active');
+            gravityModeButton.classList.remove('active');
+            infoText.innerHTML = "轻触或移动鼠标与光球互动<br>点击/触摸屏幕释放冲击波";
+        });
+
+        gravityModeButton.addEventListener('click', () => {
+            settings.interactionMode = 'gravity';
+            gravityModeButton.classList.add('active');
+            repulsionModeButton.classList.remove('active');
+            infoText.innerHTML = "轻触或移动鼠标形成引力点<br>按住可增强引力";
+        });
+
+        // Initialize display values
+        document.getElementById('numOrbsValue').textContent = settings.numOrbs;
+        document.getElementById('trailAlphaValue').textContent = settings.trailAlpha.toFixed(2);
+        document.getElementById('orbRepulsionValue').textContent = settings.orbRepulsionForce.toFixed(2);
+        document.getElementById('shockwaveForceValue').textContent = settings.shockwavePushForce.toFixed(2);
+        document.getElementById('connectionDistanceValue').textContent = settings.connectionDistance;
+        document.getElementById('mouseForceValue').textContent = settings.mouseForce.toFixed(2);
+        enableConnectionsCheckbox.checked = settings.enableConnections;
+
+
+        // --- Event Listeners ---
+        canvas.addEventListener('click', (event) => {
+            if (settings.interactionMode === 'repulsion') {
+                const rect = canvas.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+                const clickY = event.clientY - rect.top;
+                shockwaves.push(new Shockwave(clickX, clickY));
+            }
+            // In gravity mode, click is handled by isDown state for stronger pull.
+        });
+
+        function handleInteractionStart(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = clientX - rect.left;
+            mouse.y = clientY - rect.top;
+            mouse.isDown = true;
+            if (settings.interactionMode === 'repulsion' && event.type === 'mousedown') { // For desktop, click for shockwave
+                 // shockwaves.push(new Shockwave(mouse.x, mouse.y)); // click handler does this
+            }
+        }
+
+        function handleInteractionMove(clientX, clientY) {
+            if (!mouse.isDown && settings.interactionMode === 'gravity') return; // In gravity, only move if mouse is down or always track? Let's always track for passive pull.
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = clientX - rect.left;
+            mouse.y = clientY - rect.top;
+        }
+
+        function handleInteractionEnd() {
+            mouse.isDown = false;
+            // For gravity mode, if we don't want mouse to affect when not pressed:
+            if (settings.interactionMode === 'gravity' && !event.type.includes('move')) { // Keep affecting on mousemove
+                 // mouse.x = undefined; // Optional: stop gravity when mouse/touch is released
+                 // mouse.y = undefined;
+            }
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', (event) => handleInteractionStart(event.clientX, event.clientY));
+        window.addEventListener('mousemove', (event) => { // window for continuous effect when dragging outside
+            const rect = canvas.getBoundingClientRect();
+            // Check if mouse is over canvas for passive interaction
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            if (x >= 0 && x <= canvas.width && y >=0 && y <= canvas.height) {
+                 handleInteractionMove(event.clientX, event.clientY);
+            } else { // Mouse is outside canvas
+                if (!mouse.isDown) { // If not dragging, clear mouse position
+                    mouse.x = undefined;
+                    mouse.y = undefined;
+                } else { // If dragging, continue to update based on window position
+                     handleInteractionMove(event.clientX, event.clientY);
+                }
+            }
+        });
+        window.addEventListener('mouseup', () => handleInteractionEnd()); // window for release outside
+
+        canvas.addEventListener('mouseleave', () => {
+            if (!mouse.isDown) { // If not dragging, clear mouse pos
+                 mouse.x = undefined;
+                 mouse.y = undefined;
+            }
+        });
+
+
+        // Touch events - 优化移动端触摸体验
+        canvas.addEventListener('touchstart', (event) => {
+            if (event.touches.length > 0) {
+                event.preventDefault(); // 防止触摸事件引起其他行为
+                handleInteractionStart(event.touches[0].clientX, event.touches[0].clientY);
+
+                // 在排斥模式下，触摸时产生冲击波
+                if (settings.interactionMode === 'repulsion') {
+                    const rect = canvas.getBoundingClientRect();
+                    const touchX = event.touches[0].clientX - rect.left;
+                    const touchY = event.touches[0].clientY - rect.top;
+
+                    // 确保冲击波在画布范围内
+                    if (touchX >= 0 && touchX <= canvas.width && touchY >= 0 && touchY <= canvas.height) {
+                        shockwaves.push(new Shockwave(touchX, touchY));
+                    }
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (event) => {
+            event.preventDefault(); // 防止滚动页面
+            if (event.touches.length > 0) {
+                const rect = canvas.getBoundingClientRect();
+                const touchX = event.touches[0].clientX;
+                const touchY = event.touches[0].clientY;
+
+                // 检查触摸点是否在画布范围内
+                const x = touchX - rect.left;
+                const y = touchY - rect.top;
+
+                if (x >= 0 && x <= canvas.width && y >= 0 && y <= canvas.height) {
+                    handleInteractionMove(touchX, touchY);
+                } else {
+                    // 如果触摸移出画布，但仍在按住，继续更新位置
+                    if (mouse.isDown) {
+                        handleInteractionMove(touchX, touchY);
+                    } else {
+                        mouse.x = undefined;
+                        mouse.y = undefined;
+                    }
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (event) => {
+            if (event.touches.length === 0) { // 所有手指都抬起
+                handleInteractionEnd();
+
+                // 在引力模式下，抬起手指时清除引力点
+                if (settings.interactionMode === 'gravity') {
+                    mouse.x = undefined;
+                    mouse.y = undefined;
+                }
+            }
+        });
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                init(true); // Full reset on resize
+            }, 250);
+        });
+
+        window.onload = () => {
+            // Set initial values for sliders based on settings
+            numOrbsSlider.value = settings.numOrbs;
+            trailAlphaSlider.value = settings.trailAlpha;
+            orbRepulsionSlider.value = settings.orbRepulsionForce;
+            shockwaveForceSlider.value = settings.shockwavePushForce;
+            enableConnectionsCheckbox.checked = settings.enableConnections;
+            connectionDistanceSlider.value = settings.connectionDistance;
+            mouseForceSlider.value = settings.mouseForce;
+
+            init();
+            animate();
+            // Set initial button text for toggle
+            togglePanelButton.textContent = settingsPanel.classList.contains('collapsed') ? '展开' : '收起';
+        };
+    </script>
+</body>
+</html>

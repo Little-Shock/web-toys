@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浮光晶体 - Three.js 互动玩具</title>
+    <style>
+        :root {
+            --panel-bg-color: rgba(20, 20, 25, 0.85);
+            --text-color: #e0e0e0;
+            --border-radius: 8px;
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #060608; /* Slightly darker background */
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: rgba(0,0,0,0.6);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            text-align: center;
+            color: var(--text-color);
+            z-index: 90;
+            pointer-events: none;
+        }
+        #loading {
+            font-size: 1.5em;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 返回链接 */
+        .back-link {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: rgba(30, 30, 40, 0.7);
+            color: var(--text-color);
+            padding: 8px 15px;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all var(--transition-speed) ease;
+        }
+        .back-link:hover {
+            background: rgba(60, 60, 90, 0.8);
+            border-color: rgba(98, 0, 234, 0.5);
+        }
+
+        /* Control Panel Styles */
+        #controls-panel {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: var(--panel-bg-color);
+            backdrop-filter: blur(5px);
+            border-radius: var(--border-radius);
+            padding: 0;
+            z-index: 100;
+            overflow: hidden;
+            transition: max-height var(--transition-speed) ease-out, padding var(--transition-speed) ease-out;
+            max-height: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #controls-panel.expanded {
+            max-height: 500px;
+            padding: 10px 15px;
+        }
+        #toggle-controls {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+        #controls-panel.expanded #toggle-controls {
+             margin-bottom: 10px;
+        }
+        .controls-content { display: none; padding-top: 5px; }
+        #controls-panel.expanded .controls-content { display: block; }
+        .control-item { margin-bottom: 12px; display: flex; flex-direction: column; }
+        .control-item label { font-size: 13px; color: #bbb; margin-bottom: 5px; }
+        .control-item input[type="range"] { width: 160px; cursor: pointer; }
+        .control-item input[type="checkbox"] { margin-right: 5px; vertical-align: middle; }
+        .control-item .value-display { font-size: 12px; color: #888; margin-left: 8px; }
+        .control-item div { display: flex; align-items: center; }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            #info {
+                width: 80%;
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+
+            .control-item input[type="range"] {
+                width: 120px;
+            }
+
+            #controls-panel.expanded {
+                max-width: 80%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="info">轻触/点击晶体触发连锁与引力，拖拽旋转视角</div>
+    <div id="loading">加载中...</div>
+
+    <!-- 返回主菜单链接 -->
+    <a href="/" class="back-link" id="backToHome">返回主菜单</a>
+
+    <div id="controls-panel">
+        <button id="toggle-controls">⚙️ 控制面板</button>
+        <div class="controls-content">
+            <div class="control-item">
+                <label for="crystal-count">晶体数量: <span id="crystal-count-value">20</span></label>
+                <input type="range" id="crystal-count" min="5" max="300" value="20"> </div>
+            <div class="control-item">
+                <label for="scene-brightness">场景亮度: <span id="scene-brightness-value">0.6</span></label>
+                <input type="range" id="scene-brightness" min="0.1" max="2.0" step="0.1" value="0.6">
+            </div>
+            <div class="control-item">
+                <label for="particle-density">粒子密度: <span id="particle-density-value">1.0</span></label>
+                <input type="range" id="particle-density" min="0.1" max="3.0" step="0.1" value="1.0">
+            </div>
+            <div class="control-item">
+                <label for="gravity-strength">引力强度: <span id="gravity-strength-value">0.5</span></label>
+                <input type="range" id="gravity-strength" min="0" max="2.0" step="0.1" value="0.5">
+            </div>
+            <div class="control-item">
+                <label for="auto-rotate">自动旋转</label>
+                <div>
+                    <input type="checkbox" id="auto-rotate-toggle" checked>
+                    <input type="range" id="auto-rotate-speed" min="0" max="2" step="0.1" value="0.2" style="width:120px;">
+                    <span id="auto-rotate-speed-value">0.2</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <script>
+        // --- 全局变量 ---
+        let scene, camera, renderer, controls;
+        const crystals = [];
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let INTERSECTED;
+        let lastClickTime = 0;
+        const CHAIN_REACTION_DISTANCE = 18; // Slightly increased chain reaction distance
+        const CHAIN_REACTION_DELAY = 150;
+        let particleSystems = [];
+        let starField;
+        let audioInitialized = false;
+        let clickSynth, chainSynth;
+        const clock = new THREE.Clock(); // Moved clock to global for wider use
+
+        // --- 场景设置 ---
+        const settings = {
+            crystalCount: 20,
+            sceneBrightness: 0.6,
+            particleDensity: 1.0,
+            gravityStrength: 0.5, // New setting for gravitational pull strength
+            autoRotate: true,
+            autoRotateSpeed: 0.2,
+            basePointLightIntensity: 0.8,
+            fogBaseColor: { h: 0.6, s: 0.1, l: 0.03 } // Base HSL for fog
+        };
+
+        // 移动设备优化
+        function optimizeForMobile() {
+            // 检测是否为移动设备
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+
+            if (isMobile) {
+                // 移动设备上降低晶体数量和粒子密度以提高性能
+                settings.crystalCount = 12;
+                settings.particleDensity = 0.6;
+
+                // 更新控制面板的值
+                if (document.getElementById('crystal-count')) {
+                    document.getElementById('crystal-count').value = settings.crystalCount;
+                    document.getElementById('crystal-count-value').textContent = settings.crystalCount;
+                }
+
+                if (document.getElementById('particle-density')) {
+                    document.getElementById('particle-density').value = settings.particleDensity;
+                    document.getElementById('particle-density-value').textContent = settings.particleDensity;
+                }
+            }
+        }
+
+        // --- DOM Elements for Controls ---
+        let crystalCountInput, sceneBrightnessInput, particleDensityInput, gravityStrengthInput,
+            autoRotateToggleInput, autoRotateSpeedInput;
+        let crystalCountValue, sceneBrightnessValue, particleDensityValue, gravityStrengthValue, autoRotateSpeedValue;
+
+        // --- 初始化函数 ---
+        function init() {
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) loadingElement.style.display = 'none';
+
+            // 移动设备优化
+            optimizeForMobile();
+
+            setupControlsPanel();
+
+            scene = new THREE.Scene();
+            // Initial fog setup
+            const initialFogH = settings.fogBaseColor.h + Math.sin(0) * 0.1;
+            const initialFogS = settings.fogBaseColor.s;
+            const initialFogL = settings.fogBaseColor.l;
+            scene.fog = new THREE.FogExp2(new THREE.Color().setHSL(initialFogH, initialFogS, initialFogL), 0.020);
+
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.z = 45; // Slightly further camera
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, settings.sceneBrightness);
+            scene.add(ambientLight);
+            const pointLight1 = new THREE.PointLight(0x99eeff, settings.sceneBrightness * settings.basePointLightIntensity, 180); // Increased range
+            pointLight1.position.set(20, 30, 30);
+            scene.add(pointLight1);
+            const pointLight2 = new THREE.PointLight(0xffaabb, settings.sceneBrightness * settings.basePointLightIntensity, 180); // Increased range
+            pointLight2.position.set(-30, -20, 25);
+            scene.add(pointLight2);
+            scene.userData.ambientLight = ambientLight;
+            scene.userData.pointLight1 = pointLight1;
+            scene.userData.pointLight2 = pointLight2;
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.03; // Slightly more damping
+            controls.screenSpacePanning = false;
+            controls.minDistance = 10; // Increased min distance
+            controls.maxDistance = 120; // Increased max distance
+            controls.autoRotate = settings.autoRotate;
+            controls.autoRotateSpeed = settings.autoRotateSpeed;
+
+            createCrystals(settings.crystalCount);
+            createStarfield();
+
+            window.addEventListener('resize', onWindowResize, false);
+            renderer.domElement.addEventListener('pointermove', onPointerMove, false);
+            renderer.domElement.addEventListener('click', onClick, false);
+
+            animate();
+        }
+
+        function initializeAudio() {
+            if (audioInitialized) return;
+            Tone.start();
+            clickSynth = new Tone.PluckSynth({ attackNoise: 0.6, dampening: 3500, resonance: 0.85, volume: -9 }).toDestination();
+            chainSynth = new Tone.MembraneSynth({ pitchDecay: 0.025, octaves: 3.5, oscillator: { type: "triangle" }, envelope: { attack: 0.002, decay: 0.25, sustain: 0.01, release: 0.15, attackCurve: "exponential" }, volume: -14 }).toDestination();
+            audioInitialized = true;
+        }
+
+        function createStarfield() {
+            if (starField) scene.remove(starField);
+            const starGeometry = new THREE.BufferGeometry();
+            const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.18, transparent: true, opacity: 0.6, sizeAttenuation: true }); // Slightly larger stars
+            const starVertices = [];
+            for (let i = 0; i < 12000; i++) { // More stars
+                const x = (Math.random() - 0.5) * 1800;
+                const y = (Math.random() - 0.5) * 1800;
+                const z = (Math.random() - 0.5) * 1800;
+                if (Math.sqrt(x*x + y*y + z*z) < 120) continue;
+                starVertices.push(x, y, z);
+            }
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            starField = new THREE.Points(starGeometry, starMaterial);
+            scene.add(starField);
+        }
+
+        function clearCrystals() {
+            crystals.forEach(crystal => scene.remove(crystal));
+            crystals.length = 0;
+            particleSystems.forEach(ps => scene.remove(ps));
+            particleSystems.length = 0;
+        }
+
+        function createCrystals(count) {
+            clearCrystals();
+            const geometries = [
+                new THREE.IcosahedronGeometry(1.3, 0), new THREE.OctahedronGeometry(1.3, 0),
+                new THREE.DodecahedronGeometry(1.3, 0), new THREE.TetrahedronGeometry(1.3, 0),
+                new THREE.ConeGeometry(1, 2.2, 5), // Added Cone
+                new THREE.TorusKnotGeometry(0.8, 0.25, 50, 8) // Added TorusKnot
+            ];
+            for (let i = 0; i < count; i++) {
+                const geometry = geometries[Math.floor(Math.random() * geometries.length)].clone();
+                const scale = Math.random() * 2.0 + 0.6; // Wider scale range
+                const material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color().setHSL(Math.random(), 0.75, 0.65), // Slightly more vibrant
+                    roughness: 0.1, metalness: 0.35, transparent: true,
+                    opacity: 0.7 + Math.random() * 0.25,
+                    emissive: new THREE.Color().setHSL(Math.random(), 0.6, 0.15),
+                    side: THREE.DoubleSide
+                });
+                const crystal = new THREE.Mesh(geometry, material);
+                crystal.scale.set(scale,scale,scale);
+                crystal.position.set((Math.random() - 0.5) * 80, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 70); // Wider distribution
+                crystal.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
+                crystal.userData = {
+                    originalScale: scale,
+                    rotationSpeed: { x: (Math.random() - 0.5) * 0.007, y: (Math.random() - 0.5) * 0.007, z: (Math.random() - 0.5) * 0.007 },
+                    initialEmissive: material.emissive.clone(), baseColor: material.color.clone(),
+                    isPulsing: false, pulseIntensity: 0, hasChainReactedThisPulse: false,
+                    // For enhanced breathing
+                    breathingOffset: Math.random() * Math.PI * 2, // Random phase for breathing
+                    breathingAmplitude: 0.02 + Math.random() * 0.03 // Random amplitude for breathing
+                };
+                crystals.push(crystal);
+                scene.add(crystal);
+            }
+        }
+
+        function createParticleBurst(position, color) {
+            const baseParticleCount = 45;
+            const particleCount = Math.floor(baseParticleCount * settings.particleDensity) + Math.floor(Math.random() * 25 * settings.particleDensity) ;
+            if (particleCount <= 0) return;
+
+            const particlesGeometry = new THREE.BufferGeometry();
+            const posArray = new Float32Array(particleCount * 3);
+            const velocities = [];
+            for (let i = 0; i < particleCount; i++) {
+                posArray[i * 3 + 0] = position.x; posArray[i * 3 + 1] = position.y; posArray[i * 3 + 2] = position.z;
+                const theta = Math.random() * Math.PI * 2; const phi = Math.acos((Math.random() * 2) - 1);
+                const speed = 0.3 + Math.random() * 0.6; // Slightly faster particles
+                velocities.push({
+                    x: speed * Math.sin(phi) * Math.cos(theta), y: speed * Math.sin(phi) * Math.sin(theta), z: speed * Math.cos(phi),
+                    life: 1.8 + Math.random() * 1.8, initialLife: 1.8 + Math.random() * 1.8 // Slightly longer life
+                });
+            }
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMaterial = new THREE.PointsMaterial({
+                color: color, size: 0.35 + Math.random() * 0.45, // Slightly larger particles
+                transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending,
+                depthWrite: false, sizeAttenuation: true
+            });
+            const particleSystem = new THREE.Points(particlesGeometry, particleMaterial);
+            particleSystem.userData = { velocities, creationTime: performance.now() / 1000 };
+            scene.add(particleSystem);
+            particleSystems.push(particleSystem);
+        }
+
+        function updateParticleSystems(deltaTime) {
+            for (let i = particleSystems.length - 1; i >= 0; i--) {
+                const system = particleSystems[i]; const positions = system.geometry.attributes.position;
+                const velocities = system.userData.velocities; let allDead = true;
+                for (let j = 0; j < positions.count; j++) {
+                    if (velocities[j].life > 0) {
+                        allDead = false; velocities[j].life -= deltaTime;
+                        positions.array[j * 3 + 0] += velocities[j].x * deltaTime * 22; // Speed multiplier
+                        positions.array[j * 3 + 1] += velocities[j].y * deltaTime * 22;
+                        positions.array[j * 3 + 2] += velocities[j].z * deltaTime * 22;
+                        system.material.opacity = Math.max(0, (velocities[j].life / velocities[j].initialLife) * 0.9);
+                    }
+                }
+                positions.needsUpdate = true;
+                if (allDead || (performance.now()/1000 - system.userData.creationTime > 6)) { // Increased failsafe
+                    scene.remove(system); system.geometry.dispose(); system.material.dispose();
+                    particleSystems.splice(i, 1);
+                }
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onPointerMove(event) {
+            event.preventDefault(); const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            handleHover();
+        }
+
+        function handleHover() {
+            raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(crystals);
+            if (intersects.length > 0) {
+                const firstIntersected = intersects[0].object;
+                if (INTERSECTED !== firstIntersected) {
+                    if (INTERSECTED && !INTERSECTED.userData.isPulsing) INTERSECTED.material.emissive.copy(INTERSECTED.userData.initialEmissive);
+                    INTERSECTED = firstIntersected;
+                    if (!INTERSECTED.userData.isPulsing) {
+                        const hoverColor = INTERSECTED.userData.initialEmissive.clone().multiplyScalar(3.5); // Stronger hover
+                        INTERSECTED.material.emissive.copy(hoverColor.clamp(new THREE.Color(0x000000), new THREE.Color(0xffffff)));
+                    }
+                }
+            } else {
+                if (INTERSECTED && !INTERSECTED.userData.isPulsing) INTERSECTED.material.emissive.copy(INTERSECTED.userData.initialEmissive);
+                INTERSECTED = null;
+            }
+        }
+
+        function onClick(event) {
+            event.preventDefault(); if (!audioInitialized) initializeAudio();
+            const currentTime = performance.now(); if (currentTime - lastClickTime < 200) return;
+            lastClickTime = currentTime; const rect = renderer.domElement.getBoundingClientRect();
+            const clickX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const clickY = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            triggerCrystalPulse(clickX, clickY, true);
+        }
+
+        function triggerCrystalPulse(x, y, isDirectClick) {
+            raycaster.setFromCamera({ x, y }, camera); const intersects = raycaster.intersectObjects(crystals);
+            if (intersects.length > 0) {
+                startPulse(intersects[0].object, isDirectClick);
+            } else {
+                 if (!controls.autoRotate && isDirectClick && settings.autoRotate) {
+                    setTimeout(() => { if (!crystals.some(c => c.userData.isPulsing)) controls.autoRotate = true; }, 1500);
+                }
+            }
+        }
+
+        function startPulse(crystal, isDirectClickOrChainStarter) {
+            if (crystal.userData.isPulsing) return;
+            crystal.userData.isPulsing = true; crystal.userData.pulseIntensity = 1.0;
+            crystal.userData.hasChainReactedThisPulse = false;
+            if (isDirectClickOrChainStarter && controls.autoRotate) controls.autoRotate = false;
+            const pulseEmissive = crystal.userData.initialEmissive.clone().lerp(crystal.userData.baseColor, 0.6).multiplyScalar(6); // Stronger pulse emissive
+            crystal.material.emissive.copy(pulseEmissive.clamp(new THREE.Color(0x000000), new THREE.Color(0xffffff)));
+            createParticleBurst(crystal.position, crystal.material.color);
+            if (audioInitialized) {
+                if (isDirectClickOrChainStarter) clickSynth.triggerAttackRelease(Tone.Frequency(150 + Math.random() * 250).toNote(), "8n", Tone.now());
+                else chainSynth.triggerAttackRelease(Tone.Frequency(80 + Math.random() * 120).toNote(), "16n", Tone.now() + Math.random()*0.05);
+            }
+        }
+
+        // Variables for subtle camera drift
+        let cameraDriftTarget = new THREE.Vector3();
+        let cameraDriftSpeed = 0.00005; // Very slow drift
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const deltaTime = clock.getDelta();
+            const elapsedTime = clock.getElapsedTime(); // Use elapsed time for smooth periodic animations
+
+            // --- Dynamic Fog Color ---
+            if (scene.fog) {
+                const hue = (settings.fogBaseColor.h + Math.sin(elapsedTime * 0.03) * 0.05) % 1.0; // Slow hue shift
+                const saturation = settings.fogBaseColor.s + Math.cos(elapsedTime * 0.02) * 0.02; // Subtle saturation shift
+                const lightness = settings.fogBaseColor.l + Math.sin(elapsedTime * 0.025) * 0.005; // Subtle lightness shift
+                scene.fog.color.setHSL(hue, THREE.MathUtils.clamp(saturation,0,1), THREE.MathUtils.clamp(lightness,0,0.1));
+            }
+
+            crystals.forEach(crystal => {
+                crystal.rotation.x += crystal.userData.rotationSpeed.x * (60 * deltaTime);
+                crystal.rotation.y += crystal.userData.rotationSpeed.y * (60 * deltaTime);
+                crystal.rotation.z += crystal.userData.rotationSpeed.z * (60 * deltaTime);
+
+                // Enhanced Breathing
+                crystal.position.y += Math.sin(elapsedTime * 0.5 + crystal.userData.breathingOffset) * crystal.userData.breathingAmplitude * (60 * deltaTime);
+
+                if (crystal.userData.isPulsing) {
+                    crystal.userData.pulseIntensity -= 1.8 * deltaTime; // Slightly faster pulse decay
+                    const pulseProgress = 1.0 - crystal.userData.pulseIntensity;
+                    const scaleFactor = crystal.userData.originalScale * (1 + Math.sin(pulseProgress * Math.PI) * 0.45); // Slightly larger pulse scale
+                    crystal.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                    // Gravitational Pull & Chain Reaction
+                    if (crystal.userData.pulseIntensity > 0.3 && !crystal.userData.hasChainReactedThisPulse) { // Check earlier in pulse
+                        crystals.forEach(otherCrystal => {
+                            if (otherCrystal !== crystal && !otherCrystal.userData.isPulsing) {
+                                const distance = crystal.position.distanceTo(otherCrystal.position);
+                                const effectiveChainDistance = CHAIN_REACTION_DISTANCE * ((crystal.scale.x / crystal.userData.originalScale + otherCrystal.scale.x / otherCrystal.userData.originalScale)/2);
+
+                                // Chain Reaction
+                                if (distance < effectiveChainDistance ) {
+                                    setTimeout(() => startPulse(otherCrystal, false), CHAIN_REACTION_DELAY + Math.random() * 100);
+                                }
+
+                                // Gravitational Pull
+                                if (settings.gravityStrength > 0 && distance < effectiveChainDistance * 1.5) { // Gravity acts a bit further
+                                    const pullFactor = (1.0 - distance / (effectiveChainDistance * 1.5)) * crystal.userData.pulseIntensity * settings.gravityStrength * 0.01;
+                                    if (pullFactor > 0) {
+                                        const direction = new THREE.Vector3().subVectors(crystal.position, otherCrystal.position).normalize();
+                                        otherCrystal.position.addScaledVector(direction, pullFactor);
+                                    }
+                                }
+                            }
+                        });
+                        crystal.userData.hasChainReactedThisPulse = true;
+                    }
+
+                    if (crystal.userData.pulseIntensity <= 0) {
+                        crystal.userData.isPulsing = false; crystal.userData.pulseIntensity = 0;
+                        crystal.scale.set(crystal.userData.originalScale, crystal.userData.originalScale, crystal.userData.originalScale);
+                        crystal.material.emissive.copy(crystal.userData.initialEmissive);
+                        if (INTERSECTED === crystal) {
+                            const hoverColor = crystal.userData.initialEmissive.clone().multiplyScalar(3.5);
+                            crystal.material.emissive.copy(hoverColor.clamp(new THREE.Color(0x000000), new THREE.Color(0xffffff)));
+                        }
+                        if (!crystals.some(c => c.userData.isPulsing) && !controls.autoRotate && settings.autoRotate) controls.autoRotate = true;
+                    }
+                } else if (INTERSECTED !== crystal) {
+                     crystal.material.emissive.lerp(crystal.userData.initialEmissive, 0.08); // Slower fade back
+                }
+            });
+            updateParticleSystems(deltaTime);
+            if (starField) {
+                starField.rotation.y += 0.00004 * (60 * deltaTime);
+                starField.rotation.x += 0.000015 * (60 * deltaTime);
+            }
+
+            // Subtle Camera Drifting
+            if (settings.autoRotate && controls.autoRotate) { // Only drift if auto-rotate is on
+                if (camera.position.distanceTo(cameraDriftTarget) < 0.1 || Math.random() < 0.001) { // Pick new target occasionally or when close
+                    cameraDriftTarget.set(
+                        (Math.random() - 0.5) * 5, // Small drift range
+                        (Math.random() - 0.5) * 3,
+                        camera.position.z // Keep z relatively stable or slightly adjust
+                    );
+                }
+                // This is a very subtle lookAt adjustment, OrbitControls will mostly override this.
+                // A better way for drift with OrbitControls is to slightly move the controls.target
+                // controls.target.lerp(cameraDriftTarget, cameraDriftSpeed * deltaTime * 10);
+            }
+
+
+            controls.update(); // OrbitControls update
+            renderer.render(scene, camera);
+        }
+
+        function setupControlsPanel() {
+            const panel = document.getElementById('controls-panel');
+            const toggleButton = document.getElementById('toggle-controls');
+            toggleButton.onclick = () => panel.classList.toggle('expanded');
+
+            crystalCountInput = document.getElementById('crystal-count');
+            sceneBrightnessInput = document.getElementById('scene-brightness');
+            particleDensityInput = document.getElementById('particle-density');
+            gravityStrengthInput = document.getElementById('gravity-strength'); // New control
+            autoRotateToggleInput = document.getElementById('auto-rotate-toggle');
+            autoRotateSpeedInput = document.getElementById('auto-rotate-speed');
+
+            crystalCountValue = document.getElementById('crystal-count-value');
+            sceneBrightnessValue = document.getElementById('scene-brightness-value');
+            particleDensityValue = document.getElementById('particle-density-value');
+            gravityStrengthValue = document.getElementById('gravity-strength-value'); // New control display
+            autoRotateSpeedValue = document.getElementById('auto-rotate-speed-value');
+
+            crystalCountInput.value = settings.crystalCount; crystalCountValue.textContent = settings.crystalCount;
+            sceneBrightnessInput.value = settings.sceneBrightness; sceneBrightnessValue.textContent = settings.sceneBrightness;
+            particleDensityInput.value = settings.particleDensity; particleDensityValue.textContent = settings.particleDensity;
+            gravityStrengthInput.value = settings.gravityStrength; gravityStrengthValue.textContent = settings.gravityStrength; // New control
+            autoRotateToggleInput.checked = settings.autoRotate;
+            autoRotateSpeedInput.value = settings.autoRotateSpeed; autoRotateSpeedValue.textContent = settings.autoRotateSpeed;
+            autoRotateSpeedInput.disabled = !settings.autoRotate;
+
+            crystalCountInput.addEventListener('input', (e) => {
+                settings.crystalCount = parseInt(e.target.value); crystalCountValue.textContent = settings.crystalCount;
+                createCrystals(settings.crystalCount);
+            });
+            sceneBrightnessInput.addEventListener('input', (e) => {
+                settings.sceneBrightness = parseFloat(e.target.value); sceneBrightnessValue.textContent = settings.sceneBrightness;
+                if (scene.userData.ambientLight) scene.userData.ambientLight.intensity = settings.sceneBrightness;
+                if (scene.userData.pointLight1) scene.userData.pointLight1.intensity = settings.sceneBrightness * settings.basePointLightIntensity;
+                if (scene.userData.pointLight2) scene.userData.pointLight2.intensity = settings.sceneBrightness * settings.basePointLightIntensity;
+            });
+            particleDensityInput.addEventListener('input', (e) => {
+                settings.particleDensity = parseFloat(e.target.value); particleDensityValue.textContent = settings.particleDensity;
+            });
+            gravityStrengthInput.addEventListener('input', (e) => { // New control listener
+                settings.gravityStrength = parseFloat(e.target.value); gravityStrengthValue.textContent = settings.gravityStrength;
+            });
+            autoRotateToggleInput.addEventListener('change', (e) => {
+                settings.autoRotate = e.target.checked; controls.autoRotate = settings.autoRotate;
+                autoRotateSpeedInput.disabled = !settings.autoRotate;
+            });
+            autoRotateSpeedInput.addEventListener('input', (e) => {
+                settings.autoRotateSpeed = parseFloat(e.target.value); autoRotateSpeedValue.textContent = settings.autoRotateSpeed;
+                controls.autoRotateSpeed = settings.autoRotateSpeed;
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
+
+        // 修复返回链接
+        function fixBackLink() {
+            const backLink = document.querySelector('.back-link');
+            if (!backLink) return;
+
+            // 获取原始href
+            const originalHref = backLink.getAttribute('href');
+
+            // 构建绝对URL
+            const absoluteUrl = window.location.origin + '/';
+
+            // 修改返回链接的href属性
+            backLink.setAttribute('href', absoluteUrl);
+
+            // 添加点击事件处理
+            backLink.addEventListener('click', function(e) {
+                // 阻止默认行为
+                e.preventDefault();
+
+                // 在URL中添加时间戳参数，确保主页刷新
+                const timestamp = new Date().getTime();
+                const urlWithTimestamp = absoluteUrl + '?t=' + timestamp;
+
+                // 使用绝对URL导航
+                window.location.href = urlWithTimestamp;
+            });
+        }
+
+        // 页面加载完成后修复返回链接
+        document.addEventListener('DOMContentLoaded', fixBackLink);
+    </script>
+
+    <!-- 添加返回链接修复脚本 -->
+    <script src="../../js/back-link-fix.js"></script>
+</body>
+</html>

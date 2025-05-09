@@ -1,0 +1,40 @@
+{
+    "title": "黑客帝国瀑布",
+    "description": "交互式黑客帝国数字雨效果，支持鼠标/触摸干扰、点击爆发效果和动态粒子，完美适配移动端。",
+    "tags": [
+        "触摸互动",
+        "粒子效果",
+        "光效",
+        "移动优化"
+    ],
+    "status": "stable",
+    "order": 5,
+    "primary_category": "visual-effects",
+    "secondary_categories": [],
+    "version": "1.0.0",
+    "update_date": "2025-05-20",
+    "last_updated": "2025-05-10",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-10",
+            "changes": [
+                "初始版本"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    "features": [
+        "基本功能"
+    ],
+    "dependencies": []
+}

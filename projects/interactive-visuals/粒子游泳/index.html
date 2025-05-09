@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>粒子游泳 - Little Shock</title>
+  <meta name="description" content="互动粒子效果，触摸屏幕创造流动的粒子轨迹，支持自定义颜色和行为，适合移动设备。">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 预加载字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- p5.js 库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+  <!-- 返回主菜单链接 -->
+  <a href="/" class="back-link">返回主菜单</a>
+
+  <!-- 控制面板 -->
+  <div class="controls-panel">
+    <div class="panel-header">
+      <div class="panel-title">控制面板</div>
+      <button class="toggle-panel">▼</button>
+    </div>
+
+    <div class="control-group">
+      <div class="control-group-title">粒子设置</div>
+      <div class="slider-control">
+        <div class="slider-label">粒子数量</div>
+        <input type="range" id="particleCount" class="slider-input" min="50" max="500" step="10">
+        <div class="slider-value" id="particleValue">300</div>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <div class="control-group-title">颜色设置</div>
+      <div class="slider-control">
+        <div class="slider-label">色相速度</div>
+        <input type="range" id="hueSpeed" class="slider-input" min="1" max="50" step="1">
+        <div class="slider-value" id="hueValue">0.15</div>
+      </div>
+      <div class="slider-control">
+        <div class="slider-label">背景饱和度</div>
+        <input type="range" id="bgSaturation" class="slider-input" min="0" max="100" step="5">
+        <div class="slider-value" id="satValue">80</div>
+      </div>
+      <div class="slider-control">
+        <div class="slider-label">背景亮度</div>
+        <input type="range" id="bgBrightness" class="slider-input" min="0" max="100" step="5">
+        <div class="slider-value" id="brightValue">80</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 版本信息 -->
+  <div class="version-info">v<span id="version">1.0.0</span> | © 2025 Little Shock</div>
+
+  <!-- 脚本 -->
+  <script src="js/particle-system.js"></script>
+  <script src="js/main.js"></script>
+  <script src="../../js/back-link-fix.js"></script>
+</body>
+</html>

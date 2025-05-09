@@ -8,5 +8,40 @@
     "status": "stable",
     "order": 3,
     "primary_category": "interactive-visuals",
-    "secondary_categories": []
+    "secondary_categories": [],
+    "version": "1.0.0",
+    "last_updated": "2025-05-10",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-10",
+            "changes": [
+                "初始版本"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    "features": [
+        "视觉主体",
+        "动态流光",
+        "多种交互方式",
+        "丰富的粒子效果",
+        "GIF导出功能"
+    ],
+    "dependencies": [
+        "Three.js",
+        "WebGL",
+        "GLSL着色器",
+        "DeviceOrientation API",
+        "GIF.js"
+    ]
 }

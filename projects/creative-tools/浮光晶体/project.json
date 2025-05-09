@@ -1,0 +1,37 @@
+{
+    "title": "浮光晶体",
+    "description": "一个基于Three.js的3D晶体互动体验，通过触摸晶体触发连锁反应和引力效果，创造出梦幻的视觉效果",
+    "tags": [
+        "3d-interaction",
+        "particle-effects",
+        "touch-interaction",
+        "light-effects",
+        "mobile-optimized"
+    ],
+    "status": "stable",
+    "primary_category": "creative-tools",
+    "secondary_categories": [
+        "interactive-visuals",
+        "visual-effects"
+    ],
+    "order": 5,
+    "version": "1.0.0",
+    "update_time": "2025-05-10",
+    "changelog": [
+        "初始版本发布",
+        "添加移动端优化",
+        "添加返回按钮",
+        "优化粒子效果"
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "tablet": true
+    },
+    "author": "Little Shock 团队",
+    "last_updated": "2025-05-10",
+    "features": [
+        "基本功能"
+    ],
+    "dependencies": []
+}

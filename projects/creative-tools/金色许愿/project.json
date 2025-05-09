@@ -1,0 +1,51 @@
+{
+    "title": "金色许愿",
+    "description": "上传你的珍藏图片，点亮星空，见证它化为史诗级金色传说的辉煌时刻！",
+    "tags": [
+        "图片处理",
+        "动画效果",
+        "粒子效果",
+        "互动体验",
+        "移动优化"
+    ],
+    "status": "stable",
+    "order": 1,
+    "version": "1.0.0",
+    "last_updated": "2025-06-01",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-06-01",
+            "changes": [
+                "初始版本发布",
+                "实现金色祈愿动画效果",
+                "支持图片上传与展示",
+                "添加星空背景与粒子效果",
+                "优化移动端体验"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    "features": [
+        "图片上传与处理",
+        "金色祈愿动画",
+        "流星特效",
+        "能量爆发效果",
+        "星空背景",
+        "粒子效果",
+        "响应式设计"
+    ],
+    "dependencies": [
+        "FileReader API",
+        "Web Animations API"
+    ]
+}

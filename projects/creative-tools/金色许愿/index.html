@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="上传你的珍藏图片，点亮星空，见证它化为史诗级金色传说的辉煌时刻！">
+    <meta name="theme-color" content="#0a0e23">
+    <title>金色许愿 - 史诗召唤</title>
+    
+    <!-- 预加载字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- 样式表 -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="container" id="mainContainer">
+        <h1>金色许愿</h1>
+        <p>上传你的珍藏，点亮星空，见证它化为史诗级金色传说的辉煌时刻！</p>
+        
+        <input type="file" id="cardUploader" accept="image/*">
+        <button id="wishButton" class="wish-button" disabled>请先上传卡片</button>
+
+        <a href="../../index.html" class="back-link">返回主菜单</a>
+    </div>
+
+    <!-- 动画覆盖层 -->
+    <div class="animation-overlay" id="animationOverlay">
+        <div class="starry-sky" id="starrySky"></div>
+        <div class="summoning-portal" id="summoningPortal"></div>
+        <div class="shooting-star" id="shootingStar"></div>
+        <div class="energy-burst" id="energyBurst"></div>
+        
+        <div class="particle-container" id="particleContainer"></div>
+
+        <div class="card-reveal-area" id="cardRevealArea">
+            <h2>金色史诗！</h2>
+            <img id="revealedCardDisplay" src="#" alt="抽中的卡片">
+            <div class="action-buttons" id="actionButtons">
+                <button id="retryButton" class="retry-button">再次祈愿</button>
+                <a href="#" id="closeAnimationLink" class="back-link" style="margin-left: 15px;">关闭</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <button id="settingsToggle" class="settings-toggle">⚙️</button>
+    <div id="settingsPanel" class="settings-panel">
+        <div class="setting-item">
+            <label for="particleCount">粒子数量</label>
+            <input type="range" id="particleCount" min="10" max="50" step="5" value="30">
+        </div>
+        <div class="setting-item">
+            <label for="effectQuality">效果质量</label>
+            <select id="effectQuality">
+                <option value="low">低 (省电)</option>
+                <option value="medium">中</option>
+                <option value="high" selected>高</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="js/main.js"></script>
+    <script src="../../js/back-link-fix.js"></script>
+</body>
+</html>

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黑客帝国瀑布 - Little Shock</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* 隐藏滚动条 */
+            background-color: #000; /* 黑色背景 */
+            user-select: none; /* 防止文本被选中影响体验 */
+            cursor: default; /* 默认光标 */
+        }
+
+        #matrixCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            touch-action: none; /* 防止移动设备上的默认触摸行为影响拖拽 */
+        }
+
+        /* 返回主菜单链接样式 */
+        .back-to-menu {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100; /* 确保在 Canvas 上层 */
+            color: #0f0; /* Matrix green */
+            text-decoration: none;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #0f0;
+            background-color: rgba(0, 0, 0, 0.6); /* 半透明黑色背景 */
+            cursor: pointer; /* 返回按钮的鼠标指针用默认的或pointer */
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .back-to-menu:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+
+        /* 配置面板样式 */
+        .config-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            padding: 15px;
+            color: #0f0;
+            font-family: monospace;
+            max-width: 300px;
+            transition: opacity 0.3s ease;
+        }
+
+        .config-panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .config-title {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            text-align: center;
+            border-bottom: 1px solid #0f0;
+            padding-bottom: 5px;
+        }
+
+        .config-group {
+            margin-bottom: 10px;
+        }
+
+        .config-label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .config-slider {
+            width: 100%;
+            background: #111;
+            -webkit-appearance: none;
+            height: 5px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .config-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #0f0;
+            cursor: pointer;
+        }
+
+        .config-checkbox {
+            margin-right: 5px;
+        }
+
+        .config-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 101;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid #0f0;
+            color: #0f0;
+            font-family: monospace;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrixCanvas"></canvas>
+
+    <a href="../../index.html" class="back-to-menu">← 返回主页</a>
+
+    <button class="config-toggle" id="configToggle">⚙️ 设置</button>
+
+    <div class="config-panel hidden" id="configPanel">
+        <h3 class="config-title">黑客帝国瀑布设置</h3>
+        <div class="config-group">
+            <label class="config-label">雨滴密度</label>
+            <input type="range" min="5" max="30" value="16" class="config-slider" id="fontSizeSlider">
+        </div>
+        <div class="config-group">
+            <label class="config-label">雨滴长度</label>
+            <input type="range" min="10" max="50" value="25" class="config-slider" id="dropLengthSlider">
+        </div>
+        <div class="config-group">
+            <label class="config-label">下落速度</label>
+            <input type="range" min="0.5" max="2.0" value="1.0" step="0.1" class="config-slider" id="speedSlider">
+        </div>
+        <div class="config-group">
+            <label class="config-label">
+                <input type="checkbox" class="config-checkbox" id="soundToggle" checked>
+                启用音效
+            </label>
+        </div>
+        <div class="config-group">
+            <label class="config-label">
+                <input type="checkbox" class="config-checkbox" id="particleToggle" checked>
+                启用粒子效果
+            </label>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 配置面板元素
+        const configToggle = document.getElementById('configToggle');
+        const configPanel = document.getElementById('configPanel');
+        const fontSizeSlider = document.getElementById('fontSizeSlider');
+        const dropLengthSlider = document.getElementById('dropLengthSlider');
+        const speedSlider = document.getElementById('speedSlider');
+        const soundToggle = document.getElementById('soundToggle');
+        const particleToggle = document.getElementById('particleToggle');
+
+        // 配置面板事件监听
+        configToggle.addEventListener('click', () => {
+            configPanel.classList.toggle('hidden');
+        });
+
+        // 全局变量
+        let width, height;
+        let matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+{}[];:'\"\\|,.<>/?~`";
+        matrixChars = matrixChars.split('');
+
+        let font_size = parseInt(fontSizeSlider.value);
+        let columns;
+        const rainColumns = []; // 存储每一列雨的状态
+        let VISIBLE_DROP_LENGTH = parseInt(dropLengthSlider.value); // 每列雨可见的字符数量 (雨滴的长度)
+        let speedMultiplier = parseFloat(speedSlider.value); // 速度倍数
+
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let isMouseDown = false; // 标记鼠标是否按下
+        let isDragging = false; // 标记鼠标是否正在拖拽 (按下且移动)
+
+        // 干扰效果参数
+        const INFLUENCE_RADIUS_MOVE = 100; // 普通移动干扰半径
+        const INFLUENCE_RADIUS_DRAG = 150; // 拖拽干扰半径
+        const INFLUENCE_PUSH_STRENGTH_MOVE = 5.0; // 普通移动推开强度
+        const INFLUENCE_PUSH_STRENGTH_DRAG = 15.0; // 拖拽推开强度
+
+        const CLICK_EFFECT_DURATION = 20; // 点击效果持续帧数
+        const DOUBLE_CLICK_EFFECT_DURATION = 40; // 双击效果持续帧数
+        const EFFECT_RADIUS_CLICK = 120; // 点击效果半径
+        const EFFECT_RADIUS_DOUBLE_CLICK = 250; // 双击效果半径
+
+        let clickEffectTimer = 0; // 点击效果计时器
+        let doubleClickEffectTimer = 0; // 双击效果计时器
+        let effectCenterX = 0; // 效果中心X
+        let effectCenterY = 0; // 效果中心Y
+
+        // 双击检测参数
+        let lastClickTime = 0;
+        const DOUBLE_CLICK_TIME_THRESHOLD = 300; // 300毫秒内算双击
+
+        // 静态像素点
+        const ambientPixels = [];
+        const MAX_AMBIENT_PIXELS = 80; // 最大静态像素点数量
+        const pixel_dot_size = 2; // 像素点基础大小
+        let mouseIdleTimer = null; // 用于检测鼠标是否静止
+        const MOUSE_IDLE_DELAY = 1500; // 鼠标静止 1.5 秒后触发静态效果
+
+        // 音效
+        const soundPaths = {
+            moveAmbientLoop: 'sounds/data_ambient_loop.mp3', // 移动时的环境干扰音 (循环)
+            clickDisrupt: 'sounds/data_disrupt.mp3', // 点击：数据扰乱音
+            dragIntenseLoop: 'sounds/data_intense_loop.mp3', // 拖拽：持续强烈干扰音 (循环)
+            doubleClickShock: 'sounds/system_shockwave.mp3', // 双击：系统震荡音
+        };
+
+        const sounds = {};
+        let currentLoopSound = null; // 管理当前播放的循环音效
+
+        // 初始化音效
+        for (const key in soundPaths) {
+            sounds[key] = new Audio(soundPaths[key]);
+            sounds[key].load();
+            if (key.includes('Loop')) {
+                sounds[key].loop = true;
+                sounds[key].volume = 0.4;
+            } else {
+                sounds[key].volume = 0.6;
+            }
+        }
+
+        // 播放音效函数
+        function playSound(key) {
+            if (!soundToggle.checked) return; // 如果音效关闭，不播放
+
+            if (sounds[key]) {
+                if (key.includes('Loop')) {
+                    if (currentLoopSound && currentLoopSound !== sounds[key]) {
+                        currentLoopSound.pause();
+                        currentLoopSound.currentTime = 0;
+                    }
+                    if (sounds[key].paused) {
+                        sounds[key].play().catch(e => {});
+                        currentLoopSound = sounds[key];
+                    }
+                } else {
+                    const soundClone = sounds[key].cloneNode();
+                    soundClone.volume = sounds[key].volume;
+                    soundClone.play().catch(e => {});
+                }
+            }
+        }
+
+        // 停止循环音效
+        function stopLoopSound() {
+            if (currentLoopSound) {
+                currentLoopSound.pause();
+                currentLoopSound.currentTime = 0;
+                currentLoopSound = null;
+            }
+        }
+
+        // 调整 Canvas 大小并初始化
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+
+            columns = Math.floor(width / font_size);
+            rainColumns.length = 0; // 清空现有雨列
+
+            for (let i = 0; i < columns; i++) {
+                rainColumns.push({
+                    x: i * font_size, // 列的固定X坐标
+                    y: Math.random() * height, // 当前下落的Y坐标基准线 (顶部字符的基线Y)
+                    speed: font_size * (0.8 + Math.random() * 0.4) * speedMultiplier, // 每帧下落速度，有变化
+                    chars: Array.from({length: Math.floor(height / font_size) + VISIBLE_DROP_LENGTH}, () => matrixChars[Math.floor(Math.random() * matrixChars.length)]), // 该列的字符序列
+                    disturbTimer: 0, // 扰乱效果计时器
+                    disturbType: null, // 当前扰乱类型 ('click', 'doubleClick')
+                });
+                // 初始化 Y 坐标，让雨滴分散在屏幕各处
+                rainColumns[i].y -= Math.random() * height; // 负数Y坐标，让雨滴从屏幕上方随机位置开始
+            }
+
+            // 清理所有静态像素点
+            ambientPixels.length = 0;
+        }
+
+        // 绘制并更新数字雨（受干扰）
+        function drawMatrixRain() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.font = font_size + 'px monospace';
+
+            for (let i = 0; i < rainColumns.length; i++) {
+                const column = rainColumns[i];
+
+                let currentBaseY = column.y; // 该列当前的Y坐标基准线
+                let baseColor = '#0F0'; // 基础颜色
+                let pushX = 0; // 水平推开位移
+                let pushY = 0; // 垂直推开位移 (主要用于爆发效果)
+
+                // --- 计算鼠标干扰位移 (推开效果) ---
+                // 使用雨列的中心X和雨滴最下方的Y作为计算点，更符合推开感
+                const columnCenterX = column.x + font_size / 2;
+                const columnBottomY = currentBaseY + VISIBLE_DROP_LENGTH * font_size;
+
+                const dx_mouse = columnCenterX - lastMouseX;
+                const dy_mouse = columnBottomY - lastMouseY; // 计算雨滴底部到鼠标的距离
+                let dist_mouse = Math.sqrt(dx_mouse * dx_mouse + dy_mouse * dy_mouse);
+
+                let influenceRadius = isDragging ? INFLUENCE_RADIUS_DRAG : INFLUENCE_RADIUS_MOVE;
+                let pushStrength = isDragging ? INFLUENCE_PUSH_STRENGTH_DRAG : INFLUENCE_PUSH_STRENGTH_MOVE;
+
+                if (dist_mouse < influenceRadius) {
+                    // 防止除以零，将距离为零或接近零的情况设置为一个很小的正数
+                    dist_mouse = Math.max(Number.EPSILON, dist_mouse);
+
+                    const force = (1 - dist_mouse / influenceRadius) * pushStrength; // 离鼠标越近，推力越大
+                    pushX = dx_mouse / dist_mouse * force;
+                    pushY = dy_mouse / dist_mouse * force; // 垂直方向也推开
+                    baseColor = isDragging ? '#0FF' : '#0F0'; // 拖拽时颜色变亮
+                }
+
+                // --- 计算点击/双击效果 (爆发、颜色闪烁) ---
+                let effectStrength = 0;
+                let effectRadius = 0;
+                let effectColor = baseColor; // 默认使用鼠标干扰后的颜色
+                let currentEffectType = null;
+
+                if (column.disturbTimer > 0) { // 如果该列正在受瞬间效果影响
+                    currentEffectType = column.disturbType;
+
+                    if (currentEffectType === 'click') {
+                        effectRadius = EFFECT_RADIUS_CLICK;
+                        // 效果强度随计时器减少 (1到0)
+                        effectStrength = (column.disturbTimer / CLICK_EFFECT_DURATION);
+                        // 颜色闪烁
+                        effectColor = column.disturbTimer % 2 === 0 ? '#FFFF00' : '#FF0000'; // 黄/红闪烁
+
+                    } else if (currentEffectType === 'doubleClick') {
+                        effectRadius = EFFECT_RADIUS_DOUBLE_CLICK;
+                        // 效果强度随计时器减少
+                        effectStrength = (column.disturbTimer / DOUBLE_CLICK_EFFECT_DURATION);
+                        // 颜色闪烁
+                        effectColor = column.disturbTimer % 3 === 0 ? '#FF00FF' : '#00FFFF'; // 洋红/青闪烁
+                    }
+
+                    // 计算与效果中心的距离（使用该列的x和效果中心XY）
+                    const dx_effect = columnCenterX - effectCenterX; // 使用列中心X
+                    const dy_effect = columnBottomY - effectCenterY; // 使用雨滴底部Y
+                    let dist_effect = Math.sqrt(dx_effect * dx_effect + dy_effect * dy_effect);
+
+                    if (dist_effect < effectRadius) {
+                        dist_effect = Math.max(Number.EPSILON, dist_effect); // 避免除以零
+
+                        // 爆发位移 (向外推)
+                        const angle = Math.atan2(dy_effect, dx_effect);
+                        const burstForce = (1 - dist_effect / effectRadius) * effectStrength * (currentEffectType === 'click' ? 20 : 40); // 爆发力度
+                        pushX += Math.cos(angle) * burstForce;
+                        pushY += Math.sin(angle) * burstForce;
+                    }
+
+                    // 减少效果计时器
+                    column.disturbTimer--;
+                    // 如果计时器归零，清除效果类型
+                    if (column.disturbTimer <= 0) {
+                        column.disturbType = null;
+                    }
+                }
+
+                // --- 绘制该列的字符 ---
+                ctx.fillStyle = effectColor; // 使用最终计算出的颜色绘制
+                ctx.globalAlpha = 1; // 绘制雨流通常是完全不透明的
+
+                for (let j = 0; j < VISIBLE_DROP_LENGTH; j++) { // 只绘制可见的雨滴长度
+                    // 计算字符在 char 序列中的索引 (循环使用字符序列)
+                    const charIndex = (Math.floor(currentBaseY / font_size) + j) % column.chars.length;
+                    const char = column.chars[charIndex];
+
+                    // 计算字符的绘制Y坐标 (基于当前基准Y + 字符在雨滴中的位置 + 垂直推开位移)
+                    const charAbsoluteY = currentBaseY + j * font_size + pushY;
+                    const finalX = column.x + pushX; // 最终绘制X坐标 (基于列X + 水平推开位移)
+
+                    // 只绘制在屏幕内的字符 (从顶部外一点到屏幕底部)
+                    if (charAbsoluteY > -font_size && charAbsoluteY < height + font_size) {
+                        ctx.fillText(char, finalX, charAbsoluteY);
+                    }
+                }
+
+                // --- 更新下一帧的Y坐标基准线 ---
+                column.y += column.speed;
+
+                // 如果该列的Y坐标基准线落到底部，随机重置到顶部
+                // 当最下方的字符完全离开屏幕时，重置基准Y
+                if (column.y > height) {
+                    column.y = -VISIBLE_DROP_LENGTH * font_size; // 重置到屏幕顶部外面 VisibleDropLength 的距离
+                    // 可以在这里随机改变一下 speed 或 char 序列，增加雨流变化
+                    column.speed = font_size * (0.8 + Math.random() * 0.4) * speedMultiplier;
+                    column.chars = Array.from({length: column.chars.length}, () => matrixChars[Math.floor(Math.random() * matrixChars.length)]); // 字符序列也随机更新
+                }
+            }
+            ctx.globalAlpha = 1; // 绘制完所有雨列后重置全局透明度
+        }
+
+        // 绘制并更新静态像素点
+        class AmbientPixel {
+            constructor(x, y, vx, vy, life, size = pixel_dot_size, color = 'rgba(255, 255, 255, 0.1)') { // 更低的透明度
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.life = life;
+                this.size = size;
+                this.color = color;
+                this.alpha = 1;
+                this.fadeRate = 1 / life;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                this.alpha -= this.fadeRate;
+                // 静态粒子可以有轻微的速度变化或反弹
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+
+        // 生成静态像素点
+        function createAmbientPixel() {
+            if (!particleToggle.checked || ambientPixels.length >= MAX_AMBIENT_PIXELS) { return; }
+
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            const vx = (Math.random() - 0.5) * 0.5; // 慢速
+            const vy = (Math.random() - 0.5) * 0.5;
+            const life = 300 + Math.random() * 200;
+            const size = pixel_dot_size * (0.8 + Math.random() * 0.4);
+            const color = `rgba(255, 255, 255, ${0.1 + Math.random() * 0.1})`;
+
+            ambientPixels.push(new AmbientPixel(x, y, vx, vy, life, size, color));
+        }
+
+        // 主动画循环
+        function animate() {
+            // 更新和绘制背景数字雨（包含了干扰逻辑和效果计时器更新）
+            drawMatrixRain();
+
+            // 更新和绘制静态像素点
+            if (particleToggle.checked) {
+                for (let i = ambientPixels.length - 1; i >= 0; i--) {
+                    ambientPixels[i].update();
+                    ambientPixels[i].draw();
+                    if (ambientPixels[i].life <= 0) {
+                        ambientPixels.splice(i, 1); // 移除死亡粒子
+                    }
+                }
+            }
+            ctx.globalAlpha = 1; // 重置全局透明度
+
+            // --- 处理音效切换 ---
+            // 判断鼠标是否正在移动（即使不在拖拽）
+            const isMoving = Math.sqrt(Math.pow(lastMouseX - lastMoveX, 2) + Math.pow(lastMouseY - lastMoveY, 2)) > 0.1;
+
+            if (isDragging) { // 按下并移动
+                playSound('dragIntenseLoop');
+            } else if (isMoving) { // 只是移动 (鼠标未按下)
+                playSound('moveAmbientLoop');
+            } else { // 鼠标静止
+                stopLoopSound();
+                // 鼠标静止一段时间后生成静态粒子并播放音效
+                if (!mouseIdleTimer) {
+                    mouseIdleTimer = setTimeout(() => {
+                        // 再次确认静止
+                        const checkIsMoving = Math.sqrt(Math.pow(lastMouseX - lastMoveX, 2) + Math.pow(lastMouseY - lastMoveY, 2)) > 0.1;
+                        if (!isMouseDown && !isDragging && !checkIsMoving) {
+                            createAmbientPixel();
+                            mouseIdleTimer = null; // 重置计时器
+                        } else {
+                            mouseIdleTimer = null;
+                        }
+                    }, MOUSE_IDLE_DELAY + Math.random() * 500);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // --- 事件监听 ---
+        // 用于检测移动和判断静止
+        let lastMoveX = 0;
+        let lastMoveY = 0;
+        let lastMoveTime = performance.now();
+        let mouseDownX = 0;
+        let mouseDownY = 0;
+
+        // 配置面板事件监听
+        fontSizeSlider.addEventListener('input', () => {
+            font_size = parseInt(fontSizeSlider.value);
+            resizeCanvas(); // 重新初始化
+        });
+
+        dropLengthSlider.addEventListener('input', () => {
+            VISIBLE_DROP_LENGTH = parseInt(dropLengthSlider.value);
+            resizeCanvas(); // 重新初始化
+        });
+
+        speedSlider.addEventListener('input', () => {
+            speedMultiplier = parseFloat(speedSlider.value);
+            // 更新所有雨列的速度
+            rainColumns.forEach(column => {
+                column.speed = column.speed / (speedMultiplier / parseFloat(speedSlider.value));
+            });
+        });
+
+        function handleMove(clientX, clientY) {
+            lastMouseX = clientX;
+            lastMouseY = clientY;
+
+            // 更新用于判断静止和音效切换的移动状态
+            const currentTime = performance.now();
+            const distance = Math.sqrt(Math.pow(clientX - lastMoveX, 2) + Math.pow(clientY - lastMoveY, 2));
+            const timeElapsed = currentTime - lastMoveTime;
+
+            if (distance > 0.1 || timeElapsed > 50) { // 只有明显移动或超过一定时间才更新lastMoveXY和Time
+                lastMoveX = clientX;
+                lastMoveY = clientY;
+                lastMoveTime = currentTime;
+                // 重置静止计时器
+                clearTimeout(mouseIdleTimer);
+                mouseIdleTimer = null;
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            isDragging = false; // 初始不是拖拽，按下后如果移动了才算拖拽
+
+            // 初始化判断点击和拖拽所需的起始位置和时间
+            mouseDownX = lastMouseX = e.clientX;
+            mouseDownY = lastMouseY = e.clientY;
+            lastMoveX = lastMouseX; // 同步用于移动检测的位置
+            lastMoveY = lastMouseY;
+            lastMoveTime = performance.now();
+
+            // 清除可能存在的静止计时器
+            clearTimeout(mouseIdleTimer);
+            mouseIdleTimer = null;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            handleMove(e.clientX, e.clientY);
+            if (isMouseDown) { // 如果鼠标按下时发生了移动
+                // 只有移动距离超过阈值才算dragging
+                if (Math.sqrt(Math.pow(e.clientX - mouseDownX, 2) + Math.pow(e.clientY - mouseDownY, 2)) > 5) {
+                    isDragging = true; // 标记正在拖拽
+                }
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            const upTime = performance.now();
+
+            if (isMouseDown && !isDragging) { // 如果鼠标按下了但没有发生拖拽，就是点击
+                // 检测双击
+                if (upTime - lastClickTime < DOUBLE_CLICK_TIME_THRESHOLD) {
+                    // 双击！
+                    effectCenterX = e.clientX;
+                    effectCenterY = e.clientY;
+                    doubleClickEffectTimer = DOUBLE_CLICK_EFFECT_DURATION;
+                    // 标记受影响的列并初始化计时器
+                    rainColumns.forEach(col => {
+                        const dist = Math.sqrt(Math.pow(col.x - effectCenterX, 2) + Math.pow(col.y - effectCenterY, 2));
+                        if (dist < EFFECT_RADIUS_DOUBLE_CLICK * 1.5) { // 稍微扩大标记范围
+                            col.disturbType = 'doubleClick';
+                            col.disturbTimer = DOUBLE_CLICK_EFFECT_DURATION; // 初始化列的计时器
+                        }
+                    });
+                    playSound('doubleClickShock');
+                    lastClickTime = 0; // 重置双击计时
+                } else {
+                    // 单击！
+                    effectCenterX = e.clientX;
+                    effectCenterY = e.clientY;
+                    clickEffectTimer = CLICK_EFFECT_DURATION;
+                    // 标记受影响的列并初始化计时器
+                    rainColumns.forEach(col => {
+                        const dist = Math.sqrt(Math.pow(col.x - effectCenterX, 2) + Math.pow(col.y - effectCenterY, 2));
+                        if (dist < EFFECT_RADIUS_CLICK * 1.5) { // 稍微扩大标记范围
+                            col.disturbType = 'click';
+                            col.disturbTimer = CLICK_EFFECT_DURATION; // 初始化列的计时器
+                        }
+                    });
+                    playSound('clickDisrupt');
+                    lastClickTime = upTime; // 记录本次点击时间
+                }
+            }
+
+            isMouseDown = false; // 标记鼠标抬起
+            isDragging = false; // 标记停止拖拽
+
+            // 停止循环音效 (如果正在播放)
+            stopLoopSound();
+
+            // 尝试启动静止计时器 (鼠标抬起后可能进入静止状态)
+            clearTimeout(mouseIdleTimer); // 先清除旧的，避免重复
+            // 延迟一下再检测是否静止
+            setTimeout(() => {
+                const isStillMovingAfterUp = Math.sqrt(Math.pow(lastMouseX - lastMoveX, 2) + Math.pow(lastMouseY - lastMoveY, 2)) > 0.1;
+                if (!isMouseDown && !isDragging && !isStillMovingAfterUp) { // 再次确认静止
+                    mouseIdleTimer = setTimeout(() => {
+                        createAmbientPixel();
+                        mouseIdleTimer = null;
+                    }, MOUSE_IDLE_DELAY + Math.random() * 500);
+                }
+            }, 50); // 短暂延迟后检查是否静止
+        });
+
+        // 触摸事件处理 (模拟鼠标事件)
+        let touchDownTime = 0;
+        let touchDownX = 0;
+        let touchDownY = 0;
+        let lastTapTime = 0;
+        const DOUBLE_TAP_TIME_THRESHOLD = 400; // 触摸双击阈值可以更宽容
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 防止默认的缩放或滚动
+            isMouseDown = true; // 触摸按下
+            isDragging = false; // 初始不是拖拽
+            const touch = e.touches[0];
+            touchDownTime = performance.now();
+            touchDownX = lastMoveX = lastMouseX = touch.clientX;
+            touchDownY = lastMoveY = lastMouseY = touch.clientY;
+            lastMoveTime = performance.now();
+
+            // 清除可能存在的静止计时器
+            clearTimeout(mouseIdleTimer);
+            mouseIdleTimer = null;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // 防止默认的缩放或滚动
+            const touch = e.touches[0];
+            handleMove(touch.clientX, touch.clientY);
+            if (isMouseDown) { // 如果触摸按下时发生了移动 (且移动距离超过阈值)
+                if (Math.sqrt(Math.pow(touch.clientX - touchDownX, 2) + Math.pow(touch.clientY - touchDownY, 2)) > 10) { // 触摸判断距离可以大一点
+                    isDragging = true; // 标记正在拖拽
+                }
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            const upTime = performance.now();
+
+            if (isMouseDown && !isDragging) { // 如果触摸按下了但没有发生拖拽，就是点击/双击
+                const touchUpX = lastMouseX; // 使用最后一次移动的位置
+                const touchUpY = lastMouseY;
+                const touchDistance = Math.sqrt(Math.pow(touchUpX - touchDownX, 2) + Math.pow(touchUpY - touchDownY, 2));
+
+                // 触摸点击/双击的距离阈值
+                const TAP_DISTANCE_THRESHOLD = 30;
+
+                if (touchDistance < TAP_DISTANCE_THRESHOLD) { // 确保不是拖拽
+                    // 检测双击 (双击阈值可以比鼠标大)
+                    if (upTime - lastTapTime < DOUBLE_TAP_TIME_THRESHOLD) {
+                        // 双击！
+                        effectCenterX = touchUpX;
+                        effectCenterY = touchUpY;
+                        doubleClickEffectTimer = DOUBLE_CLICK_EFFECT_DURATION;
+                        rainColumns.forEach(col => {
+                            const dist = Math.sqrt(Math.pow(col.x - effectCenterX, 2) + Math.pow(col.y - effectCenterY, 2));
+                            if (dist < EFFECT_RADIUS_DOUBLE_CLICK * 1.5) {
+                                col.disturbType = 'doubleClick';
+                                col.disturbTimer = DOUBLE_CLICK_EFFECT_DURATION;
+                            }
+                        });
+                        playSound('doubleClickShock');
+                        lastTapTime = 0; // 重置双击计时
+                    } else {
+                        // 单击！
+                        effectCenterX = touchUpX;
+                        effectCenterY = touchUpY;
+                        clickEffectTimer = CLICK_EFFECT_DURATION;
+                        rainColumns.forEach(col => {
+                            const dist = Math.sqrt(Math.pow(col.x - effectCenterX, 2) + Math.pow(col.y - effectCenterY, 2));
+                            if (dist < EFFECT_RADIUS_CLICK * 1.5) {
+                                col.disturbType = 'click';
+                                col.disturbTimer = CLICK_EFFECT_DURATION;
+                            }
+                        });
+                        playSound('clickDisrupt');
+                        lastTapTime = upTime; // 记录本次点击时间
+                    }
+                }
+            }
+
+            isMouseDown = false; // 触摸抬起
+            isDragging = false; // 停止拖拽
+
+            // 停止循环音效 (如果正在播放)
+            stopLoopSound();
+
+            // 尝试启动静止计时器
+            clearTimeout(mouseIdleTimer);
+            setTimeout(() => {
+                const isStillMovingAfterUp = Math.sqrt(Math.pow(lastMouseX - lastMoveX, 2) + Math.pow(lastMouseY - lastMoveY, 2)) > 0.1;
+                if (!isMouseDown && !isDragging && !isStillMovingAfterUp) {
+                    mouseIdleTimer = setTimeout(() => {
+                        createAmbientPixel();
+                        mouseIdleTimer = null;
+                    }, MOUSE_IDLE_DELAY + Math.random() * 500);
+                }
+            }, 50);
+        });
+
+        // 窗口大小改变时重新调整 Canvas
+        window.addEventListener('resize', resizeCanvas);
+
+        // 当鼠标/触摸移出窗口时，模拟抬起
+        canvas.addEventListener('mouseout', () => {
+            if(isMouseDown) { // 如果是按下状态移出
+                isMouseDown = false;
+                isDragging = false;
+                stopLoopSound();
+            }
+            // 启动静止计时器
+            clearTimeout(mouseIdleTimer);
+            mouseIdleTimer = setTimeout(() => {
+                createAmbientPixel();
+                mouseIdleTimer = null;
+            }, MOUSE_IDLE_DELAY + Math.random() * 500);
+        });
+
+        // 当鼠标移入窗口时，清除静止计时器
+        canvas.addEventListener('mouseover', () => {
+            clearTimeout(mouseIdleTimer);
+            mouseIdleTimer = null;
+        });
+
+        // 初始化并启动动画
+        window.addEventListener('load', () => {
+            resizeCanvas(); // 页面加载时调整一次大小
+            animate(); // 启动动画循环
+        });
+    </script>
+</body>
+</html>

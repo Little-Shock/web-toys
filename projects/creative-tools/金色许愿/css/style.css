@@ -1,0 +1,452 @@
+/* 基础样式 */
+:root {
+    --gold-color: #FFD700;
+    --bright-gold-color: #FFFACD;
+    --dark-gold: #B8860B;
+    --dark-blue-bg: #0a0e23; /* 深邃星空背景基色 */
+    --light-blue-stars: #add8e6; /* 星星颜色 */
+    --text-color: #ecf0f1;
+    --panel-bg: rgba(20, 25, 50, 0.8);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --transition-speed: 0.3s;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--dark-blue-bg);
+    color: var(--text-color);
+    overflow: hidden;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.container {
+    background-color: var(--panel-bg);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+    z-index: 10;
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.container.hidden {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+}
+
+h1 {
+    color: var(--gold-color);
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px var(--gold-color);
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+}
+
+p {
+    margin-bottom: 25px;
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+/* 文件上传按钮样式 */
+input[type="file"] {
+    display: block;
+    margin: 0 auto 20px auto;
+    padding: 10px;
+    border: 2px dashed var(--gold-color);
+    border-radius: 5px;
+    background-color: rgba(255,255,255,0.1);
+    color: var(--text-color);
+    cursor: pointer;
+    width: 100%;
+    max-width: 300px;
+}
+
+input[type="file"]::file-selector-button {
+    background-color: var(--gold-color);
+    color: var(--dark-blue-bg);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+/* 祈愿按钮样式 */
+.wish-button {
+    background: linear-gradient(145deg, var(--gold-color), var(--dark-gold));
+    color: var(--dark-blue-bg);
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px var(--shadow-color), 0 0 10px var(--gold-color) inset;
+    margin-bottom: 20px;
+}
+
+.wish-button:hover {
+    background: linear-gradient(145deg, var(--bright-gold-color), var(--gold-color));
+    box-shadow: 0 8px 20px var(--shadow-color), 0 0 15px var(--bright-gold-color) inset, 0 0 20px var(--gold-color);
+    transform: translateY(-2px);
+}
+
+.wish-button:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 2px 10px var(--shadow-color), 0 0 5px var(--gold-color) inset;
+}
+
+.wish-button:disabled {
+    background: #555;
+    color: #999;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* 动画覆盖层 */
+.animation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    background: radial-gradient(ellipse at center, rgba(10,14,35,0.8) 0%, rgba(10,14,35,1) 100%);
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
+}
+
+.animation-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* 星空背景 */
+.starry-sky {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.star {
+    position: absolute;
+    background-color: var(--light-blue-stars);
+    border-radius: 50%;
+    animation: twinkle 2s infinite ease-in-out;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* 召唤传送门 */
+.summoning-portal {
+    width: 300px;
+    height: 300px;
+    position: absolute;
+    opacity: 0;
+    transform: scale(0.5);
+    border: 3px solid rgba(255, 215, 0, 0.5);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.2);
+    animation: portal-appear 2s 0.5s ease-out forwards, portal-pulse 3s 2.5s infinite ease-in-out;
+}
+
+@keyframes portal-appear {
+    to { opacity: 0.7; transform: scale(1); }
+}
+
+@keyframes portal-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 215, 0, 0.2); }
+    50% { transform: scale(1.05); box-shadow: 0 0 30px var(--gold-color), inset 0 0 30px rgba(255, 215, 0, 0.4); }
+}
+
+/* 流星效果 */
+.shooting-star {
+    position: absolute;
+    width: 150px; /* 尾巴长度 */
+    height: 3px;
+    background: linear-gradient(to left, transparent, var(--bright-gold-color));
+    border-radius: 50%;
+    opacity: 0;
+    transform: rotate(-45deg); /* 下降角度 */
+    animation: shoot 1.5s 1s ease-in forwards; /* 在传送门出现后延迟开始 */
+}
+
+.shooting-star::before { /* 流星头部 */
+    content: '';
+    position: absolute;
+    right: -2px;
+    top: -1.5px;
+    width: 6px;
+    height: 6px;
+    background-color: var(--bright-gold-color);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--bright-gold-color), 0 0 20px var(--gold-color);
+}
+
+@keyframes shoot {
+    0% { opacity: 1; transform: translate(100vw, -100vh) rotate(-45deg) scaleY(0.5); } /* 从屏幕右上角开始 */
+    50% { opacity: 1; transform: translate(calc(-50vw + 75px), calc(50vh - 1.5px)) rotate(-45deg) scaleY(1); } /* 穿过中心 */
+    100% { opacity: 0; transform: translate(calc(-100vw + 150px), calc(100vh - 3px)) rotate(-45deg) scaleY(0.5); } /* 在屏幕左下角结束 */
+}
+
+/* 能量爆发效果 */
+.energy-burst {
+    width: 50px;
+    height: 50px;
+    background-color: var(--bright-gold-color);
+    border-radius: 50%;
+    position: absolute;
+    opacity: 0;
+    transform: scale(0);
+    box-shadow: 0 0 50px 30px var(--bright-gold-color), 0 0 80px 60px var(--gold-color);
+    animation: burst 1s 2.5s ease-out forwards; /* 在流星击中后 */
+}
+
+@keyframes burst {
+    0% { transform: scale(0); opacity: 1; }
+    50% { transform: scale(15); opacity: 0.8; } /* 更大的缩放以获得更大的冲击效果 */
+    100% { transform: scale(12); opacity: 0; }
+}
+
+/* 卡片展示区域 */
+.card-reveal-area {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    opacity: 0;
+    animation: show-card 1.5s 3.2s forwards; /* 在爆发后 */
+}
+
+@keyframes show-card {
+    0% { opacity: 0; transform: scale(0.5) rotateY(180deg); }
+    60% { opacity: 1; transform: scale(1.1) rotateY(0deg); }
+    100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+}
+
+.card-reveal-area h2 {
+    color: var(--gold-color);
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px var(--gold-color), 0 0 5px var(--bright-gold-color);
+    animation: text-glow 2s infinite alternate;
+}
+
+@keyframes text-glow {
+    from { text-shadow: 0 0 10px var(--gold-color), 0 0 20px var(--gold-color); }
+    to   { text-shadow: 0 0 20px var(--bright-gold-color), 0 0 30px var(--gold-color), 0 0 40px var(--gold-color); }
+}
+
+#revealedCardDisplay {
+    max-width: 80vw;
+    max-height: 60vh;
+    border: 8px solid transparent;
+    border-image: linear-gradient(160deg, var(--gold-color), var(--dark-gold), var(--gold-color)) 1;
+    box-shadow: 0 0 25px 5px var(--gold-color), 0 0 45px 15px rgba(255, 215, 0, 0.7), inset 0 0 15px rgba(255, 250, 205, 0.5);
+    background-color: #000;
+    border-radius: 15px;
+    object-fit: contain; /* 确保图像适合 */
+}
+
+/* 浮动粒子效果 */
+.particle-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* 使它们不干扰点击 */
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    background-color: rgba(255, 215, 0, 0.7);
+    border-radius: 50%;
+    animation: float 10s infinite ease-in-out;
+    opacity: 0;
+}
+
+@keyframes float {
+    0% { transform: translateY(0) translateX(0) scale(0.5); opacity: 0; }
+    25% { opacity: 1; }
+    50% { transform: translateY(-20vh) translateX(5vw) scale(1); opacity: 0.7; }
+    75% { opacity: 1; }
+    100% { transform: translateY(20vh) translateX(-5vw) scale(0.5); opacity: 0; }
+}
+
+/* 按钮样式 */
+.back-link, .retry-button {
+    display: inline-block;
+    margin-top: 30px;
+    color: var(--gold-color);
+    text-decoration: none;
+    font-size: 1em;
+    padding: 10px 20px;
+    border: 2px solid var(--gold-color);
+    border-radius: 8px;
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+    font-weight: bold;
+    background-color: rgba(255, 215, 0, 0.1);
+}
+
+.back-link:hover, .retry-button:hover {
+    background-color: var(--gold-color);
+    color: var(--dark-blue-bg);
+    box-shadow: 0 0 15px var(--gold-color);
+}
+
+.action-buttons {
+    display: none; /* 初始隐藏，动画后显示 */
+    margin-top: 20px;
+    animation: fadeInButtons 1s 4.5s forwards;
+    opacity: 0;
+}
+
+@keyframes fadeInButtons { 
+    to { opacity: 1; } 
+}
+
+/* 设置面板样式 */
+.settings-panel {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: var(--panel-bg);
+    border-radius: 10px;
+    padding: 15px;
+    z-index: 100;
+    box-shadow: 0 0 20px var(--shadow-color);
+    display: none;
+}
+
+.settings-panel.active {
+    display: block;
+}
+
+.settings-toggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: var(--panel-bg);
+    color: var(--gold-color);
+    border: 1px solid var(--gold-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 101;
+    font-size: 1.2em;
+    box-shadow: 0 0 10px var(--shadow-color);
+}
+
+.setting-item {
+    margin-bottom: 10px;
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--gold-color);
+}
+
+.setting-item select, .setting-item input {
+    width: 100%;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid var(--gold-color);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+    
+    .summoning-portal {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .card-reveal-area h2 {
+        font-size: 2em;
+    }
+    
+    #revealedCardDisplay {
+        max-width: 90vw;
+        max-height: 50vh;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    p {
+        font-size: 1em;
+    }
+    
+    .wish-button {
+        padding: 12px 24px;
+        font-size: 1.1em;
+    }
+    
+    .summoning-portal {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .shooting-star {
+        width: 100px;
+    }
+    
+    .card-reveal-area h2 {
+        font-size: 1.8em;
+    }
+    
+    .back-link, .retry-button {
+        padding: 8px 16px;
+        font-size: 0.9em;
+    }
+}

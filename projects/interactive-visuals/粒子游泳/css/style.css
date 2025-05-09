@@ -1,0 +1,286 @@
+/*
+ * 粒子游泳 - Particle Swimming
+ * 样式表
+ */
+
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --accent-color: #9b59b6;
+  --text-color: #f5f5f5;
+  --background-color: #121212;
+  --panel-bg-color: rgba(30, 30, 30, 0.8);
+  --panel-border-color: rgba(255, 255, 255, 0.1);
+  --button-hover-color: rgba(255, 255, 255, 0.1);
+  --slider-track-color: rgba(255, 255, 255, 0.2);
+  --slider-thumb-color: rgba(255, 255, 255, 0.8);
+
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+
+  --transition-speed: 0.3s;
+  --blur-amount: 10px;
+  --shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  overflow: hidden;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* 控制面板 */
+.controls-panel {
+  position: fixed;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  background-color: var(--panel-bg-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  z-index: 10;
+  width: 300px;
+  max-width: 90vw;
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid var(--panel-border-color);
+  box-shadow: 0 4px 8px var(--shadow-color);
+  transition: transform var(--transition-speed) ease, opacity var(--transition-speed) ease;
+  transform: translateY(0);
+  opacity: 0.9;
+}
+
+.controls-panel.collapsed {
+  transform: translateY(calc(100% - 40px));
+  opacity: 0.7;
+}
+
+.controls-panel:hover {
+  opacity: 1;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  cursor: pointer;
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.toggle-panel {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform var(--transition-speed) ease;
+}
+
+.controls-panel.collapsed .toggle-panel {
+  transform: rotate(180deg);
+}
+
+.control-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.control-group-title {
+  font-size: 14px;
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.8;
+}
+
+.slider-control {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: nowrap;
+}
+
+.slider-label {
+  width: 100px;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slider-input {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: var(--slider-track-color);
+  border-radius: 3px;
+  outline: none;
+  margin: 0 var(--spacing-xs);
+}
+
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--slider-thumb-color);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.slider-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--slider-thumb-color);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.slider-value {
+  width: 40px;
+  text-align: right;
+  font-size: 14px;
+  margin-left: var(--spacing-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.checkbox-control {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.checkbox-label {
+  font-size: 14px;
+  margin-left: var(--spacing-sm);
+}
+
+/* 返回链接 */
+.back-link {
+  position: fixed;
+  top: var(--spacing-md);
+  left: var(--spacing-md);
+  background-color: var(--panel-bg-color);
+  color: var(--text-color);
+  padding: 8px var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  text-decoration: none;
+  font-size: 14px;
+  z-index: 10;
+  backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
+  border: 1px solid var(--panel-border-color);
+  transition: all var(--transition-speed) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.back-link:hover, .back-link:active {
+  background-color: var(--button-hover-color);
+  transform: translateY(-2px);
+}
+
+/* 版本信息 */
+.version-info {
+  position: fixed;
+  bottom: var(--spacing-md);
+  left: var(--spacing-md);
+  font-size: 12px;
+  opacity: 0.7;
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 4px 8px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .controls-panel {
+    width: 280px;
+    padding: var(--spacing-sm);
+    bottom: var(--spacing-sm);
+    right: var(--spacing-sm);
+  }
+
+  .slider-label {
+    width: 100px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .slider-value {
+    font-size: 12px;
+  }
+
+  .back-link {
+    padding: 6px var(--spacing-sm);
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-panel {
+    width: 90%;
+    max-width: 320px;
+  }
+
+  .slider-control {
+    flex-wrap: wrap;
+  }
+
+  .slider-label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .slider-input {
+    width: calc(100% - 50px);
+  }
+
+  .panel-header {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .control-group {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .control-group-title {
+    margin-bottom: 4px;
+  }
+}

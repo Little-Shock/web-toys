@@ -1,0 +1,52 @@
+{
+    "title": "浮动光球",
+    "description": "互动式浮动光球效果，支持鼠标/触摸交互，可配置光球数量、连接线、拖尾效果等参数，提供排斥和引力两种交互模式。",
+    "tags": [
+        "粒子效果",
+        "触摸互动",
+        "光效",
+        "移动优化"
+    ],
+    "status": "stable",
+    "version": "1.0.0",
+    "last_updated": "2025-05-25",
+    "primary_category": "interactive-visuals",
+    "secondary_categories": [],
+    "order": 12,
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-25",
+            "changes": [
+                "初始版本发布",
+                "实现互动光球系统",
+                "添加光球连接线效果",
+                "支持移动端触摸交互",
+                "添加设置面板",
+                "实现冲击波效果",
+                "添加排斥和引力两种交互模式"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    "features": [
+        "互动光球系统",
+        "动态连接线",
+        "冲击波效果",
+        "双模式交互（排斥/引力）",
+        "可调节参数",
+        "移动端优化"
+    ],
+    "dependencies": [
+        "HTML Canvas"
+    ]
+}

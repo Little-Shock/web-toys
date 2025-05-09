@@ -8,5 +8,40 @@
     "status": "beta",
     "order": 3,
     "primary_category": "music-and-sound",
-    "secondary_categories": []
+    "secondary_categories": [],
+    "version": "1.0.0",
+    "last_updated": "2025-05-10",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-10",
+            "changes": [
+                "初始版本"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+    },
+    "features": [
+        "多种交互方式",
+        "节奏层系统",
+        "星空主题",
+        "星座连接",
+        "粒子效果",
+        "保存与分享"
+    ],
+    "dependencies": [
+        "Web Audio API",
+        "Canvas",
+        "节奏检测算法",
+        "星座连接算法"
+    ]
 }
