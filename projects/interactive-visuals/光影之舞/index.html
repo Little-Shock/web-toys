@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光影之舞 - Little Shock</title>
+    <meta name="description" content="互动粒子光影效果，支持鼠标/触摸交互，粒子会随着用户动作产生动态光影变化">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #0a0a23; /* 深邃的背景色 */
+            color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* 返回链接 */
+        .back-link {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            background: rgba(30, 30, 40, 0.7);
+            color: #e0e0e0;
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(60, 60, 90, 0.8);
+            border-color: rgba(98, 0, 234, 0.5);
+        }
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .info-text {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(200, 200, 200, 0.7);
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 5px 10px;
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        /* 控制面板样式 */
+        .controls-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1001;
+            transition: background-color 0.3s;
+        }
+        .controls-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .controls-panel {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background-color: rgba(30, 30, 55, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            width: 300px;
+            color: #e0e0e0;
+            max-height: calc(100vh - 90px);
+            overflow-y: auto;
+        }
+        .controls-panel label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .controls-panel input[type="range"],
+        .controls-panel input[type="checkbox"],
+        .controls-panel select {
+            width: 100%;
+            margin-bottom: 15px;
+            accent-color: #8b5cf6;
+        }
+         .controls-panel input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .controls-panel .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .control-group:last-child {
+            border-bottom: none;
+        }
+        .control-group span {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+        }
+        .control-group h4 {
+            font-size: 1rem;
+            color: #c0c0ff;
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+
+
+        @media (max-width: 600px) {
+            .info-text {
+                font-size: 0.7rem;
+                bottom: 10px;
+            }
+            .controls-panel {
+                width: calc(100% - 40px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <canvas id="particleCanvas"></canvas>
+    <div class="info-text">轻触或移动鼠标与光点互动，点击粒子使其“爆裂”</div>
+    <!-- 返回主菜单链接 -->
+    <a href="/" class="back-link" id="backToHome">返回主菜单</a>
+
+    <div class="controls-toggle" id="controlsToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </div>
+
+    <div class="controls-panel" id="controlsPanel">
+        <div class="control-group">
+            <h4>基本设置</h4>
+            <label for="particleCount">粒子数量: <span id="particleCountValue">70</span></label>
+            <input type="range" id="particleCount" min="10" max="200" value="70">
+
+            <label for="interactionRadius">交互半径: <span id="interactionRadiusValue">100</span></label>
+            <input type="range" id="interactionRadius" min="30" max="250" value="100">
+
+            <label for="particleBaseSpeed">粒子基础速度: <span id="particleBaseSpeedValue">0.5</span></label>
+            <input type="range" id="particleBaseSpeed" min="0.1" max="2" step="0.1" value="0.5">
+        </div>
+
+        <div class="control-group">
+            <h4>连接线设置</h4>
+            <label class="checkbox-label">
+                <input type="checkbox" id="showLines" checked> 显示连接线
+            </label>
+            <label for="maxConnectionDistance">最大连接距离: <span id="maxConnectionDistanceValue">120</span></label>
+            <input type="range" id="maxConnectionDistance" min="30" max="300" value="120">
+        </div>
+
+        <div class="control-group">
+            <h4>视觉效果</h4>
+            <label for="trailOpacity">粒子拖尾强度: <span id="trailOpacityValue">0.15</span></label>
+            <input type="range" id="trailOpacity" min="0.02" max="0.7" step="0.01" value="0.15">
+        </div>
+
+        <div class="control-group">
+            <h4>高级效果</h4>
+            <label class="checkbox-label">
+                <input type="checkbox" id="enableColorPropagation" checked> 启用颜色传递
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="enableMoodColor" checked> 启用情绪色彩
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="enableBackgroundRipples" checked> 启用背景涟漪
+            </label>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.scale(dpr, dpr);
+
+        let particlesArray = [];
+        let fragmentsArray = [];
+        let backgroundRipplesArray = [];
+
+        // --- 控制参数 ---
+        let settings = {
+            particleCount: 70,
+            interactionRadius: 100,
+            showLines: true,
+            maxConnectionDistance: 120,
+            particleBaseSpeed: 0.5,
+            trailOpacity: 0.15, // 新增：粒子拖尾透明度 (越小拖尾越长)
+            enableColorPropagation: true,
+            enableMoodColor: true,
+            enableBackgroundRipples: true,
+            moodPalettes: [
+                [
+                    'rgba(173, 216, 230, 0.7)', 'rgba(135, 206, 250, 0.6)',
+                    'rgba(224, 255, 255, 0.8)', 'rgba(240, 248, 255, 0.7)',
+                    'rgba(100, 149, 237, 0.6)'
+                ],
+                [
+                    'rgba(255, 165, 0, 0.7)', 'rgba(255, 193, 7, 0.6)',
+                    'rgba(255, 235, 59, 0.8)', 'rgba(255, 248, 225, 0.7)',
+                    'rgba(255, 140, 0, 0.6)'
+                ],
+                [
+                    'rgba(218, 112, 214, 0.7)', 'rgba(221, 160, 221, 0.6)',
+                    'rgba(255, 182, 193, 0.8)', 'rgba(255, 192, 203, 0.7)',
+                    'rgba(186, 85, 211, 0.6)'
+                ],
+                 [
+                    'rgba(60, 179, 113, 0.7)', 'rgba(144, 238, 144, 0.6)',
+                    'rgba(152, 251, 152, 0.8)', 'rgba(240, 255, 240, 0.7)',
+                    'rgba(46, 139, 87, 0.6)'
+                ]
+            ],
+            currentPaletteIndex: 0,
+            particleColors: [],
+            interactionLevel: 0,
+            lastMouseX: 0,
+            lastMouseY: 0,
+            mouseSpeed: 0,
+        };
+        settings.particleColors = [...settings.moodPalettes[settings.currentPaletteIndex]];
+
+
+        const mouse = { x: null, y: null, isMoving: false, lastMoveTime: Date.now() };
+
+        // --- UI 控制元素 ---
+        const controlsToggle = document.getElementById('controlsToggle');
+        const controlsPanel = document.getElementById('controlsPanel');
+        // Basic
+        const particleCountSlider = document.getElementById('particleCount');
+        const particleCountValue = document.getElementById('particleCountValue');
+        const interactionRadiusSlider = document.getElementById('interactionRadius');
+        const interactionRadiusValue = document.getElementById('interactionRadiusValue');
+        const particleBaseSpeedSlider = document.getElementById('particleBaseSpeed');
+        const particleBaseSpeedValue = document.getElementById('particleBaseSpeedValue');
+        // Lines
+        const showLinesCheckbox = document.getElementById('showLines');
+        const maxConnectionDistanceSlider = document.getElementById('maxConnectionDistance');
+        const maxConnectionDistanceValue = document.getElementById('maxConnectionDistanceValue');
+        // Visual Effects
+        const trailOpacitySlider = document.getElementById('trailOpacity'); // 新增
+        const trailOpacityValue = document.getElementById('trailOpacityValue'); // 新增
+        // Advanced
+        const enableColorPropagationCheckbox = document.getElementById('enableColorPropagation');
+        const enableMoodColorCheckbox = document.getElementById('enableMoodColor');
+        const enableBackgroundRipplesCheckbox = document.getElementById('enableBackgroundRipples');
+
+
+        // --- 事件监听 ---
+        controlsToggle.addEventListener('click', () => {
+            controlsPanel.style.display = controlsPanel.style.display === 'block' ? 'none' : 'block';
+        });
+
+        function updateSettingsFromUI() {
+            const oldParticleCount = settings.particleCount;
+            const oldBaseSpeed = settings.particleBaseSpeed;
+
+            settings.particleCount = parseInt(particleCountSlider.value);
+            particleCountValue.textContent = settings.particleCount;
+
+            settings.interactionRadius = parseInt(interactionRadiusSlider.value);
+            interactionRadiusValue.textContent = settings.interactionRadius;
+
+            settings.particleBaseSpeed = parseFloat(particleBaseSpeedSlider.value);
+            particleBaseSpeedValue.textContent = settings.particleBaseSpeed;
+
+            settings.showLines = showLinesCheckbox.checked;
+            settings.maxConnectionDistance = parseInt(maxConnectionDistanceSlider.value);
+            maxConnectionDistanceValue.textContent = settings.maxConnectionDistance;
+
+            settings.trailOpacity = parseFloat(trailOpacitySlider.value); // 新增
+            trailOpacityValue.textContent = settings.trailOpacity.toFixed(2); // 新增
+
+            settings.enableColorPropagation = enableColorPropagationCheckbox.checked;
+            settings.enableMoodColor = enableMoodColorCheckbox.checked;
+            settings.enableBackgroundRipples = enableBackgroundRipplesCheckbox.checked;
+
+            if (settings.particleCount !== oldParticleCount || settings.particleBaseSpeed !== oldBaseSpeed) {
+                init();
+            }
+        }
+
+        // Attach listeners
+        [particleCountSlider, interactionRadiusSlider, particleBaseSpeedSlider, maxConnectionDistanceSlider, trailOpacitySlider].forEach(slider => { // 新增 trailOpacitySlider
+            slider.addEventListener('input', updateSettingsFromUI);
+        });
+        [showLinesCheckbox, enableColorPropagationCheckbox, enableMoodColorCheckbox, enableBackgroundRipplesCheckbox].forEach(checkbox => {
+            checkbox.addEventListener('change', updateSettingsFromUI);
+        });
+        // Special cases for init
+        particleCountSlider.addEventListener('input', () => { updateSettingsFromUI(); init(); });
+        particleBaseSpeedSlider.addEventListener('input', () => { updateSettingsFromUI(); init(); });
+
+
+        // 初始化UI显示
+        function initializeUIDisplay() {
+            particleCountSlider.value = settings.particleCount;
+            particleCountValue.textContent = settings.particleCount;
+            interactionRadiusSlider.value = settings.interactionRadius;
+            interactionRadiusValue.textContent = settings.interactionRadius;
+            particleBaseSpeedSlider.value = settings.particleBaseSpeed;
+            particleBaseSpeedValue.textContent = settings.particleBaseSpeed;
+
+            showLinesCheckbox.checked = settings.showLines;
+            maxConnectionDistanceSlider.value = settings.maxConnectionDistance;
+            maxConnectionDistanceValue.textContent = settings.maxConnectionDistance;
+
+            trailOpacitySlider.value = settings.trailOpacity; // 新增
+            trailOpacityValue.textContent = settings.trailOpacity.toFixed(2); // 新增
+
+            enableColorPropagationCheckbox.checked = settings.enableColorPropagation;
+            enableMoodColorCheckbox.checked = settings.enableMoodColor;
+            enableBackgroundRipplesCheckbox.checked = settings.enableBackgroundRipples;
+        }
+
+
+        window.addEventListener('mousemove', event => {
+            const dx = event.clientX - settings.lastMouseX;
+            const dy = event.clientY - settings.lastMouseY;
+            settings.mouseSpeed = Math.sqrt(dx*dx + dy*dy);
+            settings.lastMouseX = event.clientX;
+            settings.lastMouseY = event.clientY;
+
+            mouse.x = event.clientX;
+            mouse.y = event.clientY;
+            mouse.isMoving = true;
+            mouse.lastMoveTime = Date.now();
+        });
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+            mouse.isMoving = false;
+            settings.mouseSpeed = 0;
+        });
+        ['touchstart', 'touchmove'].forEach(eventType => {
+            window.addEventListener(eventType, event => {
+                if (event.touches.length > 0) {
+                    const touch = event.touches[0];
+                    if (eventType === 'touchmove') {
+                        const dx = touch.clientX - settings.lastMouseX;
+                        const dy = touch.clientY - settings.lastMouseY;
+                        settings.mouseSpeed = Math.sqrt(dx*dx + dy*dy);
+                    }
+                    settings.lastMouseX = touch.clientX;
+                    settings.lastMouseY = touch.clientY;
+
+                    mouse.x = touch.clientX;
+                    mouse.y = touch.clientY;
+                    mouse.isMoving = true;
+                    mouse.lastMoveTime = Date.now();
+                }
+            }, { passive: true });
+        });
+        window.addEventListener('touchend', () => {
+            mouse.isMoving = false;
+            settings.mouseSpeed = 0;
+        });
+
+
+        canvas.addEventListener('click', handleCanvasClick);
+        canvas.addEventListener('touchstart', (event) => {
+             if (event.touches.length === 1) {
+                mouse.x = event.touches[0].clientX;
+                mouse.y = event.touches[0].clientY;
+                handleCanvasClick(event.touches[0]);
+            }
+        }, { passive: true });
+
+
+        function handleCanvasClick(event) {
+            const clickX = event.clientX || event.pageX;
+            const clickY = event.clientY || event.pageY;
+
+            for (let i = particlesArray.length - 1; i >= 0; i--) {
+                const p = particlesArray[i];
+                const dx = clickX - p.x;
+                const dy = clickY - p.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < p.size + 15) {
+                    createFragments(p.x, p.y, p.originalColor);
+                    particlesArray.splice(i, 1);
+                    if (particlesArray.length < settings.particleCount) {
+                         setTimeout(() => {
+                            if (particlesArray.length < settings.particleCount) {
+                                particlesArray.push(new Particle(Math.random() * width, Math.random() * height));
+                            }
+                        }, 300 + Math.random() * 400);
+                    }
+                    break;
+                }
+            }
+        }
+
+        function createFragments(x, y, baseColor) {
+            const numFragments = 6 + Math.floor(Math.random() * 6);
+            for (let i = 0; i < numFragments; i++) {
+                fragmentsArray.push(new Fragment(x, y, baseColor));
+            }
+        }
+
+        function parseColor(rgbaString) {
+            const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+            if (!match) return { r: 0, g: 0, b: 0, a: 1 };
+            return {
+                r: parseInt(match[1]), g: parseInt(match[2]), b: parseInt(match[3]),
+                a: match[4] !== undefined ? parseFloat(match[4]) : 1
+            };
+        }
+        function lerpColor(colorA, colorB, t) {
+            const pA = parseColor(colorA);
+            const pB = parseColor(colorB);
+            const r = Math.round(pA.r + (pB.r - pA.r) * t);
+            const g = Math.round(pA.g + (pB.g - pA.g) * t);
+            const b = Math.round(pA.b + (pB.b - pA.b) * t);
+            const a = pA.a + (pB.a - pA.a) * t;
+            return `rgba(${r},${g},${b},${a.toFixed(2)})`;
+        }
+
+        class BaseParticle {
+             constructor(x, y, size, color) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.baseSize = size;
+                this.color = color;
+                this.originalColor = color;
+                this.targetOriginalColor = color;
+
+                const speedFactor = settings.particleBaseSpeed || 0.5;
+                this.vx = (Math.random() - 0.5) * speedFactor * 1.5;
+                this.vy = (Math.random() - 0.5) * speedFactor * 1.5;
+                this.maxSpeed = 0.8 + speedFactor;
+            }
+            draw() { /* To be implemented by subclasses */ }
+            update() { /* To be implemented by subclasses */ }
+        }
+
+        class Particle extends BaseParticle {
+            constructor(x, y) {
+                const size = Math.random() * 4 + 2.5;
+                const color = settings.particleColors[Math.floor(Math.random() * settings.particleColors.length)];
+                super(x, y, size, color);
+
+                this.density = (Math.random() * 20) + 10;
+                this.angle = Math.random() * Math.PI * 2;
+                this.pulseSpeed = Math.random() * 0.02 + 0.005;
+                this.isInteracting = false;
+
+                this.propagationSource = false;
+                this.propagationTime = 0;
+                this.maxPropagationTime = 60;
+            }
+
+            update() {
+                if (this.originalColor !== this.targetOriginalColor) {
+                    this.originalColor = lerpColor(this.originalColor, this.targetOriginalColor, 0.03);
+                     if (Math.abs(parseColor(this.originalColor).r - parseColor(this.targetOriginalColor).r) < 1 &&
+                        Math.abs(parseColor(this.originalColor).g - parseColor(this.targetOriginalColor).g) < 1 &&
+                        Math.abs(parseColor(this.originalColor).b - parseColor(this.targetOriginalColor).b) < 1) {
+                        this.originalColor = this.targetOriginalColor;
+                    }
+                }
+
+                this.isInteracting = false;
+                this.propagationSource = false;
+                let interactionFactor = 0;
+
+                if (mouse.x !== null && mouse.y !== null) {
+                    const dxMouse = mouse.x - this.x;
+                    const dyMouse = mouse.y - this.y;
+                    const distanceMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+
+                    if (distanceMouse < settings.interactionRadius) {
+                        this.isInteracting = true;
+                        this.propagationSource = true;
+                        this.propagationTime = this.maxPropagationTime;
+
+                        interactionFactor = (settings.interactionRadius - distanceMouse) / settings.interactionRadius;
+                        const forceDirectionX = dxMouse / distanceMouse;
+                        const forceDirectionY = dyMouse / distanceMouse;
+                        const force = interactionFactor * this.density * 0.1;
+                        this.vx -= forceDirectionX * force;
+                        this.vy -= forceDirectionY * force;
+                    }
+                }
+
+                this.angle += this.pulseSpeed;
+                let pulseEffectSize = Math.sin(this.angle) * (this.baseSize * 0.3);
+                this.size = this.baseSize + pulseEffectSize + (this.isInteracting ? interactionFactor * this.baseSize * 1.2 : 0);
+
+                let currentColorToDraw = this.originalColor;
+                if (this.propagationTime > 0 && settings.enableColorPropagation) {
+                    const propagationRatio = this.propagationTime / this.maxPropagationTime;
+                    const pColor = parseColor(this.originalColor);
+                    const brightR = Math.min(255, pColor.r + Math.floor(60 * propagationRatio));
+                    const brightG = Math.min(255, pColor.g + Math.floor(60 * propagationRatio));
+                    const brightB = Math.min(255, pColor.b + Math.floor(60 * propagationRatio));
+                    const brightA = Math.min(1, pColor.a + 0.3 * propagationRatio);
+                    currentColorToDraw = `rgba(${brightR},${brightG},${brightB},${brightA.toFixed(2)})`;
+                    this.propagationTime--;
+                }
+                 if (this.isInteracting) {
+                    const pColor = parseColor(this.originalColor);
+                    const r = Math.min(255, pColor.r + Math.floor(70 * interactionFactor));
+                    const g = Math.min(255, pColor.g + Math.floor(70 * interactionFactor));
+                    const b = Math.min(255, pColor.b + Math.floor(70 * interactionFactor));
+                    const a = Math.min(1, pColor.a + 0.4 * interactionFactor);
+                    currentColorToDraw = `rgba(${r},${g},${b},${a.toFixed(2)})`;
+                }
+                this.color = currentColorToDraw;
+
+                this.vx += (width / 2 - this.x) * 0.00015;
+                this.vy += (height / 2 - this.y) * 0.00015;
+                this.vx *= 0.96;
+                this.vy *= 0.96;
+                const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (currentSpeed > this.maxSpeed) {
+                    this.vx = (this.vx / currentSpeed) * this.maxSpeed;
+                    this.vy = (this.vy / currentSpeed) * this.maxSpeed;
+                }
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if ((this.x - this.size < 0 && this.vx < 0) || (this.x + this.size > width && this.vx > 0)) {
+                    this.vx *= -0.7;
+                    this.x = Math.max(this.size, Math.min(this.x, width - this.size));
+                }
+                if ((this.y - this.size < 0 && this.vy < 0) || (this.y + this.size > height && this.vy > 0)) {
+                    this.vy *= -0.7;
+                    this.y = Math.max(this.size, Math.min(this.y, height - this.size));
+                }
+
+                this.draw();
+            }
+
+            draw(){
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, Math.max(0.5, this.size), 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        class Fragment extends BaseParticle {
+            constructor(x, y, baseColor) {
+                const size = Math.random() * 2.5 + 1;
+                let r=200, g=200, b=200, a=0.9;
+                const parts = baseColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+                if (parts) {
+                    r = Math.min(255, parseInt(parts[1]) + 60);
+                    g = Math.min(255, parseInt(parts[2]) + 60);
+                    b = Math.min(255, parseInt(parts[3]) + 60);
+                }
+                const color = `rgba(${r},${g},${b},${a})`;
+                super(x, y, size, color);
+
+                this.lifespan = 80 + Math.random() * 60;
+                this.vx = (Math.random() - 0.5) * (4 + Math.random() * 4);
+                this.vy = (Math.random() - 0.5) * (4 + Math.random() * 4) - Math.random()*2;
+                this.gravity = 0.08;
+                this.drag = 0.97;
+            }
+            update() {
+                this.lifespan--;
+                this.size *= 0.97;
+                this.vy += this.gravity;
+                this.vx *= this.drag;
+                this.vy *= this.drag;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                let pColor = parseColor(this.color);
+                this.color = `rgba(${pColor.r},${pColor.g},${pColor.b},${Math.max(0, pColor.a * 0.96).toFixed(2)})`;
+                this.draw();
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, Math.max(0, this.size), 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        class BackgroundRipple {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.maxRadius = 50 + Math.random() * 100;
+                this.speed = 1 + Math.random() * 1;
+                this.opacity = 0.1 + Math.random() * 0.1;
+                this.maxOpacity = this.opacity;
+                this.lifespan = 60 + Math.random() * 60;
+                const hue = 200 + Math.random() * 60;
+                this.color = `hsla(${hue}, 70%, 70%, ${this.opacity})`;
+            }
+            update() {
+                this.radius += this.speed;
+                this.lifespan--;
+                this.opacity = (this.lifespan / (60 + Math.random() * 60)) * this.maxOpacity;
+                this.color = this.color.replace(/[\d.]+(?=\))/, this.opacity.toFixed(3));
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 1 + Math.random();
+                ctx.stroke();
+            }
+        }
+
+
+        function init(){
+            particlesArray = [];
+            fragmentsArray = [];
+            backgroundRipplesArray = [];
+            settings.particleColors = [...settings.moodPalettes[settings.currentPaletteIndex]];
+            for (let i = 0; i < settings.particleCount; i++){
+                particlesArray.push(new Particle(Math.random() * width, Math.random() * height));
+            }
+        }
+
+        let moodUpdateCounter = 0;
+        const moodUpdateInterval = 180;
+
+        function updateMood() {
+            if (!settings.enableMoodColor) return;
+
+            moodUpdateCounter++;
+            if (moodUpdateCounter < moodUpdateInterval) return;
+            moodUpdateCounter = 0;
+
+            let interactingParticlesCount = particlesArray.filter(p => p.isInteracting).length;
+            settings.interactionLevel = Math.min(1, (settings.mouseSpeed / 50) + (interactingParticlesCount / settings.particleCount) * 0.5);
+
+            if (settings.interactionLevel > 0.6 && Math.random() < 0.3) {
+                settings.currentPaletteIndex = (settings.currentPaletteIndex + 1 + Math.floor(Math.random() * (settings.moodPalettes.length -1))) % settings.moodPalettes.length;
+            } else if (settings.interactionLevel < 0.1 && Math.random() < 0.1) {
+                 settings.currentPaletteIndex = 0;
+            }
+
+            settings.particleColors = [...settings.moodPalettes[settings.currentPaletteIndex]];
+            particlesArray.forEach(p => {
+                p.targetOriginalColor = settings.particleColors[Math.floor(Math.random() * settings.particleColors.length)];
+            });
+        }
+
+        function handleColorPropagation() {
+            if (!settings.enableColorPropagation) return;
+            for (let i = 0; i < particlesArray.length; i++) {
+                if (particlesArray[i].propagationSource) {
+                    for (let j = 0; j < particlesArray.length; j++) {
+                        if (i === j) continue;
+
+                        const p1 = particlesArray[i];
+                        const p2 = particlesArray[j];
+                        const dx = p1.x - p2.x;
+                        const dy = p1.y - p2.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < settings.maxConnectionDistance * 0.7) {
+                            if (p2.propagationTime <= 0) {
+                                p2.propagationTime = p1.maxPropagationTime * (1 - distance / (settings.maxConnectionDistance * 0.7)) * 0.8;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let lastRippleTime = 0;
+        const rippleInterval = 100;
+
+        function handleBackgroundRipples() {
+            if (!settings.enableBackgroundRipples) {
+                backgroundRipplesArray = [];
+                return;
+            }
+
+            const now = Date.now();
+            if (mouse.isMoving && (now - mouse.lastMoveTime < 500) && (now - lastRippleTime > rippleInterval)) {
+                 let isOverParticle = particlesArray.some(p => {
+                    if (!mouse.x || !mouse.y) return false;
+                    const dx = mouse.x - p.x;
+                    const dy = mouse.y - p.y;
+                    return Math.sqrt(dx * dx + dy * dy) < p.size + 20;
+                });
+                if (!isOverParticle && mouse.x && mouse.y) {
+                    backgroundRipplesArray.push(new BackgroundRipple(mouse.x, mouse.y));
+                    lastRippleTime = now;
+                }
+            }
+
+            for (let i = backgroundRipplesArray.length - 1; i >= 0; i--) {
+                const ripple = backgroundRipplesArray[i];
+                ripple.update();
+                if (ripple.lifespan <= 0 || ripple.radius >= ripple.maxRadius || ripple.opacity <= 0.001) {
+                    backgroundRipplesArray.splice(i, 1);
+                } else {
+                    ripple.draw();
+                }
+            }
+        }
+
+
+        function handleParticles() {
+            for (let i = particlesArray.length - 1; i >= 0; i--) {
+                particlesArray[i].update();
+            }
+            for (let i = fragmentsArray.length - 1; i >= 0; i--) {
+                fragmentsArray[i].update();
+                if (fragmentsArray[i].lifespan <= 0 || fragmentsArray[i].size <= 0.1) {
+                    fragmentsArray.splice(i, 1);
+                }
+            }
+        }
+
+        function drawConnections() {
+            if (!settings.showLines || particlesArray.length < 2) return;
+            for (let i = 0; i < particlesArray.length; i++) {
+                for (let j = i + 1; j < particlesArray.length; j++) {
+                    const p1 = particlesArray[i];
+                    const p2 = particlesArray[j];
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < settings.maxConnectionDistance) {
+                        const p1Color = parseColor(p1.color);
+                        const p2Color = parseColor(p2.color);
+                        const lineR = Math.floor((p1Color.r + p2Color.r) / 2);
+                        const lineG = Math.floor((p1Color.g + p2Color.g) / 2);
+                        const lineB = Math.floor((p1Color.b + p2Color.b) / 2);
+
+                        const baseOpacity = (1 - distance / settings.maxConnectionDistance) * 0.4;
+                        const finalOpacity = Math.min(0.8, baseOpacity * (p1.isInteracting || p2.isInteracting || p1.propagationTime > 0 || p2.propagationTime > 0 ? 1.8 : 1));
+
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(${lineR},${lineG},${lineB}, ${finalOpacity.toFixed(2)})`;
+                        ctx.lineWidth = 0.6 + (p1.isInteracting || p2.isInteracting ? 0.4 : 0);
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        function animate(){
+            if (settings.enableBackgroundRipples) {
+                ctx.fillStyle = '#0a0a23';
+                ctx.fillRect(0, 0, width, height);
+                handleBackgroundRipples();
+            }
+
+            // 使用可配置的拖尾透明度
+            ctx.fillStyle = `rgba(10, 10, 35, ${settings.trailOpacity})`;
+            ctx.fillRect(0, 0, width, height);
+
+            updateMood();
+            handleColorPropagation();
+
+            handleParticles();
+            drawConnections();
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            ctx.scale(dpr, dpr);
+            init();
+        });
+
+        initializeUIDisplay();
+        init();
+        animate();
+
+        setInterval(() => {
+            if (Date.now() - mouse.lastMoveTime > 1000) {
+                mouse.isMoving = false;
+                settings.mouseSpeed = 0;
+            }
+        }, 500);
+
+        window.onload = function() {
+            // Any logic post full page load
+        }
+
+    </script>
+    <script src="../../js/back-link-fix.js"></script>
+</body>
+</html>
