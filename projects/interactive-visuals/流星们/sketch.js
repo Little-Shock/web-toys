@@ -1,9 +1,24 @@
 
-// Helper to detect mobile devices (basic check)
+// Helper to detect mobile devices and orientation
 function isMobileDevice() {
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
   return /android|avantgo|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|rim)|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(userAgent) ||
          /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(userAgent.substr(0,4)) || (window.innerWidth <= 800 && window.innerHeight <= 600) ;
+}
+
+// Check if device is in portrait mode
+function isPortraitMode() {
+  return window.innerHeight > window.innerWidth;
+}
+
+// Get device orientation info
+function getDeviceInfo() {
+  return {
+    isMobile: isMobileDevice(),
+    isPortrait: isPortraitMode(),
+    width: window.innerWidth,
+    height: window.innerHeight
+  };
 }
 
 // Global Configuration Object
@@ -20,8 +35,8 @@ fadeInDuration: 50,
 fadeOutDuration: 90,
 
 enableSeek: true,
-seekForce: 0.8, 
-enableFlowField: !isMobileDevice(), 
+seekForce: 0.8,
+enableFlowField: !isMobileDevice(),
 flowFieldStrength: 0.5,
 enableRepulsion: !isMobileDevice(), // Repulsion can also be a bit heavy on mobile
 repulsionForce: 0.9,
@@ -54,28 +69,59 @@ mouseDragForceMultiplier: isMobileDevice() ? 5.0 : 4.0,
 // --- UI System Variables ---
 let uiElements = [];
 let uiOpen = false; // If the panel is visually open
-let activeSlider = null; 
+let activeSlider = null;
 let activeTouchID = null; // Store the ID of the touch interacting with UI
+let deviceInfo = getDeviceInfo(); // Store device info
 
-const uiPanelWidth = 220; 
-const uiPadding = 10;     
-const uiElementHeight = 28; // Taller for touch
-const uiHeaderHeight = 35;
-const uiLabelOffset = 6;
-const uiValueXOffset = 110; 
-const uiSliderTrackXOffset = 110; 
-const uiSliderThumbSize = 20; // Larger thumb 
-const uiToggleSize = 20;      
+// UI dimensions - will be adjusted based on device
+let uiPanelWidth = deviceInfo.isPortrait && deviceInfo.isMobile ? 180 : 220;
+let uiPadding = 10;
+let uiElementHeight = deviceInfo.isMobile ? 32 : 28; // Taller for touch
+let uiHeaderHeight = 35;
+let uiLabelOffset = 6;
+let uiValueXOffset = deviceInfo.isPortrait && deviceInfo.isMobile ? 90 : 110;
+let uiSliderTrackXOffset = deviceInfo.isPortrait && deviceInfo.isMobile ? 90 : 110;
+let uiSliderThumbSize = deviceInfo.isMobile ? 24 : 20; // Larger thumb for mobile
+let uiToggleSize = deviceInfo.isMobile ? 24 : 20;
 
 let uiPanelCurrentX = -uiPanelWidth; // Start off-screen (left)
 let uiPanelTargetX = -uiPanelWidth;  // Target X for animation
 
-const uiToggleButtonSize = 35;     // The 'gear' icon button
-const uiToggleButtonPadding = 15;
+let uiToggleButtonSize = deviceInfo.isMobile ? 40 : 35;     // The 'gear' icon button
+let uiToggleButtonPadding = 15;
+
+// Function to update UI dimensions based on device orientation
+function updateUIDimensions() {
+  deviceInfo = getDeviceInfo();
+
+  // Adjust UI dimensions for portrait mode on mobile
+  if (deviceInfo.isPortrait && deviceInfo.isMobile) {
+    uiPanelWidth = 180;
+    uiValueXOffset = 90;
+    uiSliderTrackXOffset = 90;
+  } else {
+    uiPanelWidth = 220;
+    uiValueXOffset = 110;
+    uiSliderTrackXOffset = 110;
+  }
+
+  // Always adjust for mobile vs desktop
+  uiElementHeight = deviceInfo.isMobile ? 32 : 28;
+  uiSliderThumbSize = deviceInfo.isMobile ? 24 : 20;
+  uiToggleSize = deviceInfo.isMobile ? 24 : 20;
+  uiToggleButtonSize = deviceInfo.isMobile ? 40 : 35;
+
+  // Update panel position if it's open
+  if (uiOpen) {
+    uiPanelTargetX = 0;
+  } else {
+    uiPanelTargetX = -uiPanelWidth;
+  }
+}
 // --- End UI System Variables ---
 
 // Particle class (Assumed to be the same as the previous version, using config)
-class Particle { /* ... Same as before ... */ 
+class Particle { /* ... Same as before ... */
 constructor(x, y) { this.respawn(x, y); }
 respawn(x,y){ this.pos = (x !== undefined && y !== undefined) ? createVector(x, y) : createVector(random(width), random(height)); this.vel = p5.Vector.random2D(); this.vel.mult(random(1,2.5)); this.acc = createVector(0,0); this.maxSpeed = random(config.particleMaxSpeedMin, config.particleMaxSpeedMax); this.originalMaxSpeed = this.maxSpeed; this.baseMaxForce = random(0.1,0.3); this.r = random(config.particleRadiusMin, config.particleRadiusMax); this.history = []; this.trailLength = int(random(config.particleTrailLengthMin, config.particleTrailLengthMax)); const palette = config.palettes[config.activePalette] || config.palettes["default"]; this.baseHue = random(palette.H[0], palette.H[1]); this.baseSat = random(palette.S[0], palette.S[1]); this.baseBri = random(palette.B[0], palette.B[1]); this.age = 0; this.lifespan = config.particleLifespan > 0 ? config.particleLifespan + random(-config.particleLifespan * 0.15, config.particleLifespan * 0.15) : 0; this.perturbationTimer = 0; }
 update(){ if(this.lifespan > 0){ this.age++; if(this.age > this.lifespan){ this.respawn(); return; }} if(this.perturbationTimer > 0){ this.vel.mult(0.95); this.perturbationTimer--; if(this.perturbationTimer === 0){ this.maxSpeed = this.originalMaxSpeed; }}else{ this.vel.add(this.acc); } this.vel.limit(this.maxSpeed); this.pos.add(this.vel); this.acc.mult(0); this.history.push(this.pos.copy()); if(this.history.length > this.trailLength){ this.history.splice(0,1); }}
@@ -91,7 +137,7 @@ burst(){ this.vel.mult(random(2.8,4.8)); this.vel.rotate(random(-PI,PI)); this.a
 
 let particles = [];
 let flowField;
-let zOffset = 0; 
+let zOffset = 0;
 let stars = [];
 const numStars = isMobileDevice() ? 80 : 150;
 
@@ -100,22 +146,29 @@ function drawStars(globalHueOffset) { for(let star of stars){ let starHue = (200
 
 
 function setup() {
-createCanvas(windowWidth, windowHeight);
-colorMode(HSB, 360, 100, 100, 100);
+  createCanvas(windowWidth, windowHeight);
+  colorMode(HSB, 360, 100, 100, 100);
 
-setupUI(); 
-initSystem(); // Initialize particles and flow field
-setupStars();
+  // Update device info and UI dimensions
+  deviceInfo = getDeviceInfo();
+  updateUIDimensions();
 
-console.log("Tap/Click gear icon (top-left) to toggle UI Panel.");
-if (isMobileDevice()) {
-  console.log("Mobile device detected: Using optimized settings.");
-  // frameRate(30); // Optionally cap frame rate on mobile
-}
+  setupUI();
+  initSystem(); // Initialize particles and flow field
+  setupStars();
+
+  console.log("Tap/Click gear icon (top-left) to toggle UI Panel.");
+  if (deviceInfo.isMobile) {
+    console.log(`Mobile device detected: ${deviceInfo.width}x${deviceInfo.height}, Portrait: ${deviceInfo.isPortrait}`);
+    if (deviceInfo.isPortrait) {
+      console.log("Portrait mode: Using optimized UI layout");
+    }
+    // frameRate(30); // Optionally cap frame rate on mobile
+  }
 }
 
 function initSystem(fullResetParticles = true) {
-  if (fullResetParticles) initParticles(); 
+  if (fullResetParticles) initParticles();
   if (config.enableFlowField) calculateFlowField(); else flowField = [];
 }
 
@@ -125,18 +178,18 @@ function initParticles() {
       particles.push(new Particle(random(width), random(height)));
   }
 }
-function calculateFlowField() { /* ... Same as before, uses config ... */ 
+function calculateFlowField() { /* ... Same as before, uses config ... */
 if (!config.enableFlowField || config.flowFieldScale <=0) { flowField = []; return; }
 let cols = floor(width / config.flowFieldScale); let rows = floor(height / config.flowFieldScale);
 if (cols === 0 || rows === 0) { flowField = []; return; }
 flowField = new Array(cols * rows); noiseDetail(3, 0.45); let yNoiseOffset = 0;
 for (let y = 0; y < rows; y++) { let xNoiseOffset = 0;
   for (let x = 0; x < cols; x++) {
-    let angle = noise(xNoiseOffset, yNoiseOffset, zOffset) * TWO_PI * 2.5; 
-    let v = p5.Vector.fromAngle(angle); v.setMag(1); 
+    let angle = noise(xNoiseOffset, yNoiseOffset, zOffset) * TWO_PI * 2.5;
+    let v = p5.Vector.fromAngle(angle); v.setMag(1);
     flowField[x + y * cols] = v; xNoiseOffset += config.flowFieldNoiseIncrement;
   } yNoiseOffset += config.flowFieldNoiseIncrement;
-} zOffset += config.flowFieldTimeIncrement; 
+} zOffset += config.flowFieldTimeIncrement;
 }
 
 
@@ -167,14 +220,14 @@ for (let p of particles) {
       let index = constrain(xGrid + yGrid * colsGrid, 0, flowField.length - 1);
       if (flowField[index]) { p.applyFlow(flowField[index]); }
   }
-  if (config.enableRepulsion) p.repel(particles); 
-  
+  if (config.enableRepulsion) p.repel(particles);
+
   // Only seek if UI is not being actively dragged by a touch, or if mouse is used and no active touch on UI
   let UIIsActiveTouch = (activeTouchID !== null && touches.some(t => t.id === activeTouchID));
   if (config.enableSeek && !UIIsActiveTouch) {
       p.seek(createVector(interactPt.x, interactPt.y));
   }
-  
+
   p.update();
   p.edges();
   p.display(globalHueOffset);
@@ -185,19 +238,19 @@ drawUI(); // Draw UI elements (panel, buttons, etc.)
 
 // --- UI System Implementation ---
 function setupUI() {
-  uiElements = []; 
-  let currentY = uiHeaderHeight + uiPadding; 
+  uiElements = [];
+  let currentY = uiHeaderHeight + uiPadding;
 
   const addElement = (el) => {
       // x positions are relative to the panel's 0, not screen 0
-      el.x = uiPadding; 
+      el.x = uiPadding;
       el.y = currentY;
-      el.w = uiPanelWidth - 2 * uiPadding; 
+      el.w = uiPanelWidth - 2 * uiPadding;
       el.h = uiElementHeight;
       uiElements.push(el);
       currentY += uiElementHeight + uiPadding / 1.5;
   };
-  
+
   // Sliders - Minimized list for brevity, add more as needed from previous version
   addElement({ type: 'slider', label: 'Particles', configKey: 'numParticles', min: 10, max: isMobileDevice() ? 100 : 200, step: 1, requiresReinit: true });
   addElement({ type: 'slider', label: 'Max Speed', configKey: 'particleMaxSpeedMax', min: 1, max: 10, step: 0.1 });
@@ -226,7 +279,7 @@ function drawUIToggleButton() {
   let btnX = uiToggleButtonPadding;
   let btnY = uiToggleButtonPadding;
   let hue = frameCount % 360;
-  
+
   fill(hue, 80, 30, 70); // BG for button
   noStroke();
   ellipse(btnX + uiToggleButtonSize/2, btnY + uiToggleButtonSize/2, uiToggleButtonSize * 1.2);
@@ -246,6 +299,16 @@ function drawUIToggleButton() {
 }
 
 function drawUI() {
+  // Draw title and version when UI is closed
+  if (!uiOpen) {
+    push();
+    fill(0, 0, 100, 70);
+    textSize(deviceInfo.isMobile ? 16 : 18);
+    textAlign(RIGHT, TOP);
+    text("流星们 v1.0.0", width - 15, 15);
+    pop();
+  }
+
   drawUIToggleButton(); // Always draw the main toggle button
 
   if (abs(uiPanelCurrentX - uiPanelTargetX) < 0.1 && !uiOpen) return; // Don't draw panel if fully closed
@@ -254,7 +317,7 @@ function drawUI() {
   translate(uiPanelCurrentX, 0); // Move the coordinate system for the panel
 
   // Panel Background
-  fill(20, 80, 20, 85); 
+  fill(20, 80, 20, 85);
   noStroke();
   rect(0, 0, uiPanelWidth, height);
 
@@ -262,7 +325,7 @@ function drawUI() {
   fill(0,0,100);
   textSize(16);
   textAlign(CENTER, CENTER);
-  text("Settings", uiPanelWidth / 2, uiHeaderHeight / 2);
+  text("流星们 设置", uiPanelWidth / 2, uiHeaderHeight / 2);
 
   // Close Button (X) for the panel
   let closeBtnSize = 20;
@@ -277,7 +340,7 @@ function drawUI() {
 
 
   for (let el of uiElements) {
-      fill(0, 0, 90); 
+      fill(0, 0, 90);
       noStroke();
       textSize(12);
       textAlign(LEFT, CENTER);
@@ -288,7 +351,7 @@ function drawUI() {
           strokeWeight(3); // Thicker track for touch
           line(el.x + uiSliderTrackXOffset, el.y + el.h / 2, el.x + el.w - uiPadding / 2, el.y + el.h / 2);
           let thumbX = map(config[el.configKey], el.min, el.max, el.x + uiSliderTrackXOffset, el.x + el.w - uiPadding/2 );
-          fill( (frameCount * 2 + el.y)%360, 85, 100); 
+          fill( (frameCount * 2 + el.y)%360, 85, 100);
           stroke(0, 0, 100);
           strokeWeight(1.5);
           ellipse(thumbX, el.y + el.h / 2, uiSliderThumbSize, uiSliderThumbSize);
@@ -297,7 +360,7 @@ function drawUI() {
 
       } else if (el.type === 'toggle') {
           stroke(0, 0, 75); strokeWeight(1.5);
-          fill(config[el.configKey] ? [120, 85, 85, 80] : [0, 80, 80, 70]); 
+          fill(config[el.configKey] ? [120, 85, 85, 80] : [0, 80, 80, 70]);
           rect(el.x + uiValueXOffset, el.y + el.h/2 - uiToggleSize/2, uiToggleSize, uiToggleSize, 3);
           if (config[el.configKey]) { fill(0,0,100); noStroke(); textSize(12); textAlign(CENTER, CENTER); text("✓", el.x + uiValueXOffset + uiToggleSize/2, el.y + el.h/2); }
           fill(0,0,90); noStroke(); textAlign(LEFT, CENTER);
@@ -310,7 +373,7 @@ function drawUI() {
           text(el.label, el.x + uiValueXOffset + (el.w - uiValueXOffset)/2, el.y + el.h/2);
       }
   }
-  pop(); 
+  pop();
 }
 
 
@@ -337,7 +400,7 @@ function handleUIInteraction(px, py, eventType, touchId = null) {
   let closeBtnSize = 20;
   let closeBtnX = uiPanelWidth - uiPadding - closeBtnSize;
   let closeBtnY = (uiHeaderHeight - closeBtnSize) / 2;
-  if (panelX > closeBtnX && panelX < closeBtnX + closeBtnSize && 
+  if (panelX > closeBtnX && panelX < closeBtnX + closeBtnSize &&
       panelY > closeBtnY && panelY < closeBtnY + closeBtnSize) {
       if (eventType === 'pressed' || eventType === 'touched') {
           uiOpen = false;
@@ -346,7 +409,7 @@ function handleUIInteraction(px, py, eventType, touchId = null) {
           return true;
       }
   }
-  
+
   // If interaction is outside the visible panel area (considering its current animated position)
   if (px > uiPanelCurrentX + uiPanelWidth || px < uiPanelCurrentX) {
       if (eventType === 'released' || eventType === 'touchEnded') activeSlider = null; // Release slider if touch ends outside
@@ -360,7 +423,6 @@ function handleUIInteraction(px, py, eventType, touchId = null) {
       if (el.type === 'slider') {
           let trackLeft = el.x + uiSliderTrackXOffset;
           let trackRight = el.x + el.w - uiPadding / 2;
-          let sliderY = el.y + el.h / 2;
           // Wider hit area for slider y-axis
           if (panelY > el.y - uiElementHeight*0.5 && panelY < el.y + el.h + uiElementHeight*0.5 && panelX > trackLeft - uiSliderThumbSize && panelX < trackRight + uiSliderThumbSize) {
                if (eventType === 'pressed' || eventType === 'touched') {
@@ -386,7 +448,7 @@ function handleUIInteraction(px, py, eventType, touchId = null) {
           // Hit area for toggle/button value part
           let interactionAreaX = el.x + (el.type === 'toggle' ? uiValueXOffset : uiValueXOffset);
           let interactionAreaW = el.w - (el.type === 'toggle' ? uiValueXOffset : uiValueXOffset);
-          
+
           if (panelY > el.y && panelY < el.y + el.h && panelX > interactionAreaX && panelX < interactionAreaX + interactionAreaW) {
               if (eventType === 'pressed' || eventType === 'touched') { // Act on press/touch for responsiveness
                   if (el.type === 'toggle') {
@@ -398,7 +460,7 @@ function handleUIInteraction(px, py, eventType, touchId = null) {
                   } else if (el.type === 'button') {
                       el.action();
                   }
-                  return true; 
+                  return true;
               }
           }
       }
@@ -415,11 +477,28 @@ function handleUIInteraction(px, py, eventType, touchId = null) {
 }
 
 function windowResized() {
-resizeCanvas(windowWidth, windowHeight);
-// uiPanelCurrentX and uiPanelTargetX might need adjustment if panel visibility logic changes
-setupUI(); // Re-layout UI 
-initSystem(true); 
-setupStars(); 
+  resizeCanvas(windowWidth, windowHeight);
+
+  // Get new device info
+  const newDeviceInfo = getDeviceInfo();
+
+  // Log if orientation changed
+  if (deviceInfo.isPortrait !== newDeviceInfo.isPortrait) {
+    console.log(`Orientation changed: ${newDeviceInfo.isPortrait ? 'Portrait' : 'Landscape'} mode`);
+  }
+
+  // Update device info and UI dimensions
+  deviceInfo = newDeviceInfo;
+  updateUIDimensions();
+
+  // Re-layout UI
+  setupUI();
+
+  // Reinitialize system and stars
+  initSystem(true);
+  setupStars();
+
+  console.log(`Window resized: ${windowWidth}x${windowHeight}, Portrait: ${deviceInfo.isPortrait}`);
 }
 
 // --- Combined Mouse/Touch Event Handlers ---
@@ -428,11 +507,11 @@ if (handleUIInteraction(mouseX, mouseY, 'pressed', null)) return false;
 // Game interaction
 for (let p of particles) {
   let d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
-  if (d < config.mouseBurstRadius) { 
-    p.burst(); 
+  if (d < config.mouseBurstRadius) {
+    p.burst();
     let force = p5.Vector.sub(p.pos, createVector(mouseX, mouseY));
     force.normalize();
-    force.mult(map(d,0,config.mouseBurstRadius,config.mouseBurstStrength, config.mouseBurstStrength * 0.2)); 
+    force.mult(map(d,0,config.mouseBurstRadius,config.mouseBurstStrength, config.mouseBurstStrength * 0.2));
     p.applyForce(force);
   }
 }
@@ -444,12 +523,12 @@ if (handleUIInteraction(mouseX, mouseY, 'dragged', null)) return false;
 // Game interaction
 for (let p of particles) {
   let d = dist(mouseX, mouseY, p.pos.x, p.pos.y);
-  if (d < config.mouseDragInfluenceRadius && p.perturbationTimer === 0) { 
-    let force = p5.Vector.sub(createVector(mouseX, mouseY), p.pos); 
+  if (d < config.mouseDragInfluenceRadius && p.perturbationTimer === 0) {
+    let force = p5.Vector.sub(createVector(mouseX, mouseY), p.pos);
     let strength = map(d, 0, config.mouseDragInfluenceRadius, p.baseMaxForce * config.mouseDragForceMultiplier, p.baseMaxForce * 0.1);
     force.setMag(strength);
     p.applyForce(force);
-    if (d < config.mouseDragInfluenceRadius * 0.35) p.vel.mult(1.05); 
+    if (d < config.mouseDragInfluenceRadius * 0.35) p.vel.mult(1.05);
   }
 }
 return false; // Prevent default
@@ -491,7 +570,7 @@ function touchMoved() {
  }
  // If a UI touch is found and handled, return. Otherwise, use the first touch for game interaction.
  if (uiTouch && handleUIInteraction(uiTouch.x, uiTouch.y, 'touchMoved', uiTouch.id)) return false;
- 
+
  // If no specific UI touch is active or handled, use the first touch for game interaction.
  // This prevents other touches from dragging particles if one touch is on UI.
  if (activeTouchID === null) {
