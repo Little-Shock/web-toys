@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>瞬息之华 (Ephemeral Bloom) - 可调参数版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #080808;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; /* 更现代的字体栈 */
+            color: #e0e0e0; /* 浅灰色文字，对比度更舒适 */
+            display: flex; /* 用于垂直居中提示信息，如果需要的话 */
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        canvas { 
+            display: block; 
+            /* width和height将由p5.js设置，这里不需要重复定义为100vw/vh，避免潜在冲突 */
+        }
+        .info-text {
+            position: absolute;
+            bottom: 15px; /* 调整位置，避免与某些设备底部导航栏冲突 */
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(200, 200, 200, 0.6); /* 稍微降低透明度 */
+            font-size: 11px; /* 稍小一点 */
+            text-align: center;
+            padding: 6px 12px;
+            background-color: rgba(0,0,0,0.4);
+            border-radius: 8px; /* 更圆润的边角 */
+            pointer-events: none;
+            z-index: 100; /* 确保在控制面板之上（如果控制面板在下方） */
+        }
+
+        /* 控制面板样式 */
+        #controlsContainer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(25, 25, 25, 0.85); /* 深色半透明背景 */
+            backdrop-filter: blur(5px); /* 毛玻璃效果 (如果浏览器支持) */
+            -webkit-backdrop-filter: blur(5px);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-width: calc(100vw - 40px); /* 确保在小屏幕上不会超出 */
+        }
+        #controlsContainer.collapsed {
+            transform: translateY(-110%); /* 完全移出视野 */
+            opacity: 0;
+            pointer-events: none; /* 收起时不可交互 */
+        }
+        #toggleButton {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(40, 40, 40, 0.9);
+            color: #e0e0e0;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1001; /* 确保在展开的面板之上 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #toggleButton:hover {
+            background-color: rgba(60, 60, 60, 0.95);
+        }
+
+        .control-group {
+            margin-bottom: 8px;
+        }
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #b0b0b0; /* 标签颜色稍暗 */
+        }
+        .control-group input[type="range"] {
+            width: 160px; /* 调整滑块宽度 */
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .control-group span {
+            font-size: 12px;
+            min-width: 25px; /* 给数值显示留出固定空间 */
+            display: inline-block;
+            text-align: right;
+            vertical-align: middle;
+            color: #d0d0d0;
+        }
+
+        /* 自定义滑块样式 (可选，但能提升高级感) */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            background: #555;
+            height: 4px;
+            border-radius: 2px;
+        }
+        input[type=range]::-moz-range-track {
+            background: #555;
+            height: 4px;
+            border-radius: 2px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -5px; /* (track_height - thumb_height) / 2 ... (4-14)/2 = -5 */
+            background-color: #00bcd4; /* 青色主题色 */
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            border: 2px solid #fff; /* 白色边框 */
+        }
+        input[type=range]::-moz-range-thumb {
+            background-color: #00bcd4;
+            height: 10px; /* 调整为14px与webkit一致，但需配合边框 */
+            width: 10px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <button id="toggleButton">参数设置</button>
+
+    <div id="controlsContainer" class="collapsed">
+        <div class="control-group">
+            <label for="numParticlesSlider">粒子数量 (<span id="numParticlesValue">25</span>)</label>
+            <input type="range" id="numParticlesSlider" min="5" max="150" value="25" step="1">
+        </div>
+        <div class="control-group">
+            <label for="lifespanDecrementSlider">消逝速度 (<span id="lifespanDecrementValue">1.8</span>)</label>
+            <input type="range" id="lifespanDecrementSlider" min="0.2" max="5" value="1.8" step="0.1">
+        </div>
+        <div class="control-group">
+            <label for="maxSpeedSlider">最大速度 (<span id="maxSpeedValue">4.5</span>)</label>
+            <input type="range" id="maxSpeedSlider" min="1" max="15" value="4.5" step="0.1">
+        </div>
+        <div class="control-group">
+            <label for="dragSlider">拖拽系数 (<span id="dragValue">0.030</span>)</label>
+            <input type="range" id="dragSlider" min="0.001" max="0.1" value="0.03" step="0.001">
+        </div>
+        <div class="control-group">
+            <label for="bgAlphaSlider">拖尾强度 (<span id="bgAlphaValue">12</span>)</label>
+            <input type="range" id="bgAlphaSlider" min="1" max="60" value="12" step="1">
+        </div>
+        <div class="control-group">
+            <label for="maxSizeSlider">最大尺寸 (<span id="maxSizeValue">9</span>)</label>
+            <input type="range" id="maxSizeSlider" min="2" max="25" value="9" step="1">
+        </div>
+    </div>
+
+    <div class="info-text">轻触或拖动屏幕，创造绚烂光华</div>
+
+    <script>
+        let particles = [];
+        const bgColor = [0, 0, 5]; // HSB
+
+        // --- 可调参数及其默认值 ---
+        let currentNumParticles = 25;
+        let currentLifespanDecrement = 1.8;
+        let currentMaxSpeed = 4.5; // 粒子初始扩散的最大速度
+        let currentMinSpeedFactor = 0.3; // 最小速度 = 最大速度 * 这个因子
+        let currentDragCoefficient = 0.03;
+        let currentBgAlpha = 12; // 背景透明度，影响拖尾效果
+        let currentMaxSize = 9; // 粒子最大尺寸
+        let currentMinSizeFactor = 0.3; // 最小尺寸 = 最大尺寸 * 这个因子
+
+        class Particle {
+            constructor(x, y, hu) {
+                this.pos = createVector(x, y);
+                // 使用 currentMaxSpeed 和 currentMinSpeedFactor
+                const speed = random(currentMaxSpeed * currentMinSpeedFactor, currentMaxSpeed);
+                this.vel = p5.Vector.random2D().mult(speed);
+                this.acc = createVector(0, 0);
+                this.lifespan = 100; 
+                this.hue = hu;
+                // 使用 currentMaxSize 和 currentMinSizeFactor
+                this.size = random(currentMaxSize * currentMinSizeFactor, currentMaxSize);
+                this.saturation = 90;
+                this.brightness = 90;
+            }
+
+            applyForce(force) {
+                this.acc.add(force);
+            }
+
+            update() {
+                let drag = this.vel.copy();
+                // 使用 currentDragCoefficient
+                drag.mult(-currentDragCoefficient); 
+                this.applyForce(drag);
+
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                this.acc.mult(0);
+
+                // 使用 currentLifespanDecrement
+                this.lifespan -= currentLifespanDecrement; 
+
+                this.saturation = lerp(90, 50, 1 - this.lifespan / 100);
+                this.brightness = lerp(90, 60, 1 - this.lifespan / 100);
+            }
+
+            display() {
+                noStroke();
+                fill(this.hue, this.saturation, this.brightness, this.lifespan);
+                ellipse(this.pos.x, this.pos.y, this.size);
+            }
+
+            isDead() {
+                return this.lifespan < 0;
+            }
+        }
+
+        function setup() {
+            let cnv = createCanvas(windowWidth, windowHeight);
+            colorMode(HSB, 360, 100, 100, 100);
+            background(bgColor[0], bgColor[1], bgColor[2]);
+            
+            // --- UI元素获取与事件绑定 ---
+            const controlsPanel = select('#controlsContainer');
+            const toggleBtn = select('#toggleButton');
+            
+            // 初始时面板是收起的，按钮文本应该是“参数设置”
+            // 点击按钮切换面板的 'collapsed' 类
+            toggleBtn.mousePressed(() => {
+                controlsPanel.toggleClass('collapsed');
+                // 根据面板状态更新按钮文本
+                if (controlsPanel.hasClass('collapsed')) {
+                    toggleBtn.html('参数设置');
+                } else {
+                    toggleBtn.html('收起参数');
+                }
+            });
+
+            // 粒子数量
+            const numParticlesSlider = select('#numParticlesSlider');
+            const numParticlesValue = select('#numParticlesValue');
+            numParticlesSlider.value(currentNumParticles); // 设置滑块初始值
+            numParticlesValue.html(currentNumParticles);   // 设置显示初始值
+            numParticlesSlider.input(() => {
+                currentNumParticles = numParticlesSlider.value();
+                numParticlesValue.html(currentNumParticles);
+            });
+
+            // 消逝速度
+            const lifespanDecrementSlider = select('#lifespanDecrementSlider');
+            const lifespanDecrementValue = select('#lifespanDecrementValue');
+            lifespanDecrementSlider.value(currentLifespanDecrement);
+            lifespanDecrementValue.html(currentLifespanDecrement.toFixed(1));
+            lifespanDecrementSlider.input(() => {
+                currentLifespanDecrement = parseFloat(lifespanDecrementSlider.value());
+                lifespanDecrementValue.html(currentLifespanDecrement.toFixed(1));
+            });
+
+            // 最大速度
+            const maxSpeedSlider = select('#maxSpeedSlider');
+            const maxSpeedValue = select('#maxSpeedValue');
+            maxSpeedSlider.value(currentMaxSpeed);
+            maxSpeedValue.html(currentMaxSpeed.toFixed(1));
+            maxSpeedSlider.input(() => {
+                currentMaxSpeed = parseFloat(maxSpeedSlider.value());
+                maxSpeedValue.html(currentMaxSpeed.toFixed(1));
+            });
+            
+            // 拖拽系数
+            const dragSlider = select('#dragSlider');
+            const dragValue = select('#dragValue');
+            dragSlider.value(currentDragCoefficient);
+            dragValue.html(currentDragCoefficient.toFixed(3));
+            dragSlider.input(() => {
+                currentDragCoefficient = parseFloat(dragSlider.value());
+                dragValue.html(currentDragCoefficient.toFixed(3));
+            });
+
+            // 拖尾强度 (背景Alpha)
+            const bgAlphaSlider = select('#bgAlphaSlider');
+            const bgAlphaValue = select('#bgAlphaValue');
+            bgAlphaSlider.value(currentBgAlpha);
+            bgAlphaValue.html(currentBgAlpha);
+            bgAlphaSlider.input(() => {
+                currentBgAlpha = parseInt(bgAlphaSlider.value());
+                bgAlphaValue.html(currentBgAlpha);
+            });
+
+            // 最大尺寸
+            const maxSizeSlider = select('#maxSizeSlider');
+            const maxSizeValue = select('#maxSizeValue');
+            maxSizeSlider.value(currentMaxSize);
+            maxSizeValue.html(currentMaxSize);
+            maxSizeSlider.input(() => {
+                currentMaxSize = parseInt(maxSizeSlider.value());
+                maxSizeValue.html(currentMaxSize);
+            });
+
+
+            // 阻止移动设备上的默认触摸行为
+            let canvasElement = document.querySelector('canvas');
+            if (canvasElement) {
+                canvasElement.addEventListener('touchstart', function(e) {
+                    // 只在触摸点在canvas内部且控制面板收起时才阻止默认行为
+                    // 避免影响控制面板的滑动操作
+                    if (controlsPanel.hasClass('collapsed')) {
+                         e.preventDefault();
+                    }
+                }, { passive: false });
+                canvasElement.addEventListener('touchmove', function(e) {
+                     if (controlsPanel.hasClass('collapsed')) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }
+        }
+
+        function draw() {
+            blendMode(BLEND);
+            // 使用 currentBgAlpha
+            fill(bgColor[0], bgColor[1], bgColor[2], currentBgAlpha); 
+            rect(0, 0, width, height);
+
+            blendMode(ADD);
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].display();
+                if (particles[i].isDead()) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function createBloom(x, y) {
+            let hue = map(x, 0, width, 0, 360);
+            // 使用 currentNumParticles
+            for (let i = 0; i < currentNumParticles; i++) {
+                particles.push(new Particle(x, y, hue));
+            }
+        }
+
+        function mousePressed() {
+            // 检查鼠标是否在控制面板或切换按钮上
+            const controlsPanel = document.getElementById('controlsContainer');
+            const toggleBtn = document.getElementById('toggleButton');
+            if (controlsPanel && toggleBtn) {
+                const controlsRect = controlsPanel.getBoundingClientRect();
+                const toggleRect = toggleBtn.getBoundingClientRect();
+
+                // 如果面板是展开的，并且点击在面板内，则不创建粒子
+                if (!controlsPanel.classList.contains('collapsed') &&
+                    mouseX >= controlsRect.left && mouseX <= controlsRect.right &&
+                    mouseY >= controlsRect.top && mouseY <= controlsRect.bottom) {
+                    return; 
+                }
+                // 如果点击在切换按钮上，也不创建粒子
+                if (mouseX >= toggleRect.left && mouseX <= toggleRect.right &&
+                    mouseY >= toggleRect.top && mouseY <= toggleRect.bottom) {
+                    return;
+                }
+            }
+            // 确保点击在画布内才创建粒子
+            if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+                 createBloom(mouseX, mouseY);
+            }
+            return false; 
+        }
+
+        function mouseDragged() {
+            const controlsPanel = document.getElementById('controlsContainer');
+             if (controlsPanel && !controlsPanel.classList.contains('collapsed')) {
+                const controlsRect = controlsPanel.getBoundingClientRect();
+                 if (mouseX >= controlsRect.left && mouseX <= controlsRect.right &&
+                    mouseY >= controlsRect.top && mouseY <= controlsRect.bottom) {
+                    return; 
+                }
+            }
+            if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
+                createBloom(mouseX, mouseY);
+            }
+            return false;
+        }
+
+        function touchStarted() {
+            const controlsPanel = document.getElementById('controlsContainer');
+            const toggleBtn = document.getElementById('toggleButton');
+
+            if (touches.length > 0) {
+                const touchX = touches[0].x;
+                const touchY = touches[0].y;
+
+                if (controlsPanel && toggleBtn) {
+                    const controlsRect = controlsPanel.getBoundingClientRect();
+                    const toggleRect = toggleBtn.getBoundingClientRect();
+
+                    if (!controlsPanel.classList.contains('collapsed') &&
+                        touchX >= controlsRect.left && touchX <= controlsRect.right &&
+                        touchY >= controlsRect.top && touchY <= controlsRect.bottom) {
+                        return; // 在展开的面板上触摸，不操作粒子
+                    }
+                    if (touchX >= toggleRect.left && touchX <= toggleRect.right &&
+                        touchY >= toggleRect.top && touchY <= toggleRect.bottom) {
+                        // 触摸在按钮上，p5的select().mousePressed()会处理
+                        return; 
+                    }
+                }
+                if (touchX > 0 && touchX < width && touchY > 0 && touchY < height) {
+                    createBloom(touchX, touchY);
+                }
+            }
+            // 只有当控制面板收起时，才阻止默认滚动行为
+            if (controlsPanel && controlsPanel.classList.contains('collapsed')) {
+                return false;
+            }
+        }
+
+        function touchMoved() {
+            const controlsPanel = document.getElementById('controlsContainer');
+            if (touches.length > 0) {
+                const touchX = touches[0].x;
+                const touchY = touches[0].y;
+                 if (controlsPanel && !controlsPanel.classList.contains('collapsed')) {
+                    const controlsRect = controlsPanel.getBoundingClientRect();
+                     if (touchX >= controlsRect.left && touchX <= controlsRect.right &&
+                        touchY >= controlsRect.top && touchY <= controlsRect.bottom) {
+                        return; 
+                    }
+                }
+                if (touchX > 0 && touchX < width && touchY > 0 && touchY < height) {
+                    createBloom(touchX, touchY);
+                }
+            }
+            if (controlsPanel && controlsPanel.classList.contains('collapsed')) {
+                return false;
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            background(bgColor[0], bgColor[1], bgColor[2]);
+        }
+    </script>
+</body>
+</html>

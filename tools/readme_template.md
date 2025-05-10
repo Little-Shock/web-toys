@@ -47,6 +47,7 @@
 ## 版本信息
 
 - **当前版本**: v{{version}}
+- **创建日期**: {{creation_date}}
 - **最后更新**: {{last_updated}}
 - **状态**: {{status_text}}
 
@@ -60,6 +61,12 @@
 {{/changes}}
 
 {{/changelog}}
+
+## 作者信息
+
+- **开发团队**: Little Shock Team
+- **主要创建者**: Little-Shock
+- **联系方式**: [团队Wiki](https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd)
 
 ## 未来计划
 

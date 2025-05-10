@@ -28,7 +28,9 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
         "图像上传",
@@ -42,5 +44,6 @@
         "JavaScript",
         "CSS3",
         "File API"
-    ]
+    ],
+    "creation_date": "2025-05-10"
 }

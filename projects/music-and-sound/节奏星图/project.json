@@ -28,7 +28,9 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
         "多种交互方式",
@@ -43,5 +45,6 @@
         "Canvas",
         "节奏检测算法",
         "星座连接算法"
-    ]
+    ],
+    "creation_date": "2025-05-10"
 }

@@ -1,0 +1,53 @@
+{
+    "title": "星尘画布",
+    "description": "互动式星尘粒子画布，用户可通过触摸创造绚丽星尘轨迹，支持多种粒子效果和颜色主题，营造梦幻星空体验。",
+    "tags": [
+        "粒子效果",
+        "触摸互动",
+        "光效",
+        "移动优化"
+    ],
+    "status": "stable",
+    "version": "1.0.0",
+    "last_updated": "2025-06-01",
+    "primary_category": "interactive-visuals",
+    "secondary_categories": [],
+    "order": 8,
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-06-01",
+            "changes": [
+                "初始版本发布",
+                "实现星尘粒子系统",
+                "添加多种颜色主题",
+                "支持移动端触摸交互",
+                "添加设置面板"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "星尘粒子系统",
+        "多种颜色主题",
+        "触摸互动效果",
+        "粒子轨迹",
+        "可调节参数",
+        "移动端优化"
+    ],
+    "dependencies": [
+        "p5.js"
+    ],
+    "creation_date": "2025-05-10"
+}

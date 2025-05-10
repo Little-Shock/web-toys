@@ -1,9 +1,11 @@
 {
-    "title": "赛博流麻闪卡",
-    "description": "上传一张图片，体验重力感应流麻效果",
+    "title": "赛博动感相框 (Cyber Motion Frame)",
+    "description": "上传图片创建3D相框，通过重力感应控制粒子流动效果",
     "tags": [
         "重力感应",
-        "图片特效"
+        "图片特效",
+        "3D效果",
+        "粒子动画"
     ],
     "status": "stable",
     "order": 3,
@@ -28,10 +30,21 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
-        "基本功能"
+        "图片上传",
+        "3D相框效果",
+        "重力感应控制",
+        "粒子流动动画",
+        "设备方向检测"
     ],
-    "dependencies": []
+    "dependencies": [
+        "Three.js",
+        "WebGL",
+        "DeviceOrientation API"
+    ],
+    "creation_date": "2025-05-10"
 }

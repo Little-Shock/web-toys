@@ -61,6 +61,7 @@ def create_project_config(project_path, project_name, category, description=None
 
         # 版本管理相关字段
         "version": "0.1.0",
+        "creation_date": today,
         "last_updated": today,
         "changelog": [
             {
@@ -77,14 +78,15 @@ def create_project_config(project_path, project_name, category, description=None
         "compatibility": {
             "mobile": True,
             "desktop": True,
-            "min_screen_width": 320,
             "performance_impact": "medium"
         },
 
         # 作者信息
         "author": {
             "name": "Little Shock Team",
-            "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+            "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+            "creator": "Little-Shock",
+            "contributors": []
         },
 
         # 其他元信息

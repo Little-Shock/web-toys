@@ -1,0 +1,49 @@
+{
+    "title": "赛博故障风 (Cyberpunk Glitch Effect)",
+    "description": "为图片添加赛博朋克风格的故障艺术效果，可调节多种参数创造独特视觉体验。",
+    "tags": [
+        "图像处理",
+        "故障艺术",
+        "赛博风格"
+    ],
+    "status": "stable",
+    "order": 2,
+    "primary_category": "cyber-goods",
+    "secondary_categories": ["creative-tools"],
+    "version": "1.0.0",
+    "last_updated": "2025-05-10",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-10",
+            "changes": [
+                "初始版本"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "图像上传",
+        "多种效果参数",
+        "预设效果",
+        "质量控制",
+        "移动端优化"
+    ],
+    "dependencies": [
+        "HTML5 Canvas",
+        "JavaScript",
+        "CSS3",
+        "File API"
+    ],
+    "creation_date": "2025-05-10"
+}

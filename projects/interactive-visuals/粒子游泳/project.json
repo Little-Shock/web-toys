@@ -32,7 +32,9 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
         "粒子系统",
@@ -45,5 +47,6 @@
         "p5.js"
     ],
     "primary_category": "interactive-visuals",
-    "secondary_categories": []
+    "secondary_categories": [],
+    "creation_date": "2025-05-10"
 }

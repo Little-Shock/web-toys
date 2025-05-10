@@ -1,0 +1,52 @@
+{
+    "title": "瞬息之华",
+    "description": "互动式粒子光华效果，通过触摸或拖动屏幕创造绚烂的粒子绽放，支持多种参数调整，呈现如花朵般瞬息绽放的视觉体验。",
+    "tags": [
+        "粒子效果",
+        "触摸互动",
+        "光效",
+        "移动优化"
+    ],
+    "status": "stable",
+    "order": 6,
+    "primary_category": "visual-effects",
+    "secondary_categories": [],
+    "version": "1.0.0",
+    "creation_date": "2025-05-01",
+    "last_updated": "2025-05-15",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-15",
+            "changes": [
+                "初始版本发布",
+                "实现基础粒子系统",
+                "添加参数调整面板",
+                "支持移动端触摸交互",
+                "优化性能表现"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "粒子绽放系统",
+        "可调节参数面板",
+        "触摸互动效果",
+        "拖尾效果",
+        "移动端优化"
+    ],
+    "dependencies": [
+        "p5.js"
+    ]
+}

@@ -1,22 +1,33 @@
 {
-    "title": "墨韵",
-    "description": "模拟水墨在纸上的流动效果，创造出独特的东方美学风格的数字艺术作品。",
+    "title": "Ink Rhythm",
+    "chinese_title": "墨韵",
+    "description": "Simulate the flow of ink on paper to create unique digital artworks with an Eastern aesthetic style.",
+    "chinese_description": "模拟水墨在纸上的流动效果，创造出独特的东方美学风格的数字艺术作品。",
     "tags": [
-        "流体模拟",
-        "东方美学"
+        "fluid simulation",
+        "eastern aesthetics",
+        "ink painting"
     ],
     "status": "beta",
     "order": 4,
     "primary_category": "interactive-visuals",
     "secondary_categories": [],
-    "version": "1.0.0",
-    "last_updated": "2025-05-10",
+    "version": "1.0.1",
+    "last_updated": "2023-07-15",
     "changelog": [
         {
-            "version": "1.0.0",
-            "date": "2025-05-10",
+            "version": "1.0.1",
+            "date": "2023-07-15",
             "changes": [
-                "初始版本"
+                "Fixed texture loading issues",
+                "Improved performance"
+            ]
+        },
+        {
+            "version": "1.0.0",
+            "date": "2023-05-10",
+            "changes": [
+                "Initial version"
             ]
         }
     ],
@@ -28,10 +39,13 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
-        "基本功能"
+        "Basic functionality"
     ],
-    "dependencies": []
+    "dependencies": [],
+    "creation_date": "2025-05-10"
 }

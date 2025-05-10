@@ -1,0 +1,48 @@
+{
+    "title": "赛博流体 (Cyber Fluid)",
+    "description": "交互式流体模拟与粒子效果，创造出赛博朋克风格的视觉体验。",
+    "tags": [
+        "互动体验",
+        "赛博风格",
+        "粒子效果"
+    ],
+    "status": "beta",
+    "order": 3,
+    "primary_category": "cyber-goods",
+    "secondary_categories": ["games-and-entertainment"],
+    "version": "1.0.0",
+    "last_updated": "2025-05-10",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-10",
+            "changes": [
+                "初始版本"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "流体模拟",
+        "粒子效果",
+        "设备方向感应",
+        "3D视觉效果",
+        "图像上传"
+    ],
+    "dependencies": [
+        "Three.js",
+        "WebGL",
+        "DeviceOrientation API"
+    ],
+    "creation_date": "2025-05-10"
+}

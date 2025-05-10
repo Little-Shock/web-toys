@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>赛博流麻闪卡</title>
+    <title>赛博动感相框 · Cyber Motion Frame</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
@@ -115,18 +115,22 @@
     </style>
 </head>
 <body class="overflow-hidden">
+    <!-- 返回主菜单链接 -->
+    <a href="../index.html" style="position: fixed; top: 10px; left: 10px; z-index: 100; color: white; text-decoration: none; background-color: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; font-size: 14px; display: flex; align-items: center;">
+        <span style="margin-right: 5px;">&#8592;</span> 返回主菜单
+    </a>
 
     <div id="canvasContainer"></div>
 
     <div id="uiContainer">
         <div id="uploadSection" class="upload-card">
-            <h1>赛博流麻闪卡</h1>
-            <p class="description-text">上传一张图片，体验重力感应流麻效果。</p>
-            
+            <h1>赛博动感相框</h1>
+            <p class="description-text">上传图片创建3D相框，通过重力感应控制粒子流动效果。</p>
+
             <label for="imageUpload" class="file-label">选择图片</label>
             <input type="file" id="imageUpload" accept="image/*">
             <p id="fileName"></p> <button id="startButton" class="btn" disabled>开始体验</button>
-            
+
             <p id="permissionMessage">
                 请允许访问设备运动传感器。
                 <br>(部分浏览器可能需要HTTPS环境)
@@ -139,7 +143,7 @@
         let scene, camera, renderer;
         let imageCard; // The 3D object (Plane) for the uploaded image
         let particles; // Particle system for "流麻" (quicksand/flowing particles) effect
-        
+
         const particleCount = 1500; // Number of particles in the system
         const particleContainerSize = 12; // Defines the spread area of particles
 
@@ -185,8 +189,8 @@
 
             // Image Card: a plane geometry that will display the uploaded image
             // Initial geometry is a square; it will be resized when an image is loaded.
-            const cardGeometry = new THREE.PlaneGeometry(3, 3); 
-            const cardMaterial = new THREE.MeshStandardMaterial({ 
+            const cardGeometry = new THREE.PlaneGeometry(3, 3);
+            const cardMaterial = new THREE.MeshStandardMaterial({
                 map: uploadedImageTexture, // Texture will be applied here
                 side: THREE.DoubleSide,    // Render both sides of the plane
                 transparent: true,         // Allow transparency if image has alpha
@@ -221,7 +225,7 @@
             context.fillStyle = 'rgba(220, 220, 255, 0.6)'; // Light, semi-transparent blueish-white
             context.fill();
             const particleTexture = new THREE.CanvasTexture(canvas);
-            
+
             const particleMaterial = new THREE.PointsMaterial({
                 size: 0.07,                // Size of each particle
                 map: particleTexture,      // Texture for each particle
@@ -265,7 +269,7 @@
                         uploadedImageTexture.colorSpace = THREE.SRGBColorSpace; // Important for correct color display
                         startButton.disabled = false; // Enable the start button
                         fileNameDisplay.textContent = `已选: ${file.name}`; // Show selected file name
-                        
+
                         // If the 3D scene is already initialized, update the card's texture and geometry
                         if (imageCard) {
                             updateImageCardTextureAndGeometry();
@@ -288,19 +292,19 @@
                 return;
             }
             // Request permission for device orientation (crucial for iOS)
-            requestDeviceOrientationPermission(); 
-            
+            requestDeviceOrientationPermission();
+
             uploadSection.style.display = 'none'; // Hide the upload UI
 
             // Initialize Three.js if it hasn't been already
-            if (!scene) { 
+            if (!scene) {
                 initThreeJS();
-            } else { 
+            } else {
                 // If already initialized, ensure card is updated (e.g., if user uploads a new image after starting)
                 updateImageCardTextureAndGeometry();
             }
         });
-        
+
         /**
          * Requests permission to access device orientation events.
          * This is necessary for iOS 13+ and some modern Android browsers.
@@ -341,7 +345,7 @@
          */
         function handleOrientation(event) {
             // If permission wasn't explicitly granted but we receive events, update the flag.
-            if (!orientationPermissionGranted && event.alpha !== null) { 
+            if (!orientationPermissionGranted && event.alpha !== null) {
                 orientationPermissionGranted = true;
                 permissionMessage.style.display = 'none'; // Hide permission message once active
             }
@@ -353,7 +357,7 @@
                  // Normalize and clamp values for smoother and predictable control
                  // Beta: typically -90 (face up) to 90 (face down) or -180 to 180. We clamp to +/-90.
                  // Gamma: typically -90 (left edge up) to 90 (right edge up).
-                deviceOrientationControls.beta = Math.max(-90, Math.min(90, event.beta)); 
+                deviceOrientationControls.beta = Math.max(-90, Math.min(90, event.beta));
                 deviceOrientationControls.gamma = Math.max(-90, Math.min(90, event.gamma));
                 // deviceOrientationControls.alpha = event.alpha; // Store alpha if needed later
             }
@@ -369,13 +373,13 @@
 
             // Calculate aspect ratio of the image
             const aspectRatio = uploadedImageTexture.image.width / uploadedImageTexture.image.height;
-            
+
             // Define a base size for the card (e.g., height)
             const cardBaseHeight = 3.5; // Max height of the card in 3D units
             const cardBaseWidth = cardBaseHeight * aspectRatio;
 
             // Constrain dimensions to prevent overly large cards
-            const maxDisplayWidth = 4.5; 
+            const maxDisplayWidth = 4.5;
             const maxDisplayHeight = 4.5;
 
             let displayWidth = cardBaseWidth;
@@ -389,7 +393,7 @@
                 displayHeight = maxDisplayHeight;
                 displayWidth = displayHeight * aspectRatio;
             }
-            
+
             // Dispose of the old geometry to free up memory
             if (imageCard.geometry) {
                 imageCard.geometry.dispose();
@@ -421,13 +425,13 @@
                 // Convert degrees from device orientation to radians for Three.js
                 const betaRad = THREE.MathUtils.degToRad(deviceOrientationControls.beta);
                 const gammaRad = THREE.MathUtils.degToRad(deviceOrientationControls.gamma);
-                
+
                 // Apply rotation. The order of rotation can affect the final appearance.
                 // A common order for device orientation is YXZ or Euler angles.
                 // Here, we map beta to X-axis rotation (pitch) and gamma to Y-axis rotation (roll/yaw).
                 // Adjust multipliers (e.g., 0.7) to control sensitivity.
-                imageCard.rotation.x = betaRad * 0.7; 
-                imageCard.rotation.y = gammaRad * 0.7; 
+                imageCard.rotation.x = betaRad * 0.7;
+                imageCard.rotation.y = gammaRad * 0.7;
             }
 
             // Update particles if they exist
@@ -442,12 +446,12 @@
         }
 
         /**
-         * Updates the positions and velocities of particles for the "流麻" effect.
+         * Updates the positions and velocities of particles for the flowing particle effect.
          */
         function updateParticles() {
             const positions = particles.geometry.attributes.position.array;
             const velocities = particles.geometry.attributes.velocity.array;
-            
+
             // Simplified gravity vector based on device orientation (gamma for X, beta for Y)
             // The strength of gravity (e.g., 0.003) can be tuned.
             const gravityStrength = 0.003;
@@ -464,13 +468,13 @@
                 velocities[i3] -= gravityX;     // X velocity affected by left/right tilt (gamma)
                 velocities[i3 + 1] -= gravityY; // Y velocity affected by front/back tilt (beta)
                 // Z velocity could have a slight constant pull or random motion if desired
-                // velocities[i3 + 2] -= 0.0001; 
+                // velocities[i3 + 2] -= 0.0001;
 
                 // Apply damping to velocities to slow them down over time
                 velocities[i3] *= dampingFactor;
                 velocities[i3 + 1] *= dampingFactor;
-                velocities[i3 + 2] *= dampingFactor; 
-                
+                velocities[i3 + 2] *= dampingFactor;
+
                 // Update particle positions based on their velocities
                 positions[i3] += velocities[i3];
                 positions[i3 + 1] += velocities[i3 + 1];
@@ -493,7 +497,7 @@
                     positions[i3 + 1] = halfSize - (-halfSize - positions[i3+1]);
                     velocities[i3 + 1] *= -0.3;
                 }
-                
+
                 // Boundary for Z (keep particles generally in a plane)
                 const zDepth = particleContainerSize * 0.3;
                 const zCenter = -1.5;
@@ -509,7 +513,7 @@
             // Tell Three.js that the particle positions have been updated
             particles.geometry.attributes.position.needsUpdate = true;
             // Velocities are not directly used by renderer but updated for internal logic
-            particles.geometry.attributes.velocity.needsUpdate = true; 
+            particles.geometry.attributes.velocity.needsUpdate = true;
         }
 
         // --- Initial UI Setup ---

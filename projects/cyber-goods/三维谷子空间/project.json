@@ -1,0 +1,52 @@
+{
+    "title": "三维谷子空间 (3D Cyber Grain Space)",
+    "description": "一个交互式3D空间，可以创建、编辑和操作多个发光的谷子对象，支持重力感应和自动旋转效果。",
+    "tags": [
+        "3D交互",
+        "赛博风格",
+        "重力感应",
+        "发光效果"
+    ],
+    "status": "stable",
+    "order": 1,
+    "primary_category": "cyber-goods",
+    "secondary_categories": [],
+    "version": "1.0.0",
+    "last_updated": "2023-11-15",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2023-11-15",
+            "changes": [
+                "初始版本"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "多对象创建与管理",
+        "3D空间交互",
+        "发光效果",
+        "重力感应控制",
+        "自动旋转",
+        "形状选择",
+        "大小调整",
+        "发光强度调整"
+    ],
+    "dependencies": [
+        "Three.js",
+        "WebGL",
+        "DeviceOrientation API"
+    ],
+    "creation_date": "2023-11-10"
+}

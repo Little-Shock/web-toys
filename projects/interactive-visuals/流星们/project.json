@@ -34,7 +34,9 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
         "流星粒子系统",
@@ -45,5 +47,6 @@
     ],
     "dependencies": [
         "p5.js"
-    ]
+    ],
+    "creation_date": "2025-05-10"
 }

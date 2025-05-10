@@ -49,17 +49,24 @@
       "icon": "🎮"
     },
     {
+      "id": "cyber-goods",
+      "name": "赛博谷子",
+      "description": "赛博朋克风格的数字物品和互动体验，融合科技与艺术的未来感创作",
+      "order": 7,
+      "icon": "🌐"
+    },
+    {
       "id": "utility-tools",
       "name": "实用工具",
       "description": "实用的功能性工具，解决特定需求的小应用",
-      "order": 7,
+      "order": 8,
       "icon": "🔧"
     },
     {
       "id": "archived",
       "name": "归档项目",
       "description": "历史项目和早期版本，见证我们的发展历程",
-      "order": 8,
+      "order": 9,
       "icon": "📦"
     }
   ],
@@ -78,7 +85,7 @@
     "blackhole": "physics-simulations",
     "三体模拟": "physics-simulations",
 
-    "赛博故障风": "creative-tools",
+    "赛博故障风": "cyber-goods",
     "光绘": "creative-tools",
     "织梦": "creative-tools",
     "量子涂鸦": "creative-tools",
@@ -96,6 +103,10 @@
     "find_emoji": "games-and-entertainment",
     "赛博流麻": "games-and-entertainment",
     "赛博流麻-Gemini": "games-and-entertainment",
+
+    "三维谷子空间": "cyber-goods",
+    "赛博流体-Cyber-Fluid": "cyber-goods",
+    "赛博动感相框-Cyber-Motion-Frame": "cyber-goods",
 
     "放大镜后": "utility-tools",
 

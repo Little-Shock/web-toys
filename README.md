@@ -115,14 +115,34 @@ web-toys/
 
   // 版本管理相关字段
   "version": "0.1.0",  // 语义化版本号
+  "creation_date": "2025-01-01",  // 创建日期
   "last_updated": "2025-01-15",  // 最后更新日期
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2025-01-15",
+      "changes": ["初始版本"]
+    }
+  ],
 
-  // 兼容性信息（可选）
+  // 兼容性信息
   "compatibility": {
     "mobile": true,  // 是否支持移动设备
     "desktop": true,  // 是否支持桌面设备
     "performance_impact": "medium"  // 性能影响: "low", "medium", "high"
-  }
+  },
+
+  // 作者信息
+  "author": {
+    "name": "Little Shock Team",
+    "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+    "creator": "Little-Shock",
+    "contributors": []
+  },
+
+  // 其他元信息
+  "features": ["基本功能"],
+  "dependencies": []
 }
 ```
 

@@ -124,6 +124,10 @@ def update_project_metadata(project_path):
     if "version" not in config:
         config["version"] = "1.0.0"
 
+    # 添加创建日期
+    if "creation_date" not in config:
+        config["creation_date"] = today
+
     if "last_updated" not in config:
         config["last_updated"] = today
 
@@ -140,7 +144,6 @@ def update_project_metadata(project_path):
         config["compatibility"] = {
             "mobile": True,
             "desktop": True,
-            "min_screen_width": 320,
             "performance_impact": "medium"
         }
 
@@ -148,8 +151,16 @@ def update_project_metadata(project_path):
     if "author" not in config:
         config["author"] = {
             "name": "Little Shock Team",
-            "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+            "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+            "creator": "Little-Shock",
+            "contributors": []
         }
+    elif "author" in config and isinstance(config["author"], dict):
+        # 确保作者信息包含creator和contributors字段
+        if "creator" not in config["author"]:
+            config["author"]["creator"] = "Little-Shock"
+        if "contributors" not in config["author"]:
+            config["author"]["contributors"] = []
 
     # 从README中提取功能特点
     if "features" not in config:
@@ -195,6 +206,7 @@ def update_readme_with_version(project_path):
 ## 版本信息
 
 - **当前版本**: v{config.get('version', '1.0.0')}
+- **创建日期**: {config.get('creation_date', config.get('last_updated', datetime.now().strftime("%Y-%m-%d")))}
 - **最后更新**: {config.get('last_updated', datetime.now().strftime("%Y-%m-%d"))}
 - **状态**: {config.get('status', 'stable')}
 
@@ -231,6 +243,7 @@ def update_readme_with_version(project_path):
                 new_version_info = f"""## 版本信息
 
 - **当前版本**: v{config.get('version', '1.0.0')}
+- **创建日期**: {config.get('creation_date', config.get('last_updated', datetime.now().strftime("%Y-%m-%d")))}
 - **最后更新**: {config.get('last_updated', datetime.now().strftime("%Y-%m-%d"))}
 - **状态**: {config.get('status', 'stable')}
 

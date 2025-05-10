@@ -1,0 +1,62 @@
+{
+    "title": "光影沙盘 WebGL",
+    "description": "高性能WebGL版光影沙盘，使用GPU加速渲染，提供更流畅的体验和更清晰的视觉效果。",
+    "tags": [
+        "WebGL",
+        "高性能",
+        "物理模拟"
+    ],
+    "status": "stable",
+    "order": 7,
+    "primary_category": "interactive-visuals",
+    "secondary_categories": [],
+    "version": "1.1.0",
+    "last_updated": "2023-07-15",
+    "changelog": [
+        {
+            "version": "1.1.0",
+            "date": "2023-07-15",
+            "changes": [
+                "修复文件结构问题",
+                "优化渲染性能",
+                "改进用户界面"
+            ]
+        },
+        {
+            "version": "1.0.0",
+            "date": "2023-05-10",
+            "changes": [
+                "初始版本"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "WebGL高性能渲染",
+        "多种互动工具",
+        "多彩沙粒",
+        "设备倾斜控制",
+        "预设模板",
+        "保存与分享",
+        "多感官反馈"
+    ],
+    "dependencies": [
+        "Three.js",
+        "WebGL",
+        "设备方向API",
+        "触摸优化",
+        "响应式设计"
+    ],
+    "creation_date": "2025-05-10"
+}

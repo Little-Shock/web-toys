@@ -1,0 +1,52 @@
+{
+    "title": "光影花园",
+    "description": "互动式光影花园，轻触屏幕播种光芒，滑动引导生长，长按加速时光，创造出绚丽多彩的光影植物效果。",
+    "tags": [
+        "触摸互动",
+        "光效",
+        "粒子效果",
+        "移动优化"
+    ],
+    "status": "stable",
+    "order": 3,
+    "primary_category": "interactive-visuals",
+    "secondary_categories": [],
+    "version": "1.0.0",
+    "last_updated": "2025-05-15",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-05-15",
+            "changes": [
+                "初始版本发布",
+                "实现光影花园系统",
+                "添加触摸互动功能",
+                "支持长按加速时光效果",
+                "添加声音反馈"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "光影花园系统",
+        "触摸互动",
+        "长按加速时光",
+        "声音反馈",
+        "截图保存"
+    ],
+    "dependencies": [
+        "p5.js",
+        "p5.sound.js"
+    ],
+    "creation_date": "2025-05-15"
+}

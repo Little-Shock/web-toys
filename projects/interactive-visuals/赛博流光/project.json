@@ -28,7 +28,9 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
         "视觉主体",
@@ -43,5 +45,6 @@
         "GLSL着色器",
         "DeviceOrientation API",
         "GIF.js"
-    ]
+    ],
+    "creation_date": "2025-05-10"
 }

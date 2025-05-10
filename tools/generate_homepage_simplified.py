@@ -4,6 +4,7 @@
 import os
 import json
 import re
+import sys
 from collections import defaultdict
 
 # 状态文本映射
@@ -22,7 +23,7 @@ def read_site_config():
                 return json.load(f)
         except Exception as e:
             print(f"读取简化版站点配置文件时出错: {e}")
-    
+
     # 如果简化版不存在，尝试读取根目录的配置文件
     if os.path.exists('site_config.json'):
         try:
@@ -128,7 +129,7 @@ def generate_homepage():
     # 获取分类和标签
     categories = site_config.get("categories", [])
     tags = site_config.get("tags", [])
-    
+
     # 创建有效标签ID列表
     valid_tag_ids = [tag["id"] for tag in tags]
 
@@ -162,19 +163,19 @@ def generate_homepage():
                     if config:
                         # 获取项目在分类中的顺序
                         order = config.get("order", 999)
-                        
+
                         # 获取主分类和次要分类
                         primary_category = config.get("primary_category", category_id)
                         secondary_categories = config.get("secondary_categories", [])
-                        
+
                         # 添加到主分类
                         projects_by_category[primary_category].append((project_path, config, order))
-                        
+
                         # 添加到次要分类
                         for sec_category in secondary_categories:
                             if sec_category != primary_category:
                                 projects_by_category[sec_category].append((project_path, config, 999))  # 次要分类中顺序靠后
-                        
+
                         # 添加到所有项目列表
                         all_projects.append((project_path, config, order))
                     else:
@@ -544,7 +545,7 @@ def generate_homepage():
             .toy-title {
                 font-size: 1.2rem;
             }
-            
+
             .tag-cloud {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             }
@@ -563,7 +564,7 @@ def generate_homepage():
                 padding: 8px 15px;
                 font-size: 0.9rem;
             }
-            
+
             .tag-cloud {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -677,42 +678,42 @@ def generate_homepage():
             const navScroll = document.querySelector('.category-nav-scroll');
             const leftArrow = document.querySelector('.nav-arrows.left');
             const rightArrow = document.querySelector('.nav-arrows.right');
-            
+
             // 默认激活"全部"分类
             if (categoryTabs.length > 0 && categoryContents.length > 0) {
                 categoryTabs[0].classList.add('active');
                 document.getElementById('content-all').classList.add('active');
             }
-            
+
             // 分类标签点击事件
             categoryTabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     // 移除所有激活状态
                     categoryTabs.forEach(t => t.classList.remove('active'));
                     categoryContents.forEach(c => c.classList.remove('active'));
-                    
+
                     // 激活当前分类
                     this.classList.add('active');
                     const categoryId = this.getAttribute('data-category');
                     document.getElementById('content-' + categoryId).classList.add('active');
-                    
+
                     // 应用当前标签筛选
                     applyTagFilters();
                 });
             });
-            
+
             // 导航箭头功能
             function updateArrowsVisibility() {
                 leftArrow.classList.toggle('visible', navScroll.scrollLeft > 0);
                 rightArrow.classList.toggle('visible', navScroll.scrollLeft < navScroll.scrollWidth - navScroll.clientWidth - 10);
             }
-            
+
             navScroll.addEventListener('scroll', updateArrowsVisibility);
             window.addEventListener('resize', updateArrowsVisibility);
-            
+
             // 初始检查
             updateArrowsVisibility();
-            
+
             // 左右箭头点击事件
             leftArrow.addEventListener('click', function() {
                 navScroll.scrollBy({
@@ -720,52 +721,52 @@ def generate_homepage():
                     behavior: 'smooth'
                 });
             });
-            
+
             rightArrow.addEventListener('click', function() {
                 navScroll.scrollBy({
                     left: 200,
                     behavior: 'smooth'
                 });
             });
-            
+
             // 标签筛选功能
             const tagItems = document.querySelectorAll('.tag-item');
             const clearTagsButton = document.getElementById('clearTags');
             const applyTagsButton = document.getElementById('applyTags');
-            
+
             // 标签点击事件
             tagItems.forEach(tag => {
                 tag.addEventListener('click', function() {
                     this.classList.toggle('active');
                 });
             });
-            
+
             // 清除标签筛选
             clearTagsButton.addEventListener('click', function() {
                 tagItems.forEach(tag => tag.classList.remove('active'));
                 applyTagFilters();
             });
-            
+
             // 应用标签筛选
             applyTagsButton.addEventListener('click', applyTagFilters);
-            
+
             // 应用标签筛选函数
             function applyTagFilters() {
                 const selectedTags = Array.from(document.querySelectorAll('.tag-item.active')).map(tag => tag.getAttribute('data-tag'));
                 const toyCards = document.querySelectorAll('.toy-card');
-                
+
                 // 获取当前激活的分类
                 const activeCategory = document.querySelector('.category-tab.active').getAttribute('data-category');
-                
+
                 toyCards.forEach(card => {
                     // 检查分类匹配
                     const cardCategories = card.getAttribute('data-categories').split(' ');
                     const categoryMatch = activeCategory === 'all' || cardCategories.includes(activeCategory);
-                    
+
                     // 检查标签匹配
                     const cardTags = card.getAttribute('data-tags').split(' ');
                     const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => cardTags.includes(tag));
-                    
+
                     // 显示或隐藏卡片
                     if (categoryMatch && tagMatch) {
                         card.style.display = '';
@@ -785,5 +786,68 @@ def generate_homepage():
 
     print("主页生成完成！")
 
+def validate_project_metadata(project_path, config):
+    """验证项目元数据是否完整"""
+    issues = []
+
+    # 检查必要字段
+    required_fields = ["title", "description", "status", "primary_category"]
+    for field in required_fields:
+        if field not in config:
+            issues.append(f"缺少必要字段 '{field}'")
+
+    # 检查index.html文件是否存在
+    index_path = os.path.join(project_path, "index.html")
+    if not os.path.exists(index_path):
+        issues.append(f"缺少 index.html 文件")
+
+    # 检查primary_category是否与实际目录匹配
+    if "primary_category" in config:
+        primary_category = config["primary_category"]
+        actual_category = os.path.basename(os.path.dirname(project_path))
+        if primary_category != actual_category:
+            issues.append(f"primary_category '{primary_category}' 与实际目录 '{actual_category}' 不匹配")
+
+    return issues
+
 if __name__ == "__main__":
-    generate_homepage()
+    # 检查是否有--validate参数
+    if len(sys.argv) > 1 and sys.argv[1] == "--validate":
+        # 仅验证项目元数据，不生成主页
+        print("正在验证项目元数据...")
+
+        site_config = read_site_config()
+        if not site_config:
+            print("无法读取站点配置，验证中止")
+            sys.exit(1)
+
+        projects_root = "projects"
+        issues_found = False
+
+        for category_dir in os.listdir(projects_root):
+            category_path = os.path.join(projects_root, category_dir)
+            if os.path.isdir(category_path):
+                for project_dir in os.listdir(category_path):
+                    project_path = os.path.join(category_path, project_dir)
+                    if os.path.isdir(project_path):
+                        config = read_project_config(project_path)
+                        if config:
+                            issues = validate_project_metadata(project_path, config)
+                            if issues:
+                                print(f"项目 '{project_path}' 存在以下问题:")
+                                for issue in issues:
+                                    print(f"  - {issue}")
+                                issues_found = True
+                        else:
+                            print(f"警告: 项目 '{project_path}' 没有配置文件或配置文件无效")
+                            issues_found = True
+
+        if not issues_found:
+            print("验证完成: 所有项目元数据都符合要求")
+            sys.exit(0)
+        else:
+            print("验证完成: 发现一些问题，请修复后再生成主页")
+            sys.exit(1)
+    else:
+        # 生成主页
+        generate_homepage()

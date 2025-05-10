@@ -28,7 +28,9 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
         "多种互动工具",
@@ -45,5 +47,6 @@
         "设备方向API",
         "触摸优化",
         "响应式设计"
-    ]
+    ],
+    "creation_date": "2025-05-10"
 }

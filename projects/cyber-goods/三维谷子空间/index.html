@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>赛博谷子生成器 - 多对象版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #0a0a0f;
+            color: #e0e0e0;
+        }
+        #scene-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            cursor: grab; /* Default cursor for the scene */
+        }
+        #scene-container.dragging {
+            cursor: grabbing; /* Cursor when dragging an object */
+        }
+        /* Control Panel Styles */
+        #controls-toggle-button {
+            pointer-events: auto;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background-color: rgba(0, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 255, 255, 0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        #controls-toggle-button:hover {
+            background-color: rgba(0, 255, 255, 0.8);
+            transform: scale(1.1);
+        }
+        #controls-panel {
+            pointer-events: auto;
+            position: fixed;
+            top: calc(1rem + 40px + 0.5rem);
+            left: 1rem;
+            z-index: 1000;
+            background-color: rgba(10, 10, 20, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(0, 200, 200, 0.5);
+            box-shadow: 0 0 25px rgba(0, 150, 150, 0.3);
+            width: 300px;
+            max-height: calc(100vh - (1rem + 40px + 0.5rem) - 1rem); 
+            overflow-y: auto; 
+            color: #e0e0e0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #controls-panel.hidden {
+            opacity: 0;
+            transform: translateX(-100%) scale(0.95); 
+            pointer-events: none;
+        }
+        #controls-panel h3, #controls-panel h4 {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #0ff;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 0.5rem;
+        }
+        #controls-panel h3 { font-size: 1.2rem; }
+        #controls-panel h4 { font-size: 1rem; margin-top: 1rem;}
+
+        .control-group { margin-bottom: 0.75rem; }
+        .control-group label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; color: #90e0ef; }
+        .control-group input[type="range"], .control-group select, .control-group .cyber-input {
+            width: 100%;
+            padding: 0.4rem;
+            background-color: #1f2937; 
+            border: 1px solid #374151; 
+            border-radius: 0.375rem; 
+            color: #e0e0e0;
+            font-size: 0.85rem;
+        }
+         .control-group input[type="range"] { padding: 0; height: 0.5rem; background-color: #374151; appearance: none; cursor: pointer; accent-color: #ec4899; }
+        .control-group input[type="range"]::-webkit-slider-thumb { appearance: none; width: 1rem; height: 1rem; background-color: #ec4899; border-radius: 50%; border: 2px solid #0a0a0f; }
+        .control-group input[type="range"]::-moz-range-thumb { width: 1rem; height: 1rem; background-color: #ec4899; border-radius: 50%; border: 2px solid #0a0a0f; }
+        .control-group .value-display { font-size: 0.7rem; color: #adb5bd; text-align: right; margin-top: 0.1rem; }
+        .control-group .checkbox-label { display: flex; align-items: center; justify-content: space-between; }
+        .control-group input[type="checkbox"] { appearance: none; width: 1.1rem; height: 1.1rem; background-color: #374151; border: 1px solid #4b5563; border-radius: 0.25rem; cursor: pointer; position: relative; accent-color: #ec4899; }
+        .control-group input[type="checkbox"]:checked { background-color: #ec4899; border-color: #db2777; }
+        .control-group input[type="checkbox"]:checked::before { content: '✔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 0.7rem; }
+        .control-group input[type="checkbox"]:disabled, .control-group select:disabled, .control-group .cyber-button-small:disabled { opacity: 0.5; cursor: not-allowed; }
+        .control-group label.disabled { opacity: 0.5; }
+
+        .cyber-button-small {
+            cursor: pointer;
+            background: linear-gradient(90deg, #00c6ff, #0072ff); 
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 0.8rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 0 8px rgba(0, 198, 255, 0.4);
+            transition: all 0.2s ease-in-out;
+            display: block; 
+            width: 100%;
+            text-align: center;
+            border: none;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .cyber-button-small:hover:not(:disabled) {
+            transform: scale(1.03);
+            box-shadow: 0 0 12px rgba(0, 198, 255, 0.6);
+        }
+        .cyber-button-danger {
+            background: linear-gradient(90deg, #e53935, #b71c1c); 
+            box-shadow: 0 0 8px rgba(229, 57, 53, 0.4);
+        }
+        .cyber-button-danger:hover:not(:disabled) {
+            box-shadow: 0 0 12px rgba(229, 57, 53, 0.6);
+        }
+
+        #object-list { list-style: none; padding: 0; margin: 0.5rem 0; max-height: 150px; overflow-y: auto; border: 1px solid #374151; border-radius: 0.375rem;}
+        #object-list li {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-bottom: 1px solid #374151;
+            font-size: 0.85rem;
+            transition: background-color 0.2s;
+        }
+        #object-list li:last-child { border-bottom: none; }
+        #object-list li:hover { background-color: #2a3b50; }
+        #object-list li.selected { background-color: #0072ff; color: white; font-weight: bold; }
+
+        input[type="file"].hidden-input { display: none; }
+
+        #selected-object-controls .placeholder-text {
+            text-align: center;
+            color: #6b7280; 
+            font-style: italic;
+            padding: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="scene-container"></div>
+
+    <button id="controls-toggle-button">
+        <svg id="gearIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.646.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 1.655c.007.379.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.333.183-.582.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.759 6.759 0 010-1.655c-.007-.379-.137-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <svg id="closeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
+
+    <div id="controls-panel" class="hidden"> 
+        <h3>全局设置</h3>
+        <div class="control-group">
+            <div class="checkbox-label">
+                <label for="globalAutoRotate" id="globalAutoRotateLabel">全局自动旋转:</label>
+                <input type="checkbox" id="globalAutoRotate">
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="checkbox-label">
+                <label for="gravityControl" id="gravityControlLabel">重力感应 (选中物体):</label>
+                <input type="checkbox" id="gravityControl">
+            </div>
+        </div>
+
+        <h4>物体管理</h4>
+        <button id="addObjectButton" class="cyber-button-small">添加新谷子</button>
+        <ul id="object-list">
+        </ul>
+
+        <div id="selected-object-controls">
+            <h4>选中谷子设置</h4>
+            <div class="placeholder-text">请先添加或选择一个谷子</div>
+            <div id="actual-controls" class="hidden"> 
+                <input type="file" id="objectImageUpload" accept="image/*" class="hidden-input"/>
+                <label for="objectImageUpload" id="uploadButtonLabel" class="cyber-button-small">上传此谷子图片</label>
+
+                <div class="control-group">
+                    <label for="objectShape">形状:</label>
+                    <select id="objectShape">
+                        <option value="cube">立方体</option>
+                        <option value="sphere">球体</option>
+                        <option value="cylinder">圆柱体</option>
+                        <option value="plane">平面</option>
+                        <option value="torus">圆环体</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="objectScale">大小:</label>
+                    <input type="range" id="objectScale" min="0.1" max="3" step="0.05" value="1">
+                    <div id="objectScaleValue" class="value-display">1.0</div>
+                </div>
+                <div class="control-group">
+                    <label for="objectGlowIntensity">自发光强度:</label> 
+                    <input type="range" id="objectGlowIntensity" min="0" max="3" step="0.05" value="0.2"> 
+                    <div id="objectGlowIntensityValue" class="value-display">0.2</div>
+                </div>
+                <button id="deleteObjectButton" class="cyber-button-small cyber-button-danger">删除此谷子</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.150.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { DragControls } from 'three/addons/controls/DragControls.js';
+
+        let scene, camera, renderer, orbitControls, composer, bloomPass, dragControls;
+        let sceneContainer;
+        let raycaster; 
+
+        // Global Settings Elements
+        const controlsToggleButton = document.getElementById('controls-toggle-button');
+        const gearIcon = document.getElementById('gearIcon');
+        const closeIcon = document.getElementById('closeIcon');
+        const controlsPanel = document.getElementById('controls-panel');
+        const globalAutoRotateCheckbox = document.getElementById('globalAutoRotate');
+        const gravityControlCheckbox = document.getElementById('gravityControl');
+
+        // Object Management Elements
+        const addObjectButton = document.getElementById('addObjectButton');
+        const objectListElement = document.getElementById('object-list');
+
+        // Selected Object Controls Elements
+        const selectedObjectControlsContainer = document.getElementById('selected-object-controls');
+        const selectedObjectPlaceholderText = selectedObjectControlsContainer.querySelector('.placeholder-text');
+        const actualObjectControls = document.getElementById('actual-controls');
+        const objectImageUploadInput = document.getElementById('objectImageUpload');
+        const objectShapeSelector = document.getElementById('objectShape');
+        const objectScaleSlider = document.getElementById('objectScale'); 
+        const objectScaleValue = document.getElementById('objectScaleValue'); 
+        const objectGlowIntensitySlider = document.getElementById('objectGlowIntensity'); 
+        const objectGlowIntensityValue = document.getElementById('objectGlowIntensityValue');
+        const deleteObjectButton = document.getElementById('deleteObjectButton');
+
+        let cyberObjects = []; 
+        let selectedObject = null; 
+        let objectIdCounter = 0;
+
+        const sceneBloomStrength = 0.3; // Constant strength for the global bloom pass
+        const initialObjectGlowIntensity = 0.2; // Default glow for a new object
+        const baseObjectEmissiveIntensity = 0.05; // Very low glow for non-selected objects
+
+        let deviceOrientationHandler = null;
+        let originalOrbitControlsEnableRotate = true;
+        let isDragging = false;
+
+        const defaultMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x555555, 
+            metalness: 0.6, 
+            roughness: 0.5, 
+            emissive: 0x000000, // Base emissive color (black for default)
+            emissiveIntensity: baseObjectEmissiveIntensity // Base emissive intensity
+        });
+        const highlightColor = 0x00ff00; 
+
+
+        function init() {
+            sceneContainer = document.getElementById('scene-container');
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000005, 0.03);
+            raycaster = new THREE.Raycaster(); 
+
+            camera = new THREE.PerspectiveCamera(75, sceneContainer.clientWidth / sceneContainer.clientHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 6); 
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(sceneContainer.clientWidth, sceneContainer.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            sceneContainer.appendChild(renderer.domElement);
+            renderer.domElement.addEventListener('mousedown', onCanvasMouseDown, false);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0x606080, 1.5); 
+            scene.add(ambientLight);
+            const pointLight1 = new THREE.PointLight(0x00ffff, 1.0, 150);
+            pointLight1.position.set(-8, 5, 8);
+            scene.add(pointLight1);
+            const pointLight2 = new THREE.PointLight(0xff00ff, 1.0, 150);
+            pointLight2.position.set(8, -5, 8);
+            scene.add(pointLight2);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(0, 10, 5);
+            scene.add(directionalLight);
+
+            orbitControls = new OrbitControls(camera, renderer.domElement);
+            orbitControls.enableDamping = true;
+            orbitControls.dampingFactor = 0.05;
+            orbitControls.minDistance = 1;
+            orbitControls.maxDistance = 50;
+            originalOrbitControlsEnableRotate = orbitControls.enableRotate;
+
+            // Post-processing - Bloom pass with a fixed strength
+            const renderScene = new RenderPass(scene, camera);
+            bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), sceneBloomStrength, 0.4, 0.85); // Fixed radius and threshold
+            bloomPass.threshold = 0.1; // Adjust threshold for what gets bloomed
+            
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+            
+            // Drag Controls
+            dragControls = new DragControls([], camera, renderer.domElement);
+            dragControls.addEventListener('dragstart', function (event) {
+                orbitControls.enabled = false;
+                isDragging = true;
+                sceneContainer.classList.add('dragging');
+                if (event.object.userData && event.object.userData.cyberObject) {
+                    selectCyberObject(event.object.userData.cyberObject);
+                }
+            });
+            dragControls.addEventListener('drag', function (event) {
+                if (selectedObject && event.object === selectedObject.mesh) {
+                    selectedObject.position.copy(selectedObject.mesh.position);
+                }
+            });
+            dragControls.addEventListener('dragend', function (event) {
+                orbitControls.enabled = true;
+                isDragging = false;
+                sceneContainer.classList.remove('dragging');
+                 if (selectedObject && event.object === selectedObject.mesh) { 
+                    selectedObject.position.copy(selectedObject.mesh.position);
+                }
+            });
+
+
+            window.addEventListener('resize', onWindowResize);
+            setupControlEvents();
+            updateSelectedObjectControlsUI(); 
+            animate();
+        }
+        
+        function onCanvasMouseDown(event) {
+            if (isDragging) return; 
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            const mouse = new THREE.Vector2();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(cyberObjects.map(co => co.mesh), false);
+
+            if (intersects.length > 0) {
+                const clickedCyberObject = intersects[0].object.userData.cyberObject;
+                if (clickedCyberObject) {
+                    selectCyberObject(clickedCyberObject);
+                }
+            } else {
+                if (selectedObject) {
+                    selectCyberObject(null); 
+                }
+            }
+        }
+
+
+        function createCyberObject(shapeType = 'cube', position = new THREE.Vector3(0,0,0)) {
+            objectIdCounter++;
+            const newCyberObject = {
+                id: objectIdCounter,
+                name: `谷子 ${objectIdCounter}`,
+                mesh: null,
+                shape: shapeType,
+                texture: null, 
+                position: position.clone(),
+                scale: 1.0, 
+                glowIntensity: initialObjectGlowIntensity, 
+            };
+
+            const geometry = createGeometryForShape(shapeType, null); 
+            const material = defaultMaterial.clone(); 
+            // Set initial emissive intensity for non-selected state
+            setMaterialEmissive(material, defaultMaterial.emissive.getHex(), baseObjectEmissiveIntensity);
+
+
+            newCyberObject.mesh = new THREE.Mesh(geometry, material);
+            newCyberObject.mesh.position.copy(position);
+            newCyberObject.mesh.scale.set(newCyberObject.scale, newCyberObject.scale, newCyberObject.scale); 
+            newCyberObject.mesh.userData.cyberObject = newCyberObject; 
+
+            scene.add(newCyberObject.mesh);
+            cyberObjects.push(newCyberObject);
+            
+            dragControls.dispose(); 
+            const draggableMeshes = cyberObjects.map(co => co.mesh);
+            dragControls = new DragControls(draggableMeshes, camera, renderer.domElement);
+            dragControls.addEventListener('dragstart', function (event) {
+                orbitControls.enabled = false; isDragging = true; sceneContainer.classList.add('dragging');
+                 if (event.object.userData && event.object.userData.cyberObject) {
+                    selectCyberObject(event.object.userData.cyberObject);
+                }
+            });
+            dragControls.addEventListener('drag', function (event) {
+                if (selectedObject && event.object === selectedObject.mesh) {
+                    selectedObject.position.copy(selectedObject.mesh.position);
+                }
+            });
+            dragControls.addEventListener('dragend', function (event) {
+                orbitControls.enabled = true; isDragging = false; sceneContainer.classList.remove('dragging');
+                if (selectedObject && event.object === selectedObject.mesh) {
+                    selectedObject.position.copy(selectedObject.mesh.position);
+                }
+            });
+            return newCyberObject;
+        }
+
+        function createGeometryForShape(shapeType, texture) {
+            let geometry;
+            const baseSize = 1.0; 
+            const imageAspect = texture && texture.image ? texture.image.naturalWidth / texture.image.naturalHeight : 1;
+            let objWidth = baseSize, objHeight = baseSize, objDepth = baseSize;
+
+            if (shapeType === 'cube' || shapeType === 'plane') {
+                 if (imageAspect >= 1) { 
+                    objWidth = baseSize;
+                    objHeight = baseSize / imageAspect;
+                } else { 
+                    objHeight = baseSize;
+                    objWidth = baseSize * imageAspect;
+                }
+            }
+            const radius = baseSize / 2;
+
+            switch (shapeType) {
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(radius, 32, 32);
+                    break;
+                case 'cylinder':
+                    geometry = new THREE.CylinderGeometry(radius, radius, baseSize, 32); 
+                    break;
+                case 'plane':
+                    geometry = new THREE.PlaneGeometry(objWidth, objHeight);
+                    break;
+                case 'torus':
+                    geometry = new THREE.TorusGeometry(radius, radius / 2.5, 16, 100); 
+                    break;
+                case 'cube':
+                default:
+                    objDepth = (shapeType === 'plane') ? 0.05 * baseSize : Math.min(objWidth, objHeight) * 0.2; 
+                    geometry = new THREE.BoxGeometry(objWidth, objHeight, objDepth);
+                    break;
+            }
+            return geometry;
+        }
+
+        function setMaterialEmissive(material, colorHex, intensity) {
+            if (Array.isArray(material)) {
+                material.forEach(m => {
+                    if (m.emissive) {
+                        m.emissive.setHex(colorHex);
+                        m.emissiveIntensity = intensity;
+                    }
+                });
+            } else {
+                if (material.emissive) {
+                    material.emissive.setHex(colorHex);
+                    material.emissiveIntensity = intensity;
+                }
+            }
+        }
+        
+        function updateObjectAppearance(cyberObj, newShape, newTexture) {
+            if (!cyberObj || !cyberObj.mesh) return;
+
+            cyberObj.mesh.geometry.dispose(); 
+            
+            cyberObj.shape = newShape || cyberObj.shape;
+            if (newTexture) {
+                if (cyberObj.texture) cyberObj.texture.dispose(); 
+                cyberObj.texture = newTexture;
+                 newTexture.minFilter = THREE.LinearFilter;
+                 newTexture.magFilter = THREE.LinearFilter;
+                 newTexture.colorSpace = THREE.SRGBColorSpace;
+            }
+
+            cyberObj.mesh.geometry = createGeometryForShape(cyberObj.shape, cyberObj.texture);
+            cyberObj.mesh.scale.set(cyberObj.scale, cyberObj.scale, cyberObj.scale);
+
+            const baseEmissiveColor = cyberObj.texture ? 0x000000 : defaultMaterial.emissive.getHex();
+            // Use baseObjectEmissiveIntensity for non-selected state, unless it's the currently selected one
+            const currentEmissiveIntensity = (selectedObject && selectedObject.id === cyberObj.id) ? cyberObj.glowIntensity : baseObjectEmissiveIntensity;
+            const currentEmissiveColor = (selectedObject && selectedObject.id === cyberObj.id) ? highlightColor : baseEmissiveColor;
+
+
+            if (cyberObj.texture) {
+                if (cyberObj.mesh.geometry.type === 'BoxGeometry') {
+                    const sideMat = new THREE.MeshStandardMaterial({ color: 0x222228, metalness: 0.7, roughness: 0.5});
+                    setMaterialEmissive(sideMat, currentEmissiveColor, currentEmissiveIntensity); // Apply to prototype
+                    
+                    const textureMat = new THREE.MeshStandardMaterial({ map: cyberObj.texture, metalness: 0.4, roughness: 0.6});
+                    setMaterialEmissive(textureMat, currentEmissiveColor, currentEmissiveIntensity); // Apply to prototype
+                    
+                    cyberObj.mesh.material = [
+                        sideMat.clone(), sideMat.clone(), 
+                        sideMat.clone(), sideMat.clone(), 
+                        textureMat.clone(), // Use clone for the textured face
+                        sideMat.clone()  
+                    ];
+                     // Specifically set the textured face if selected
+                    if (selectedObject && selectedObject.id === cyberObj.id) {
+                        setMaterialEmissive(cyberObj.mesh.material[4], highlightColor, cyberObj.glowIntensity);
+                    } else {
+                        setMaterialEmissive(cyberObj.mesh.material[4], baseEmissiveColor, baseObjectEmissiveIntensity);
+                    }
+
+                } else if (cyberObj.mesh.geometry.type === 'PlaneGeometry') {
+                     cyberObj.mesh.material = new THREE.MeshStandardMaterial({
+                        map: cyberObj.texture, metalness: 0.3, roughness: 0.7, side: THREE.DoubleSide,
+                    });
+                    setMaterialEmissive(cyberObj.mesh.material, currentEmissiveColor, currentEmissiveIntensity);
+                } else { 
+                    cyberObj.mesh.material = new THREE.MeshStandardMaterial({
+                        map: cyberObj.texture, metalness: 0.4, roughness: 0.6,
+                    });
+                     setMaterialEmissive(cyberObj.mesh.material, currentEmissiveColor, currentEmissiveIntensity);
+                }
+            } else { // No texture
+                cyberObj.mesh.material = defaultMaterial.clone(); 
+                setMaterialEmissive(cyberObj.mesh.material, currentEmissiveColor, currentEmissiveIntensity);
+            }
+
+            if (Array.isArray(cyberObj.mesh.material)) {
+                cyberObj.mesh.material.forEach(m => m.needsUpdate = true);
+            } else {
+                cyberObj.mesh.material.needsUpdate = true;
+            }
+        }
+
+
+        function deleteCyberObject(cyberObjToDelete) {
+            if (!cyberObjToDelete) return;
+
+            scene.remove(cyberObjToDelete.mesh);
+            cyberObjToDelete.mesh.geometry.dispose();
+            if (Array.isArray(cyberObjToDelete.mesh.material)) {
+                cyberObjToDelete.mesh.material.forEach(m => m.dispose());
+            } else {
+                 if(cyberObjToDelete.mesh.material) cyberObjToDelete.mesh.material.dispose();
+            }
+            if (cyberObjToDelete.texture) {
+                cyberObjToDelete.texture.dispose();
+            }
+
+            cyberObjects = cyberObjects.filter(co => co.id !== cyberObjToDelete.id);
+            
+            dragControls.dispose();
+            const draggableMeshes = cyberObjects.map(co => co.mesh);
+            if (draggableMeshes.length > 0) { 
+                 dragControls = new DragControls(draggableMeshes, camera, renderer.domElement);
+                dragControls.addEventListener('dragstart', function (event) { orbitControls.enabled = false; isDragging = true; sceneContainer.classList.add('dragging'); if (event.object.userData && event.object.userData.cyberObject) { selectCyberObject(event.object.userData.cyberObject); } });
+                dragControls.addEventListener('drag', function (event) { if (selectedObject && event.object === selectedObject.mesh) { selectedObject.position.copy(selectedObject.mesh.position); } });
+                dragControls.addEventListener('dragend', function (event) { orbitControls.enabled = true; isDragging = false; sceneContainer.classList.remove('dragging'); if (selectedObject && event.object === selectedObject.mesh) { selectedObject.position.copy(selectedObject.mesh.position); }});
+            } else { 
+                dragControls = new DragControls([], camera, renderer.domElement);
+            }
+
+
+            if (selectedObject && selectedObject.id === cyberObjToDelete.id) {
+                selectedObject = null;
+            }
+            updateObjectListUI();
+            updateSelectedObjectControlsUI();
+        }
+
+        function selectCyberObject(cyberObjToSelect) {
+            // Deselect previously selected object
+            if (selectedObject && selectedObject.id !== (cyberObjToSelect ? cyberObjToSelect.id : null)) {
+                setMaterialEmissive(selectedObject.mesh.material, 
+                                    selectedObject.texture ? 0x000000 : defaultMaterial.emissive.getHex(), 
+                                    baseObjectEmissiveIntensity);
+            }
+            
+            selectedObject = cyberObjToSelect;
+
+            if (selectedObject) {
+                // Highlight newly selected object
+                setMaterialEmissive(selectedObject.mesh.material, highlightColor, selectedObject.glowIntensity);
+                
+                if (controlsPanel.classList.contains('hidden')) {
+                    controlsPanel.classList.remove('hidden');
+                    gearIcon.classList.add('hidden');
+                    closeIcon.classList.remove('hidden');
+                }
+                if (selectedObjectControlsContainer) {
+                     selectedObjectControlsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+            
+            updateObjectListUI();
+            updateSelectedObjectControlsUI();
+        }
+
+        function updateObjectListUI() {
+            objectListElement.innerHTML = '';
+            if (cyberObjects.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = '场景中还没有谷子';
+                li.style.textAlign = 'center';
+                li.style.color = '#6b7280';
+                objectListElement.appendChild(li);
+                return;
+            }
+            cyberObjects.forEach(co => {
+                const li = document.createElement('li');
+                li.textContent = co.name;
+                li.dataset.objectId = co.id;
+                if (selectedObject && selectedObject.id === co.id) {
+                    li.classList.add('selected');
+                }
+                li.addEventListener('click', () => selectCyberObject(co));
+                objectListElement.appendChild(li);
+            });
+        }
+
+        function updateSelectedObjectControlsUI() {
+            if (selectedObject) {
+                selectedObjectPlaceholderText.classList.add('hidden');
+                actualObjectControls.classList.remove('hidden');
+
+                objectShapeSelector.value = selectedObject.shape;
+                objectScaleSlider.value = selectedObject.scale; 
+                objectScaleValue.textContent = selectedObject.scale.toFixed(2); 
+                objectGlowIntensitySlider.value = selectedObject.glowIntensity; 
+                objectGlowIntensityValue.textContent = selectedObject.glowIntensity.toFixed(2);
+
+                objectImageUploadInput.disabled = false;
+                document.getElementById('uploadButtonLabel').classList.remove('opacity-50', 'cursor-not-allowed');
+                objectShapeSelector.disabled = false;
+                objectScaleSlider.disabled = false; 
+                objectGlowIntensitySlider.disabled = false; 
+                deleteObjectButton.disabled = false;
+
+            } else {
+                selectedObjectPlaceholderText.classList.remove('hidden');
+                actualObjectControls.classList.add('hidden');
+                objectImageUploadInput.disabled = true;
+                document.getElementById('uploadButtonLabel').classList.add('opacity-50', 'cursor-not-allowed');
+                objectShapeSelector.disabled = true;
+                objectScaleSlider.disabled = true; 
+                objectGlowIntensitySlider.disabled = true; 
+                deleteObjectButton.disabled = true;
+            }
+        }
+        
+        function setupControlEvents() {
+            controlsToggleButton.addEventListener('click', () => {
+                controlsPanel.classList.toggle('hidden');
+                gearIcon.classList.toggle('hidden');
+                closeIcon.classList.toggle('hidden');
+            });
+
+            globalAutoRotateCheckbox.addEventListener('change', (e) => { /* Handled in animate loop */ });
+            gravityControlCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) enableGravityControl();
+                else disableGravityControl();
+            });
+
+            addObjectButton.addEventListener('click', () => {
+                const randomOffset = () => (Math.random() - 0.5) * 3; 
+                const newPos = new THREE.Vector3(randomOffset(), randomOffset(), randomOffset());
+                const newObj = createCyberObject('cube', newPos);
+                selectCyberObject(newObj); 
+                updateObjectListUI();
+            });
+
+            objectImageUploadInput.addEventListener('change', (event) => {
+                if (!selectedObject) return;
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e_reader) => {
+                        const textureLoader = new THREE.TextureLoader();
+                        textureLoader.load(e_reader.target.result, (texture) => {
+                            updateObjectAppearance(selectedObject, selectedObject.shape, texture);
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            objectShapeSelector.addEventListener('change', (e) => {
+                if (selectedObject) {
+                    updateObjectAppearance(selectedObject, e.target.value, selectedObject.texture);
+                }
+            });
+
+            objectScaleSlider.addEventListener('input', (e) => { 
+                if (selectedObject && selectedObject.mesh) {
+                    const newScale = parseFloat(e.target.value);
+                    selectedObject.mesh.scale.set(newScale, newScale, newScale);
+                    selectedObject.scale = newScale; 
+                    objectScaleValue.textContent = newScale.toFixed(2);
+                }
+            });
+            
+            objectGlowIntensitySlider.addEventListener('input', (e) => { 
+                if (selectedObject && selectedObject.mesh) {
+                    const newGlow = parseFloat(e.target.value);
+                    selectedObject.glowIntensity = newGlow;
+                    // Apply highlight color with new intensity
+                    setMaterialEmissive(selectedObject.mesh.material, highlightColor, newGlow);
+                    objectGlowIntensityValue.textContent = newGlow.toFixed(2);
+                }
+            });
+            
+            deleteObjectButton.addEventListener('click', () => {
+                if (selectedObject) {
+                    deleteCyberObject(selectedObject);
+                }
+            });
+        }
+        
+        function enableGravityControl() {
+            if (!selectedObject) { 
+                gravityControlCheckbox.checked = false;
+                return;
+            }
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            attachGravityListener();
+                        } else {
+                            alert('重力感应权限未授予。');
+                            gravityControlCheckbox.checked = false;
+                        }
+                    }).catch(() => { gravityControlCheckbox.checked = false; alert('请求重力感应权限时出错。');});
+            } else if (window.DeviceOrientationEvent) {
+                attachGravityListener();
+            } else {
+                alert('此设备不支持重力感应。');
+                gravityControlCheckbox.checked = false;
+            }
+        }
+
+        function attachGravityListener() {
+            deviceOrientationHandler = (event) => handleDeviceOrientation(event);
+            window.addEventListener('deviceorientation', deviceOrientationHandler, true);
+            originalOrbitControlsEnableRotate = orbitControls.enableRotate;
+            orbitControls.enableRotate = false; 
+            globalAutoRotateCheckbox.disabled = true; 
+            if(globalAutoRotateCheckbox.checked) globalAutoRotateCheckbox.checked = false;
+        }
+
+        function disableGravityControl() {
+            if (deviceOrientationHandler) {
+                window.removeEventListener('deviceorientation', deviceOrientationHandler, true);
+                deviceOrientationHandler = null;
+            }
+            orbitControls.enableRotate = originalOrbitControlsEnableRotate;
+            globalAutoRotateCheckbox.disabled = false;
+        }
+
+        function handleDeviceOrientation(event) {
+            if (!selectedObject || !selectedObject.mesh || !gravityControlCheckbox.checked || isDragging) return;
+
+            let { alpha, beta, gamma } = event; 
+            if (beta === null || gamma === null) return;
+
+            const xRad = THREE.MathUtils.degToRad(beta - 90); 
+            const yRad = THREE.MathUtils.degToRad(gamma);     
+            
+            const targetQuaternion = new THREE.Quaternion();
+            targetQuaternion.setFromEuler(new THREE.Euler(xRad, yRad, 0, 'YXZ'));
+            
+            selectedObject.mesh.quaternion.slerp(targetQuaternion, 0.15); 
+        }
+
+        function onWindowResize() {
+            camera.aspect = sceneContainer.clientWidth / sceneContainer.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(sceneContainer.clientWidth, sceneContainer.clientHeight);
+            if (composer) composer.setSize(sceneContainer.clientWidth, sceneContainer.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            orbitControls.update();
+
+            if (globalAutoRotateCheckbox.checked && !isDragging && !deviceOrientationHandler) {
+                cyberObjects.forEach(co => {
+                    if (co.mesh) {
+                        co.mesh.rotation.y += 0.005;
+                        co.mesh.rotation.x += 0.001;
+                    }
+                });
+            }
+            if (composer) composer.render();
+            else renderer.render(scene, camera); 
+        }
+
+        init();
+        updateObjectListUI(); 
+        controlsToggleButton.classList.remove('hidden'); 
+    </script>
+</body>
+</html>

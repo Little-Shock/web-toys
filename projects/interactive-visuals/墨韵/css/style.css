@@ -74,8 +74,6 @@ body {
   width: 100%;
   height: 100%;
   background-color: var(--bg-color);
-  background-image: url('../assets/images/rice-paper.jpeg');
-  background-size: cover;
   cursor: crosshair;
 }
 
@@ -332,7 +330,7 @@ body {
   .container {
     flex-direction: column;
   }
-  
+
   .tools-panel {
     width: 100%;
     height: auto;
@@ -345,17 +343,17 @@ body {
     overflow-x: auto;
     overflow-y: hidden;
   }
-  
+
   .ink-selector, .brush-selector, .paper-selector {
     min-width: 150px;
   }
-  
+
   .control-buttons {
     flex-direction: row;
     margin-top: 0;
     margin-left: auto;
   }
-  
+
   .control-btn {
     padding: 8px 12px;
     font-size: 0.9rem;
@@ -367,34 +365,34 @@ body {
     max-height: 50%;
     gap: 10px;
   }
-  
+
   .ink-options, .brush-options, .paper-options {
     grid-template-columns: repeat(2, 1fr);
     gap: 5px;
   }
-  
+
   .ink-option, .brush-option, .paper-option {
     padding: 5px;
   }
-  
+
   .ink-preview {
     width: 20px;
     height: 20px;
   }
-  
+
   .ink-name, .brush-name, .paper-name {
     font-size: 0.8rem;
   }
-  
+
   .brush-icon {
     font-size: 1.2rem;
   }
-  
+
   .control-buttons {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .control-btn {
     flex: 1;
     font-size: 0.8rem;

@@ -26,7 +26,9 @@
     },
     "author": {
         "name": "Little Shock Team",
-        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd"
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
     },
     "features": [
         "核心交互",
@@ -45,5 +47,6 @@
         "移动优化"
     ],
     "primary_category": "music-and-sound",
-    "secondary_categories": []
+    "secondary_categories": [],
+    "creation_date": "2025-05-10"
 }
