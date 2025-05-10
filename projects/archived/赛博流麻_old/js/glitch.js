@@ -89,6 +89,9 @@ class GlitchEffect {
       };
 
       img.onerror = () => reject(new Error('图像加载失败'));
+
+      // 添加跨域支持
+      img.crossOrigin = 'anonymous';
       img.src = imageSource;
     });
   }

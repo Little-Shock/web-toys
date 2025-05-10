@@ -5,7 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>赛博流麻 · Cyberpunk Glitch Effect</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- 使用更可靠的Font Awesome CDN链接 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- 添加错误处理 -->
+  <script>
+    // 检测Font Awesome是否加载成功
+    window.addEventListener('error', function(e) {
+      if (e.target.tagName === 'LINK' && e.target.href.includes('font-awesome')) {
+        // 如果Font Awesome加载失败，使用备用图标方案
+        console.warn('Font Awesome加载失败，使用备用图标');
+        document.documentElement.classList.add('fa-unavailable');
+      }
+    }, true);
+  </script>
 </head>
 <body>
   <!-- 返回主菜单链接 -->
@@ -146,8 +158,31 @@
     </div>
   </div>
 
+  <!-- 添加错误处理脚本 -->
+  <script>
+    // 全局错误处理
+    window.addEventListener('error', function(event) {
+      console.error('捕获到错误:', event.error || event.message);
+
+      // 如果是脚本加载错误，尝试重新加载
+      if (event.target && event.target.tagName === 'SCRIPT') {
+        console.warn('脚本加载失败，尝试重新加载:', event.target.src);
+
+        // 防止无限重试
+        if (!event.target.dataset.retried) {
+          event.target.dataset.retried = 'true';
+
+          // 创建新的脚本元素替换失败的脚本
+          const newScript = document.createElement('script');
+          newScript.src = event.target.src;
+          document.body.appendChild(newScript);
+        }
+      }
+    }, true);
+  </script>
+
   <script src="js/glitch.js"></script>
   <script src="js/main.js"></script>
-<script src="../../js/back-link-fix.js"></script>
+  <script src="../../js/back-link-fix.js"></script>
 </body>
 </html>

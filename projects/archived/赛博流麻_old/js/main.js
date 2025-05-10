@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const appState = {
     isMobile: window.innerWidth <= 767,
     isProcessing: false,
-    controlsVisible: !window.innerWidth <= 767
+    controlsVisible: !(window.innerWidth <= 767)
   };
 
   // 显示加载指示器
@@ -117,16 +117,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // 开始动画效果
         glitchEffect.startAnimation();
 
-        // 在移动端自动显示控制面板
+        // 在移动端自动显示控制面板，但不立即显示，给用户一些时间查看效果
         if (appState.isMobile) {
-          toggleControlsPanel();
+          // 延迟1秒后显示控制面板
+          setTimeout(() => {
+            toggleControlsBtn.style.display = 'flex';
+          }, 1000);
         }
       } catch (error) {
         console.error('图像处理错误:', error);
         alert('图像处理失败，请尝试其他图片');
+        // 出错时恢复上传界面
+        previewContainer.style.display = 'none';
+        uploadArea.style.display = 'flex';
       } finally {
         hideLoading();
       }
+    };
+
+    reader.onerror = () => {
+      console.error('文件读取错误');
+      alert('文件读取失败，请重试');
+      hideLoading();
     };
 
     reader.readAsDataURL(file);
@@ -175,18 +187,43 @@ document.addEventListener('DOMContentLoaded', () => {
   // 保存图像
   function saveImage() {
     showLoading();
-    setTimeout(() => {
-      const dataUrl = glitchEffect.saveImage();
 
-      // 创建下载链接
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `cyberpunk-glitch-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    try {
+      setTimeout(() => {
+        const dataUrl = glitchEffect.saveImage();
+
+        // 创建下载链接
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `cyberpunk-glitch-${Date.now()}.png`;
+        document.body.appendChild(link);
+
+        // 尝试触发下载
+        try {
+          link.click();
+        } catch (e) {
+          console.error('下载触发失败:', e);
+          // 提供备用方案
+          alert('自动下载失败，请长按图片并选择"保存图片"');
+
+          // 在新窗口中打开图片，方便用户手动保存
+          const newWindow = window.open();
+          if (newWindow) {
+            newWindow.document.write(`<img src="${dataUrl}" alt="赛博故障效果" style="max-width:100%;">`);
+            newWindow.document.title = '赛博故障效果 - 长按保存';
+          } else {
+            alert('无法打开新窗口，请检查浏览器设置');
+          }
+        }
+
+        document.body.removeChild(link);
+        hideLoading();
+      }, 100); // 短暂延迟以确保加载指示器显示
+    } catch (error) {
+      console.error('保存图像失败:', error);
+      alert('保存图像失败，请重试');
       hideLoading();
-    }, 100); // 短暂延迟以确保加载指示器显示
+    }
   }
 
   // 重置图像
@@ -211,6 +248,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function toggleControlsPanel() {
     controlsPanel.classList.toggle('active');
     appState.controlsVisible = controlsPanel.classList.contains('active');
+
+    // 防止控制面板切换时页面滚动
+    if (appState.controlsVisible) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
   }
 
   // 全屏预览
@@ -240,10 +284,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 如果设备类型发生变化，更新界面
     if (wasMobile !== appState.isMobile) {
       if (appState.isMobile) {
+        // 移动端默认隐藏控制面板
         controlsPanel.classList.remove('active');
+        // 显示控制面板切换按钮
+        toggleControlsBtn.style.display = 'flex';
       } else {
-        controlsPanel.classList.remove('active');
+        // 桌面端默认显示控制面板
+        controlsPanel.classList.add('active');
+        // 隐藏控制面板切换按钮
+        toggleControlsBtn.style.display = 'none';
       }
+      // 更新控制面板可见状态
+      appState.controlsVisible = controlsPanel.classList.contains('active');
     }
   }
 
@@ -347,4 +399,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 初始化
   handleResize();
+
+  // 初始化移动端控制面板切换按钮显示状态
+  if (appState.isMobile) {
+    toggleControlsBtn.style.display = 'flex';
+  } else {
+    toggleControlsBtn.style.display = 'none';
+    controlsPanel.classList.add('active');
+  }
 });

@@ -248,10 +248,15 @@ body {
   font-weight: bold;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  display: none;
+  display: none; /* 默认隐藏，在JS中根据设备类型控制显示 */
   align-items: center;
   gap: 8px;
   font-size: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.toggle-controls-btn:active {
+  transform: scale(0.95);
 }
 
 .toggle-controls-btn i {
@@ -265,6 +270,7 @@ body {
   padding: 20px;
   margin-bottom: 30px;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* Safari支持 */
   border: 1px solid rgba(0, 243, 255, 0.2);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   transition: transform 0.4s ease, opacity 0.4s ease;
@@ -539,10 +545,7 @@ body {
     font-size: 1rem;
   }
 
-  .toggle-controls-btn {
-    display: flex;
-  }
-
+  /* 移动端控制面板样式 */
   .controls-panel {
     position: fixed;
     bottom: 0;
@@ -554,6 +557,8 @@ body {
     z-index: 100;
     transform: translateY(100%);
     opacity: 0;
+    margin-bottom: 0;
+    padding-bottom: 30px; /* 增加底部内边距，避免内容被遮挡 */
   }
 
   .controls-panel.active {
@@ -591,6 +596,7 @@ body {
     width: 100%;
     padding: 15px;
     font-size: 1rem;
+    margin-bottom: 10px; /* 按钮间距 */
   }
 
   /* 移动端优化的预设按钮 */
@@ -605,6 +611,13 @@ body {
     text-align: center;
     padding: 10px;
   }
+
+  /* 确保全屏模态框在移动端正常工作 */
+  .fullscreen-modal .close-modal {
+    top: 10px;
+    right: 15px;
+    font-size: 30px;
+  }
 }
 
 /* 触摸设备优化 */
@@ -618,4 +631,40 @@ body {
     transform: none;
     box-shadow: none;
   }
+}
+
+/* Font Awesome备用样式 */
+.fa-unavailable .fas,
+.fa-unavailable .far,
+.fa-unavailable .fab {
+  /* 使用简单的Unicode字符作为备用 */
+  font-family: sans-serif;
+}
+
+.fa-unavailable .fa-cloud-upload-alt::before {
+  content: "↑";
+}
+
+.fa-unavailable .fa-sliders-h::before {
+  content: "≡";
+}
+
+.fa-unavailable .fa-expand::before {
+  content: "⤢";
+}
+
+.fa-unavailable .fa-times::before {
+  content: "×";
+}
+
+.fa-unavailable .fa-random::before {
+  content: "⇄";
+}
+
+.fa-unavailable .fa-download::before {
+  content: "↓";
+}
+
+.fa-unavailable .fa-undo::before {
+  content: "↺";
 }
