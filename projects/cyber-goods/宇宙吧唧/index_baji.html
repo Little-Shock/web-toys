@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宇宙吧唧 (Cosmic Baji)</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000000;
+            margin: 0;
+            perspective: 1000px;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* 返回按钮样式 */
+        .back-link {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 14px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        /* 上传按钮样式 */
+        .upload-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-button {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .upload-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .upload-icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        /* 加载动画 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 粒子背景效果 */
+        .particle-container {
+            position: absolute;
+            width: 375px;
+            height: 375px;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            animation: rotate 20s infinite linear;
+            z-index: 0;
+        }
+
+        @keyframes rotate {
+            100% {
+                transform: rotateY(360deg) rotateX(360deg);
+            }
+        }
+
+        .particle {
+            position: absolute;
+            width: 2.5px;  /* 默认粒子大小减小 */
+            height: 2.5px;
+            border-radius: 50%;
+            opacity: 0;
+            transform-origin: center center;
+        }
+
+        /* 粒子爆炸动画 */
+        @keyframes particleExplosion {
+            0% {
+                transform: translate3d(0, 0, 0);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate3d(
+                    calc(var(--expX) * 500px),
+                    calc(var(--expY) * 500px),
+                    calc(var(--expZ) * 500px)
+                );
+                opacity: 0;
+            }
+        }
+
+        .particle.exploding {
+            animation: particleExplosion 1.5s ease-out forwards !important;
+        }
+
+        .baji-container {
+            width: 375px;
+            height: 375px;
+            perspective: 1000px; /* 确保有透视效果 */
+            background-color: transparent; /* 使背景透明，显示粒子 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .baji {
+            width: 250px;
+            height: 250px;
+            position: relative;
+            cursor: pointer;
+            border-radius: 50%;
+            transform-style: preserve-3d;
+            box-shadow: 0 0 20px rgba(255,255,255,0.35), 2px 5px 18px rgba(255,255,255,0.3);
+        }
+
+        .baji-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden; /* 确保在Safari中也生效 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-style: preserve-3d; /* 确保3D效果保持 */
+        }
+
+        .baji-face img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 50%;
+            user-select: none;  /* 防止内容被选中 */
+        }
+
+        .baji-front {
+            /* 正面不需要特殊变换 */
+            z-index: 2; /* 确保正面在上层 */
+            transform: translateZ(0.1px); /* 微小的Z轴偏移，确保在3D空间中正确渲染 */
+            position: relative; /* 为碎片容器定位 */
+        }
+
+        .baji-back {
+            transform: rotateY(180deg);
+            z-index: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 50%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        /* 修复背面图片定位 */
+        .baji-back img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: none !important;
+            backface-visibility: visible;
+        }
+
+        /* 确保背面元素的效果在图片上方 */
+        .baji-back .emboss-overlay,
+        .baji-back .edge-light {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            z-index: 2; /* 确保在图片上方 */
+            pointer-events: none; /* 不干扰鼠标事件 */
+        }
+
+        /* --- Effects CSS --- */
+        .emboss-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%;
+            box-shadow: inset 0 6px 12px rgba(255,255,255,0.8), inset 0 -6px 12px rgba(0,0,0,0.4), inset 6px 0 12px rgba(255,255,255,0.4), inset -6px 0 12px rgba(0,0,0,0.4);
+            pointer-events: none; z-index: 2;
+        }
+        .highlight-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%;
+            background: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.5) 15%, rgba(255,255,255,0.2) 30%, rgba(255,255,255,0) 50%);
+            pointer-events: none; z-index: 1;
+        }
+        .top-light {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%;
+            background: linear-gradient(120deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 15%, transparent 35%);
+            pointer-events: none; z-index: 3;
+            opacity: 0.6;
+        }
+        .edge-light {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.15), inset 10px 10px 20px rgba(255,255,255,0.3);
+            pointer-events: none; z-index: 1;
+        }
+        /* --- End of effects CSS --- */
+
+        /* --- 碎片效果 CSS --- */
+        .shards-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 2;
+            mix-blend-mode: screen;
+        }
+
+        .shard {
+            position: absolute;
+            pointer-events: none;
+            transform-origin: center center;
+        }
+
+        .shard-enhanced {
+            position: absolute;
+            pointer-events: none;
+            transform-origin: center center;
+            box-shadow: 0 0 4px 2px rgba(255, 255, 255, 0.7);
+        }
+        /* --- End of 碎片效果 CSS --- */
+
+        /* --- Micro-motion (Sway) Animation --- */
+        @keyframes sway-animation {
+            0% { transform: rotateY(-12deg) rotateX(4deg); }
+            50% { transform: rotateY(12deg) rotateX(-4deg); }
+            100% { transform: rotateY(-12deg) rotateX(4deg); }
+        }
+
+        .baji.default-sway {
+            animation: sway-animation 4s ease-in-out infinite;
+        }
+        /* --- End of Sway Animation --- */
+
+        /* --- Single Click 360 Spin Animation --- */
+        @keyframes spin-360 {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        .baji.perform-spin {
+            animation: spin-360 1s ease-in-out;
+        }
+        /* --- End of Single Click Spin Animation --- */
+
+    </style>
+</head>
+<body>
+    <!-- 返回主菜单链接 -->
+    <a href="/" class="back-link">返回主菜单</a>
+
+    <!-- 粒子特效容器 -->
+    <div class="particle-container" id="particleContainer"></div>
+
+    <div class="baji-container">
+        <div class="baji default-sway" id="baji">
+            <div class="baji-face baji-front">
+                <img src="https://oss.talesofai.cn/fe_assets/mng/17/f29f43ac4481bb4de8278ad6a73c04d3.jpg" alt="吧唧正面" id="frontImage">
+                <div class="shards-container" id="shardsContainer"></div>
+                <div class="emboss-overlay" id="embossOverlayFront"></div>
+                <div class="highlight-overlay" id="highlightOverlayFront"></div>
+                <div class="top-light" id="topLightFront"></div>
+                <div class="edge-light" id="edgeLightFront"></div>
+            </div>
+            <div class="baji-face baji-back">
+                <img src="https://oss.talesofai.cn/fe_assets/mng/17/1c0b32094074e69513e3fa897d8325ed.jpg" alt="吧唧背面" id="backImage">
+                <div class="emboss-overlay"></div>
+                <div class="edge-light"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上传按钮 -->
+    <div class="upload-container">
+        <button class="upload-button" id="uploadButton">
+            <span class="upload-icon">📷</span>
+            <span>上传自定义图片</span>
+        </button>
+        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+    </div>
+
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bajiElement = document.getElementById('baji');
+            const shardsContainer = document.getElementById('shardsContainer');
+            const particleContainer = document.getElementById('particleContainer');
+            const uploadButton = document.getElementById('uploadButton');
+            const imageUpload = document.getElementById('imageUpload');
+            const frontImage = document.getElementById('frontImage');
+            const backImage = document.getElementById('backImage');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+
+            // 修复返回按钮链接
+            document.querySelector('.back-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '/';
+            });
+
+            // 处理上传按钮点击
+            uploadButton.addEventListener('click', function() {
+                imageUpload.click();
+            });
+
+            // 处理图片上传
+            imageUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // 检查文件类型
+                if (!file.type.startsWith('image/')) {
+                    alert('请选择有效的图片文件');
+                    return;
+                }
+
+                // 显示加载动画
+                loadingOverlay.classList.add('active');
+
+                // 创建图片URL
+                const url = URL.createObjectURL(file);
+
+                // 创建新图像对象用于预加载
+                const img = new Image();
+                img.onload = function() {
+                    // 设置正面和背面图片
+                    frontImage.src = url;
+                    backImage.src = url;
+
+                    // 确保背面图片样式正确应用
+                    backImage.style.position = 'absolute';
+                    backImage.style.top = '0';
+                    backImage.style.left = '0';
+                    backImage.style.width = '100%';
+                    backImage.style.height = '100%';
+                    backImage.style.objectFit = 'cover';
+                    backImage.style.borderRadius = '50%';
+                    backImage.style.transform = 'none';
+                    backImage.style.backfaceVisibility = 'visible';
+
+                    // 隐藏加载动画
+                    setTimeout(() => {
+                        loadingOverlay.classList.remove('active');
+                    }, 500);
+                };
+
+                img.onerror = function() {
+                    alert('图片加载失败，请尝试其他图片');
+                    loadingOverlay.classList.remove('active');
+                };
+
+                img.src = url;
+            });
+
+            // 获取视窗大小
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            // 创建背景粒子效果
+            const totalParticles = 350; // 粒子总数
+            const canvasSize = 375; // 画布尺寸
+            const bajiSize = 250; // 吧唧尺寸
+            const minOrbitSize = 140; // 最小轨道尺寸，稍大于吧唧半径
+            const maxOrbitSize = 180; // 最大轨道尺寸，小于画布半径
+
+            // 初始屏幕尺寸
+            const screenSize = Math.max(windowWidth, windowHeight) * 0.7; // 使用屏幕较大尺寸的70%
+
+            // 银色和银蓝色色值数组，降低亮度
+            const particleColors = [
+                '#A0A0A0', // 暗银色
+                '#B3B3B3', // 暗淡灰色
+                '#C6C8DA', // 暗银蓝色
+                '#90A4BE', // 暗钢蓝
+                '#ACACDF', // 暗薰衣草蓝
+                '#C6C6DA', // 暗薰衣草淡紫
+                '#D0D8DF', // 暗爱丽丝蓝
+                '#959595', // 深暗银色
+                '#898989', // 暗灰色银
+                '#BCBCBC'  // 暗亮灰色
+            ];
+
+            // 辅助函数: 平均分布粒子
+            function getFibonacciSpherePoint(i, n, randomize = true) {
+                const offset = 2.0 / n;
+                const phi = Math.acos(1 - (i + 0.5) * offset);
+                const theta = Math.PI * (1 + 5**0.5) * (i + (randomize ? Math.random() * 0.2 - 0.1 : 0));
+
+                const x = Math.cos(theta) * Math.sin(phi);
+                const y = Math.sin(theta) * Math.sin(phi);
+                const z = Math.cos(phi);
+
+                return { x, y, z };
+            }
+
+            // 确保样式表可访问
+            const styleSheet = document.styleSheets[0];
+            const definedKeyframes = new Set();
+
+            // 辅助函数: 确保关键帧只定义一次
+            function ensureKeyframe(name, rule) {
+                if (!definedKeyframes.has(name)) {
+                    try {
+                        styleSheet.insertRule(`@keyframes ${name} { ${rule} }`, styleSheet.cssRules.length);
+                        definedKeyframes.add(name);
+                    } catch (e) {
+                        console.warn("Could not insert keyframe (might already exist or be invalid):", name, e);
+                    }
+                }
+            }
+
+            // 粒子引用数组，用于爆炸效果
+            const particles = [];
+
+            // 生成粒子
+            for (let i = 0; i < totalParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+
+                // 使用斐波那契球面分布算法获取均匀分布的点
+                const point = getFibonacciSpherePoint(i, totalParticles);
+
+                // 随机选择颜色
+                const randomColor = particleColors[Math.floor(Math.random() * particleColors.length)];
+                particle.style.backgroundColor = randomColor;
+
+                // 随机轨道大小
+                const orbitScale = minOrbitSize + Math.random() * (maxOrbitSize - minOrbitSize);
+
+                // 随机粒子大小 (1.5px - 3.5px) - 减小粒子尺寸
+                const particleSize = 2 + Math.random() * 2.0;
+                particle.style.width = `${particleSize}px`;
+                particle.style.height = `${particleSize}px`;
+
+                // 随机光晕效果 - 减弱光晕
+                const glowIntensity = Math.random() * 3 + 1;
+                particle.style.boxShadow = `0 0 ${glowIntensity}px ${randomColor}`;
+
+                // 设置初始位置为画布中心
+                particle.style.left = `${canvasSize / 2}px`;
+                particle.style.top = `${canvasSize / 2}px`;
+
+                // 为爆炸效果准备方向变量
+                const expX = point.x;
+                const expY = point.y;
+                const expZ = point.z;
+                particle.style.setProperty('--expX', expX);
+                particle.style.setProperty('--expY', expY);
+                particle.style.setProperty('--expZ', expZ);
+
+                // 创建唯一的动画名
+                const animName = `particleOrbit${i}`;
+
+                // 设置随机动画时长 (10-20秒)
+                const duration = 10 + Math.random() * 10;
+
+                // 设置随机延迟 (0-5秒)
+                const delay = Math.random() * 5;
+
+                // 创建动画 - 从屏幕大小开始，然后收缩到轨道大小
+                const keyframes = `
+                    @keyframes ${animName} {
+                        0%, 100% {
+                            opacity: 0;
+                            transform: translate3d(0, 0, 0) scale(0.3);
+                        }
+                        15% {
+                            opacity: 0.8;
+                            transform: translate3d(
+                                ${point.x * screenSize}px,
+                                ${point.y * screenSize}px,
+                                ${point.z * screenSize}px
+                            ) scale(1);
+                        }
+                        30% {
+                            transform: translate3d(
+                                ${point.x * orbitScale}px,
+                                ${point.y * orbitScale}px,
+                                ${point.z * orbitScale}px
+                            ) scale(1);
+                        }
+                        70% {
+                            opacity: 0.6;
+                            transform: translate3d(
+                                ${point.x * orbitScale}px,
+                                ${point.y * orbitScale}px,
+                                ${point.z * orbitScale}px
+                            ) scale(1);
+                        }
+                        85% {
+                            opacity: 0.8;
+                            transform: translate3d(
+                                ${point.x * screenSize * 0.5}px,
+                                ${point.y * screenSize * 0.5}px,
+                                ${point.z * screenSize * 0.5}px
+                            ) scale(0.8);
+                        }
+                    }
+                `;
+
+                try {
+                    styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+                } catch(e) {
+                    console.warn("无法插入关键帧规则:", e);
+                }
+
+                // 应用动画
+                particle.style.animation = `${animName} ${duration}s infinite ease-in-out`;
+                particle.style.animationDelay = `${delay}s`;
+
+                // 添加到容器
+                particleContainer.appendChild(particle);
+
+                // 存储粒子引用
+                particles.push(particle);
+            }
+
+            // 触发粒子爆炸效果
+            function explodeParticles() {
+                particles.forEach(particle => {
+                    // 保存当前动画状态
+                    const originalAnimation = particle.style.animation;
+                    const originalDelay = particle.style.animationDelay;
+
+                    // 添加爆炸动画类
+                    particle.classList.add('exploding');
+
+                    // 爆炸动画结束后恢复原来的动画
+                    setTimeout(() => {
+                        particle.classList.remove('exploding');
+                        particle.style.animation = originalAnimation;
+                        particle.style.animationDelay = originalDelay;
+                    }, 1500); // 爆炸动画时长
+                });
+            }
+
+            // 确保背面图片正确显示
+            // 注意：backImage已经在顶部声明，这里直接使用
+            if (backImage) {
+                // 强制确保背面图片样式正确应用
+                backImage.style.position = 'absolute';
+                backImage.style.top = '0';
+                backImage.style.left = '0';
+                backImage.style.width = '100%';
+                backImage.style.height = '100%';
+                backImage.style.objectFit = 'cover';
+                backImage.style.borderRadius = '50%';
+                backImage.style.transform = 'none';
+                backImage.style.backfaceVisibility = 'visible';
+            }
+
+            // 碎片效果 - 减少数量
+            if (shardsContainer) {
+                const circleRadius = 125; // 吧唧容器宽度的一半
+                const numberOfShards = 66; // 减少到70个亮片
+
+                // 简化颜色分布，主要使用白色和淡色系
+                const shardColors = [
+                    '#ffffff', '#ffffff', '#ffffff',
+                    '#f0f8ff', '#e0ffff',
+                    '#ff00ff',
+                    '#00ffff',
+                    '#ccffcc'
+                ];
+
+                // 定义碎片的动画
+                ensureKeyframe('shardShimmer', `
+                    0%, 100% { opacity: 0.4; filter: brightness(0.7) saturate(140%); transform: scale(0.85); }
+                    50% { opacity: 0.9; filter: brightness(2.5) saturate(300%); transform: scale(1.15); }
+                `);
+
+                ensureKeyframe('shardDrift', `
+                    0% { transform: translate(var(--tx-start, 0px), var(--ty-start, 0px)) rotate(var(--r-start, 0deg)) scale(var(--s-drift-start, 1)); }
+                    50% { transform: translate(var(--tx-mid, 0px), var(--ty-mid, 0px)) rotate(var(--r-mid, 180deg)) scale(var(--s-drift-mid, 1)); }
+                    100% { transform: translate(var(--tx-end, 0px), var(--ty-end, 0px)) rotate(var(--r-end, 360deg)) scale(var(--s-drift-end, 1)); }
+                `);
+
+                // 增强型亮片的闪烁动画
+                ensureKeyframe('enhancedShardShimmer', `
+                    0%, 100% { opacity: 0.6; filter: brightness(0.9) saturate(160%); transform: scale(0.9); }
+                    50% { opacity: 1.0; filter: brightness(3.0) saturate(350%); transform: scale(1.2); }
+                `);
+
+                // 创建边缘聚集但有一些中心分布的亮片
+                function getRandomPosition() {
+                    const angle = Math.random() * 2 * Math.PI;
+                    let r;
+                    const rand = Math.random();
+
+                    if (rand < 0.6) {
+                        // 60%的亮片集中在边缘区域
+                        r = (0.65 + rand * 0.3) * circleRadius;
+                    } else if (rand < 0.9) {
+                        // 30%的亮片分布在中间区域
+                        r = (0.35 + (rand - 0.6) * 0.75) * circleRadius;
+                    } else {
+                        // 10%的亮片分布在中心区域
+                        r = (rand - 0.9) * 3.5 * 0.35 * circleRadius;
+                    }
+
+                    const x = r * Math.cos(angle);
+                    const y = r * Math.sin(angle);
+
+                    return { x, y, r, angle };
+                }
+
+                // 创建碎片
+                for (let i = 0; i < numberOfShards; i++) {
+                    // 25%的几率创建增强型亮片
+                    const isEnhanced = Math.random() < 0.25;
+
+                    const shard = document.createElement('div');
+                    shard.classList.add(isEnhanced ? 'shard-enhanced' : 'shard');
+
+                    // 增强型亮片略大一些
+                    const size = isEnhanced ?
+                        Math.random() * 5 + 2 : // 增强型亮片 2px 到 7px
+                        Math.random() * 4 + 1;  // 普通亮片 1px 到 5px
+
+                    shard.style.width = `${size}px`;
+                    shard.style.height = `${size * (Math.random() * 0.6 + 0.4)}px`; // 碎片可以更扁平
+
+                    // 获取位置
+                    const pos = getRandomPosition();
+
+                    // 设置碎片的位置
+                    shard.style.left = `calc(50% + ${pos.x}px - ${parseFloat(shard.style.width) / 2}px)`;
+                    shard.style.top = `calc(50% + ${pos.y}px - ${parseFloat(shard.style.height) / 2}px)`;
+
+                    const randomColor = shardColors[Math.floor(Math.random() * shardColors.length)];
+                    shard.style.backgroundColor = randomColor;
+
+                    // 增强型亮片有更强的光晕
+                    if (isEnhanced) {
+                        shard.style.boxShadow = `0 0 ${Math.random() * 4 + 2}px ${randomColor}`;
+                        shard.style.opacity = '0.7';
+                    } else {
+                        shard.style.boxShadow = `0 0 ${Math.random() * 2 + 1}px ${randomColor}cc`;
+                        shard.style.opacity = '0.6';
+                    }
+
+                    // 为每个碎片的动画设置随机参数
+                    const initialRotation = Math.random() * 360;
+                    const midRotation = initialRotation + (Math.random() - 0.5) * 300 + 150;
+                    const endRotation = initialRotation + (Math.random() - 0.5) * 600 + 300;
+
+                    const driftRange = 10; // 漂移范围 (px)
+                    shard.style.setProperty('--r-start', `${initialRotation}deg`);
+                    shard.style.setProperty('--s-drift-start', `${Math.random() * 0.3 + 0.85}`);
+
+                    shard.style.setProperty('--tx-mid', `${(Math.random() - 0.5) * driftRange}px`);
+                    shard.style.setProperty('--ty-mid', `${(Math.random() - 0.5) * driftRange}px`);
+                    shard.style.setProperty('--r-mid', `${midRotation}deg`);
+                    shard.style.setProperty('--s-drift-mid', `${Math.random() * 0.4 + 0.8}`);
+
+                    shard.style.setProperty('--tx-end', `${(Math.random() - 0.5) * (driftRange * 0.6)}px`);
+                    shard.style.setProperty('--ty-end', `${(Math.random() - 0.5) * (driftRange * 0.6)}px`);
+                    shard.style.setProperty('--r-end', `${endRotation}deg`);
+                    shard.style.setProperty('--s-drift-end', shard.style.getPropertyValue('--s-drift-start'));
+
+                    // 使用不同的动画
+                    shard.style.animationName = isEnhanced ?
+                        'enhancedShardShimmer, shardDrift' :
+                        'shardShimmer, shardDrift';
+
+                    shard.style.animationTimingFunction = 'ease-in-out, cubic-bezier(0.35, 0, 0.65, 1)';
+                    shard.style.animationIterationCount = 'infinite, infinite';
+
+                    const shimmerDuration = Math.random() * 2.0 + 1.0; // 1.0s to 3.0s
+                    const driftDuration = Math.random() * 12 + 10;     // 10s to 22s
+                    shard.style.animationDuration = `${shimmerDuration}s, ${driftDuration}s`;
+                    shard.style.animationDelay = `${Math.random() * shimmerDuration * -1}s, ${Math.random() * driftDuration * -1}s`;
+
+                    shardsContainer.appendChild(shard);
+                }
+
+                // 添加少量特别明亮的大亮片
+                for (let i = 0; i < 4; i++) { // 减少到4个大亮片
+                    const bigShard = document.createElement('div');
+                    bigShard.classList.add('shard-enhanced');
+
+                    const size = Math.random() * 6 + 4; // 4px 到 10px
+                    bigShard.style.width = `${size}px`;
+                    bigShard.style.height = `${size * (Math.random() * 0.5 + 0.5)}px`;
+
+                    // 随机位置
+                    const angle = Math.random() * 2 * Math.PI;
+                    let r;
+
+                    if (i < 2) { // 2个在边缘
+                        r = (0.6 + Math.random() * 0.3) * (circleRadius - size * 2);
+                    } else { // 2个在中心区域
+                        r = Math.random() * 0.6 * (circleRadius - size * 2);
+                    }
+
+                    const x = r * Math.cos(angle);
+                    const y = r * Math.sin(angle);
+
+                    bigShard.style.left = `calc(50% + ${x}px - ${size / 2}px)`;
+                    bigShard.style.top = `calc(50% + ${y}px - ${size / 2}px)`;
+
+                    // 随机颜色，只使用白色和淡蓝色
+                    const brightColors = ['#ffffff', '#ffffff', '#f0f8ff', '#e0ffff'];
+                    const randomColor = brightColors[Math.floor(Math.random() * brightColors.length)];
+                    bigShard.style.backgroundColor = randomColor;
+                    bigShard.style.boxShadow = `0 0 ${Math.random() * 5 + 3}px ${randomColor}`;
+                    bigShard.style.opacity = '0.85';
+
+                    // 动画参数
+                    const initialRotation = Math.random() * 360;
+                    const midRotation = initialRotation + (Math.random() - 0.5) * 200 + 100;
+                    const endRotation = initialRotation + (Math.random() - 0.5) * 400 + 200;
+
+                    const driftRange = 8;
+                    bigShard.style.setProperty('--r-start', `${initialRotation}deg`);
+                    bigShard.style.setProperty('--s-drift-start', `${Math.random() * 0.2 + 0.9}`);
+
+                    bigShard.style.setProperty('--tx-mid', `${(Math.random() - 0.5) * driftRange}px`);
+                    bigShard.style.setProperty('--ty-mid', `${(Math.random() - 0.5) * driftRange}px`);
+                    bigShard.style.setProperty('--r-mid', `${midRotation}deg`);
+                    bigShard.style.setProperty('--s-drift-mid', `${Math.random() * 0.3 + 0.85}`);
+
+                    bigShard.style.setProperty('--tx-end', `${(Math.random() - 0.5) * (driftRange * 0.6)}px`);
+                    bigShard.style.setProperty('--ty-end', `${(Math.random() - 0.5) * (driftRange * 0.6)}px`);
+                    bigShard.style.setProperty('--r-end', `${endRotation}deg`);
+                    bigShard.style.setProperty('--s-drift-end', bigShard.style.getPropertyValue('--s-drift-start'));
+
+                    bigShard.style.animationName = 'enhancedShardShimmer, shardDrift';
+                    bigShard.style.animationTimingFunction = 'ease-in-out, cubic-bezier(0.35, 0, 0.65, 1)';
+                    bigShard.style.animationIterationCount = 'infinite, infinite';
+
+                    const shimmerDuration = Math.random() * 1.5 + 0.8; // 0.8s to 2.3s
+                    const driftDuration = Math.random() * 10 + 8;     // 8s to 18s
+                    bigShard.style.animationDuration = `${shimmerDuration}s, ${driftDuration}s`;
+                    bigShard.style.animationDelay = `${Math.random() * shimmerDuration * -1}s, ${Math.random() * driftDuration * -1}s`;
+
+                    shardsContainer.appendChild(bigShard);
+                }
+            }
+
+            // 吧唧点击旋转功能 + 粒子爆炸效果
+            if (bajiElement) {
+                let isSpinning = false;
+
+                bajiElement.addEventListener('click', function() {
+                    // 如果已经在旋转，则不执行新的操作
+                    if (isSpinning) return;
+                    isSpinning = true;
+
+                    // 触发粒子爆炸效果
+                    explodeParticles();
+
+                    this.classList.remove('default-sway');
+                    // Ensure perform-spin is not already there, then add it after reflow
+                    this.classList.remove('perform-spin');
+                    void this.offsetHeight; // Force reflow to restart animation
+                    this.classList.add('perform-spin');
+                });
+
+                bajiElement.addEventListener('animationend', function(event) {
+                    if (event.animationName === 'spin-360') {
+                        this.classList.remove('perform-spin');
+                        // Only add default-sway if not about to perform another spin immediately
+                        if (!this.classList.contains('perform-spin')) {
+                            this.classList.add('default-sway');
+
+                            // 确保旋转后背面图片仍然正确显示
+                            setTimeout(() => {
+                                // 使用已声明的backImage变量
+                                if (backImage) {
+                                    backImage.style.transform = 'none';
+                                }
+                            }, 50);
+
+                            isSpinning = false;
+                        }
+                    }
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>

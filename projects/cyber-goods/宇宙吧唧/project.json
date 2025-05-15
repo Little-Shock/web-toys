@@ -1,0 +1,66 @@
+{
+    "title": "宇宙吧唧 (Cosmic Baji)",
+    "description": "互动式3D吧唧翻转效果，点击触发360度旋转和粒子爆发，支持上传自定义图片，碎片光效和流畅动画，完美适配移动端。",
+    "tags": [
+        "3d-interaction",
+        "particle-effects",
+        "touch-interaction",
+        "light-effects",
+        "mobile-optimized",
+        "image-upload"
+    ],
+    "status": "stable",
+    "order": 5,
+    "primary_category": "cyber-goods",
+    "secondary_categories": ["visual-effects"],
+    "version": "1.1.0",
+    "last_updated": "2025-05-20",
+    "changelog": [
+        {
+            "version": "1.1.0",
+            "date": "2025-05-20",
+            "changes": [
+                "添加自定义图片上传功能",
+                "添加返回主菜单按钮",
+                "优化移动端体验"
+            ]
+        },
+        {
+            "version": "1.0.0",
+            "date": "2025-05-15",
+            "changes": [
+                "初始版本",
+                "支持360度翻转效果",
+                "添加粒子爆发特效",
+                "实现碎片光效"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "3D翻转效果",
+        "粒子爆发动画",
+        "碎片光效",
+        "触摸互动",
+        "自定义图片上传",
+        "移动端优化"
+    ],
+    "dependencies": [
+        "HTML5",
+        "CSS3",
+        "JavaScript",
+        "CSS Animations",
+        "File API"
+    ],
+    "creation_date": "2025-05-15"
+}

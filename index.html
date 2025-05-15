@@ -358,7 +358,7 @@
             .toy-title {
                 font-size: 1.2rem;
             }
-            
+
             .tag-cloud {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             }
@@ -377,7 +377,7 @@
                 padding: 8px 15px;
                 font-size: 0.9rem;
             }
-            
+
             .tag-cloud {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -566,6 +566,24 @@
                         <div class="toy-meta">
                             <span class="toy-status stable">稳定版</span>
                             <span class="toy-version">v1.0.0 (2025-05-10)</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="toy-card" data-categories="cyber-goods visual-effects" data-tags="3d-interaction particle-effects touch-interaction light-effects mobile-optimized image-upload">
+                    <a href="projects/cyber-goods/宇宙吧唧/index_baji.html" class="toy-link">
+                        <h3 class="toy-title">宇宙吧唧 (Cosmic Baji)</h3>
+                        <p class="toy-description">互动式3D吧唧翻转效果，点击触发360度旋转和粒子爆发，支持上传自定义图片，碎片光效和流畅动画，完美适配移动端。</p>
+                        <div class="toy-tags">
+                            <span class="toy-tag">3d-interaction</span>
+                            <span class="toy-tag">particle-effects</span>
+                            <span class="toy-tag">touch-interaction</span>
+                            <span class="toy-tag">light-effects</span>
+                            <span class="toy-tag">mobile-optimized</span>
+                            <span class="toy-tag">image-upload</span>
+                        </div>
+                        <div class="toy-meta">
+                            <span class="toy-status stable">稳定版</span>
+                            <span class="toy-version">v1.1.0 (2025-05-20)</span>
                         </div>
                     </a>
                 </div>
@@ -1337,6 +1355,24 @@
                         </div>
                     </a>
                 </div>
+                <div class="toy-card" data-categories="cyber-goods visual-effects" data-tags="3d-interaction particle-effects touch-interaction light-effects mobile-optimized image-upload">
+                    <a href="projects/cyber-goods/宇宙吧唧/index_baji.html" class="toy-link">
+                        <h3 class="toy-title">宇宙吧唧 (Cosmic Baji)</h3>
+                        <p class="toy-description">互动式3D吧唧翻转效果，点击触发360度旋转和粒子爆发，支持上传自定义图片，碎片光效和流畅动画，完美适配移动端。</p>
+                        <div class="toy-tags">
+                            <span class="toy-tag">3d-interaction</span>
+                            <span class="toy-tag">particle-effects</span>
+                            <span class="toy-tag">touch-interaction</span>
+                            <span class="toy-tag">light-effects</span>
+                            <span class="toy-tag">mobile-optimized</span>
+                            <span class="toy-tag">image-upload</span>
+                        </div>
+                        <div class="toy-meta">
+                            <span class="toy-status stable">稳定版</span>
+                            <span class="toy-version">v1.1.0 (2025-05-20)</span>
+                        </div>
+                    </a>
+                </div>
                 </div>
             </div>
             <div class="category-content" id="content-games-and-entertainment">
@@ -1448,6 +1484,24 @@
                         </div>
                     </a>
                 </div>
+                <div class="toy-card" data-categories="cyber-goods visual-effects" data-tags="3d-interaction particle-effects touch-interaction light-effects mobile-optimized image-upload">
+                    <a href="projects/cyber-goods/宇宙吧唧/index_baji.html" class="toy-link">
+                        <h3 class="toy-title">宇宙吧唧 (Cosmic Baji)</h3>
+                        <p class="toy-description">互动式3D吧唧翻转效果，点击触发360度旋转和粒子爆发，支持上传自定义图片，碎片光效和流畅动画，完美适配移动端。</p>
+                        <div class="toy-tags">
+                            <span class="toy-tag">3d-interaction</span>
+                            <span class="toy-tag">particle-effects</span>
+                            <span class="toy-tag">touch-interaction</span>
+                            <span class="toy-tag">light-effects</span>
+                            <span class="toy-tag">mobile-optimized</span>
+                            <span class="toy-tag">image-upload</span>
+                        </div>
+                        <div class="toy-meta">
+                            <span class="toy-status stable">稳定版</span>
+                            <span class="toy-version">v1.1.0 (2025-05-20)</span>
+                        </div>
+                    </a>
+                </div>
                 </div>
             </div>
             <div class="category-content" id="content-utility-tools">
@@ -1509,42 +1563,42 @@
             const navScroll = document.querySelector('.category-nav-scroll');
             const leftArrow = document.querySelector('.nav-arrows.left');
             const rightArrow = document.querySelector('.nav-arrows.right');
-            
+
             // 默认激活"全部"分类
             if (categoryTabs.length > 0 && categoryContents.length > 0) {
                 categoryTabs[0].classList.add('active');
                 document.getElementById('content-all').classList.add('active');
             }
-            
+
             // 分类标签点击事件
             categoryTabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     // 移除所有激活状态
                     categoryTabs.forEach(t => t.classList.remove('active'));
                     categoryContents.forEach(c => c.classList.remove('active'));
-                    
+
                     // 激活当前分类
                     this.classList.add('active');
                     const categoryId = this.getAttribute('data-category');
                     document.getElementById('content-' + categoryId).classList.add('active');
-                    
+
                     // 应用当前标签筛选
                     applyTagFilters();
                 });
             });
-            
+
             // 导航箭头功能
             function updateArrowsVisibility() {
                 leftArrow.classList.toggle('visible', navScroll.scrollLeft > 0);
                 rightArrow.classList.toggle('visible', navScroll.scrollLeft < navScroll.scrollWidth - navScroll.clientWidth - 10);
             }
-            
+
             navScroll.addEventListener('scroll', updateArrowsVisibility);
             window.addEventListener('resize', updateArrowsVisibility);
-            
+
             // 初始检查
             updateArrowsVisibility();
-            
+
             // 左右箭头点击事件
             leftArrow.addEventListener('click', function() {
                 navScroll.scrollBy({
@@ -1552,52 +1606,52 @@
                     behavior: 'smooth'
                 });
             });
-            
+
             rightArrow.addEventListener('click', function() {
                 navScroll.scrollBy({
                     left: 200,
                     behavior: 'smooth'
                 });
             });
-            
+
             // 标签筛选功能
             const tagItems = document.querySelectorAll('.tag-item');
             const clearTagsButton = document.getElementById('clearTags');
             const applyTagsButton = document.getElementById('applyTags');
-            
+
             // 标签点击事件
             tagItems.forEach(tag => {
                 tag.addEventListener('click', function() {
                     this.classList.toggle('active');
                 });
             });
-            
+
             // 清除标签筛选
             clearTagsButton.addEventListener('click', function() {
                 tagItems.forEach(tag => tag.classList.remove('active'));
                 applyTagFilters();
             });
-            
+
             // 应用标签筛选
             applyTagsButton.addEventListener('click', applyTagFilters);
-            
+
             // 应用标签筛选函数
             function applyTagFilters() {
                 const selectedTags = Array.from(document.querySelectorAll('.tag-item.active')).map(tag => tag.getAttribute('data-tag'));
                 const toyCards = document.querySelectorAll('.toy-card');
-                
+
                 // 获取当前激活的分类
                 const activeCategory = document.querySelector('.category-tab.active').getAttribute('data-category');
-                
+
                 toyCards.forEach(card => {
                     // 检查分类匹配
                     const cardCategories = card.getAttribute('data-categories').split(' ');
                     const categoryMatch = activeCategory === 'all' || cardCategories.includes(activeCategory);
-                    
+
                     // 检查标签匹配
                     const cardTags = card.getAttribute('data-tags').split(' ');
                     const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => cardTags.includes(tag));
-                    
+
                     // 显示或隐藏卡片
                     if (categoryMatch && tagMatch) {
                         card.style.display = '';
