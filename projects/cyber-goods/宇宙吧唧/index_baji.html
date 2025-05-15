@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>宇宙吧唧 (Cosmic Baji)</title>
     <style>
+        :root {
+            --gravity-x: 0;
+            --gravity-y: 0;
+        }
+
         html, body {
             height: 100%;
             margin: 0;
@@ -43,32 +48,36 @@
             background: rgba(0, 0, 0, 0.5);
         }
 
-        /* 上传按钮样式 */
+        /* 控制按钮样式 */
         .upload-container {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 15px;
+            right: 15px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-end;
         }
 
         .upload-button {
             background: rgba(255, 255, 255, 0.15);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
+            margin-bottom: 8px;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .upload-button:hover {
@@ -76,8 +85,21 @@
         }
 
         .upload-icon {
-            margin-right: 8px;
-            font-size: 16px;
+            margin-right: 6px;
+            font-size: 14px;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .upload-button {
+                padding: 6px 12px;
+                font-size: 11px;
+                max-width: 130px;
+            }
+
+            .upload-icon {
+                font-size: 12px;
+            }
         }
 
         /* 加载动画 */
@@ -316,7 +338,29 @@
         .baji.default-sway {
             animation: sway-animation 4s ease-in-out infinite;
         }
+
+        /* 当使用重力感应时，停止默认动画 */
+        .baji.gyro-active {
+            animation: none;
+        }
         /* --- End of Sway Animation --- */
+
+        /* --- 光线变幻效果 --- */
+        .dynamic-light {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 4;
+            mix-blend-mode: overlay;
+            transition: all 0.1s ease-out;
+        }
+        /* --- End of 光线变幻效果 --- */
 
         /* --- Single Click 360 Spin Animation --- */
         @keyframes spin-360 {
@@ -347,6 +391,7 @@
                 <div class="highlight-overlay" id="highlightOverlayFront"></div>
                 <div class="top-light" id="topLightFront"></div>
                 <div class="edge-light" id="edgeLightFront"></div>
+                <div class="dynamic-light" id="dynamicLightFront"></div>
             </div>
             <div class="baji-face baji-back">
                 <img src="https://oss.talesofai.cn/fe_assets/mng/17/1c0b32094074e69513e3fa897d8325ed.jpg" alt="吧唧背面" id="backImage">
@@ -356,11 +401,15 @@
         </div>
     </div>
 
-    <!-- 上传按钮 -->
+    <!-- 控制按钮容器 -->
     <div class="upload-container">
-        <button class="upload-button" id="uploadButton">
+        <button class="upload-button" id="uploadButton" style="margin-bottom: 10px;">
             <span class="upload-icon">📷</span>
             <span>上传自定义图片</span>
+        </button>
+        <button class="upload-button" id="gyroButton" style="background: rgba(98, 0, 234, 0.2);">
+            <span class="upload-icon">📱</span>
+            <span>开启重力感应</span>
         </button>
         <input type="file" id="imageUpload" accept="image/*" style="display: none;">
     </div>
@@ -376,10 +425,19 @@
             const shardsContainer = document.getElementById('shardsContainer');
             const particleContainer = document.getElementById('particleContainer');
             const uploadButton = document.getElementById('uploadButton');
+            const gyroButton = document.getElementById('gyroButton');
             const imageUpload = document.getElementById('imageUpload');
             const frontImage = document.getElementById('frontImage');
             const backImage = document.getElementById('backImage');
             const loadingOverlay = document.getElementById('loadingOverlay');
+            const dynamicLightFront = document.getElementById('dynamicLightFront');
+
+            // 重力感应状态
+            let gyroActive = false;
+            let gyroPermissionGranted = false;
+
+            // 保存上传的图片URL
+            let customImageUrl = null;
 
             // 修复返回按钮链接
             document.querySelector('.back-link').addEventListener('click', function(e) {
@@ -387,10 +445,148 @@
                 window.location.href = '/';
             });
 
+            // 检测是否为移动设备
+            function isMobileDevice() {
+                return (window.innerWidth <= 768) ||
+                       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            }
+
+            // 在移动设备上自动启用重力感应
+            if (isMobileDevice()) {
+                // 延迟一点启动重力感应，确保页面完全加载
+                setTimeout(() => {
+                    enableGyroscope();
+                }, 1000);
+            }
+
             // 处理上传按钮点击
             uploadButton.addEventListener('click', function() {
                 imageUpload.click();
             });
+
+            // 处理重力感应按钮点击
+            gyroButton.addEventListener('click', function() {
+                if (!gyroActive) {
+                    // 尝试启用重力感应
+                    enableGyroscope();
+                } else {
+                    // 禁用重力感应
+                    disableGyroscope();
+                }
+            });
+
+            // 启用重力感应
+            function enableGyroscope() {
+                // 检查设备是否支持DeviceOrientation事件
+                if (window.DeviceOrientationEvent) {
+                    // 检查是否需要请求权限（iOS 13+）
+                    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        DeviceOrientationEvent.requestPermission()
+                            .then(permissionState => {
+                                if (permissionState === 'granted') {
+                                    // 权限已授予，启用重力感应
+                                    activateGyroscope();
+                                } else {
+                                    alert('需要重力感应权限才能启用此功能');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('获取重力感应权限失败:', error);
+                                alert('无法获取重力感应权限');
+                            });
+                    } else {
+                        // 不需要请求权限的设备（Android等）
+                        activateGyroscope();
+                    }
+                } else {
+                    alert('您的设备不支持重力感应功能');
+                }
+            }
+
+            // 激活重力感应
+            function activateGyroscope() {
+                gyroActive = true;
+                gyroPermissionGranted = true;
+
+                // 更新按钮状态
+                gyroButton.style.background = 'rgba(98, 0, 234, 0.6)';
+                gyroButton.querySelector('span:last-child').textContent = '关闭重力感应';
+
+                // 添加gyro-active类，停止默认动画
+                bajiElement.classList.remove('default-sway');
+                bajiElement.classList.add('gyro-active');
+
+                // 添加设备方向事件监听器
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
+
+            // 禁用重力感应
+            function disableGyroscope() {
+                gyroActive = false;
+
+                // 更新按钮状态
+                gyroButton.style.background = 'rgba(98, 0, 234, 0.2)';
+                gyroButton.querySelector('span:last-child').textContent = '开启重力感应';
+
+                // 移除gyro-active类，恢复默认动画
+                bajiElement.classList.remove('gyro-active');
+                bajiElement.classList.add('default-sway');
+
+                // 重置吧唧和光线效果的位置
+                bajiElement.style.transform = '';
+                dynamicLightFront.style.background = 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)';
+
+                // 移除设备方向事件监听器
+                window.removeEventListener('deviceorientation', handleOrientation);
+            }
+
+            // 处理设备方向变化
+            function handleOrientation(event) {
+                if (!gyroActive) return;
+
+                // 获取设备方向数据
+                const beta = event.beta;  // X轴旋转 (-180 到 180)
+                const gamma = event.gamma; // Y轴旋转 (-90 到 90)
+
+                // 限制倾斜角度范围
+                const maxTilt = 15;
+                const tiltX = Math.max(-maxTilt, Math.min(maxTilt, gamma));
+                const tiltY = Math.max(-maxTilt, Math.min(maxTilt, beta));
+
+                // 应用倾斜效果到吧唧
+                bajiElement.style.transform = `rotateY(${tiltX}deg) rotateX(${-tiltY}deg)`;
+
+                // 计算光线位置（根据倾斜角度移动光源）
+                const lightPosX = 50 + (tiltX / maxTilt) * 30; // 30%的移动范围
+                const lightPosY = 50 + (tiltY / maxTilt) * 30;
+
+                // 更新动态光线效果
+                dynamicLightFront.style.background = `radial-gradient(circle at ${lightPosX}% ${lightPosY}%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)`;
+
+                // 根据倾斜角度调整粒子行为（轻微影响）
+                updateParticlesWithTilt(tiltX, tiltY);
+            }
+
+            // 根据倾斜角度更新粒子行为
+            function updateParticlesWithTilt(tiltX, tiltY) {
+                // 计算倾斜方向的重力影响
+                const gravityX = tiltX / 15; // 归一化到 -1 到 1 的范围
+                const gravityY = tiltY / 15;
+
+                // 更新粒子容器的变换，创造微妙的整体移动效果
+                particleContainer.style.transform = `translate(${gravityX * 5}px, ${gravityY * 5}px)`;
+
+                // 为粒子添加一个微妙的CSS变量，可以在动画中使用
+                document.documentElement.style.setProperty('--gravity-x', gravityX);
+                document.documentElement.style.setProperty('--gravity-y', gravityY);
+
+                // 光线强度随倾斜角度变化
+                const tiltMagnitude = Math.sqrt(tiltX * tiltX + tiltY * tiltY) / 15; // 0-1范围
+                const lightIntensity = 0.5 + tiltMagnitude * 0.3; // 0.5-0.8范围
+
+                // 更新动态光线的强度
+                dynamicLightFront.style.opacity = lightIntensity;
+            }
 
             // 处理图片上传
             imageUpload.addEventListener('change', function(e) {
@@ -409,12 +605,14 @@
                 // 创建图片URL
                 const url = URL.createObjectURL(file);
 
+                // 保存上传的图片URL
+                customImageUrl = url;
+
                 // 创建新图像对象用于预加载
                 const img = new Image();
                 img.onload = function() {
-                    // 设置正面和背面图片
-                    frontImage.src = url;
-                    backImage.src = url;
+                    // 只更新正面图片，保留原始的背面图片（带别针的效果）
+                    frontImage.src = customImageUrl;
 
                     // 确保背面图片样式正确应用
                     backImage.style.position = 'absolute';
@@ -455,8 +653,9 @@
             // 初始屏幕尺寸
             const screenSize = Math.max(windowWidth, windowHeight) * 0.7; // 使用屏幕较大尺寸的70%
 
-            // 银色和银蓝色色值数组，降低亮度
+            // 增强的粒子颜色数组，添加更多变化和一些亮色
             const particleColors = [
+                // 原始银色和银蓝色系
                 '#A0A0A0', // 暗银色
                 '#B3B3B3', // 暗淡灰色
                 '#C6C8DA', // 暗银蓝色
@@ -466,7 +665,19 @@
                 '#D0D8DF', // 暗爱丽丝蓝
                 '#959595', // 深暗银色
                 '#898989', // 暗灰色银
-                '#BCBCBC'  // 暗亮灰色
+                '#BCBCBC', // 暗亮灰色
+
+                // 添加一些亮色和星光色彩（低频率出现）
+                '#E0E8FF', // 亮蓝白
+                '#D8F0FF', // 淡天蓝
+                '#E6E6FA', // 薰衣草色
+                '#B0C4DE', // 亮钢蓝
+                '#ADD8E6', // 亮蓝色
+                '#87CEEB', // 天蓝色
+                '#B0E0E6', // 粉蓝色
+                '#F0FFFF', // 天蓝白
+                '#E6E6FF', // 淡紫蓝
+                '#F5F5FF'  // 幽灵白
             ];
 
             // 辅助函数: 平均分布粒子
@@ -516,13 +727,23 @@
                 // 随机轨道大小
                 const orbitScale = minOrbitSize + Math.random() * (maxOrbitSize - minOrbitSize);
 
-                // 随机粒子大小 (1.5px - 3.5px) - 减小粒子尺寸
-                const particleSize = 2 + Math.random() * 2.0;
+                // 随机粒子大小 (1.5px - 4.5px) - 增加一些变化
+                const particleSize = 1.5 + Math.random() * 3.0;
                 particle.style.width = `${particleSize}px`;
                 particle.style.height = `${particleSize}px`;
 
-                // 随机光晕效果 - 减弱光晕
-                const glowIntensity = Math.random() * 3 + 1;
+                // 增强的光晕效果 - 添加一些更亮的粒子
+                let glowIntensity;
+
+                // 10%的粒子有更强的光晕效果
+                if (Math.random() < 0.1) {
+                    glowIntensity = Math.random() * 5 + 3; // 3-8px 强光晕
+                    // 对于亮粒子，增加一点透明度变化
+                    particle.style.opacity = 0.7 + Math.random() * 0.3;
+                } else {
+                    glowIntensity = Math.random() * 3 + 1; // 1-4px 普通光晕
+                }
+
                 particle.style.boxShadow = `0 0 ${glowIntensity}px ${randomColor}`;
 
                 // 设置初始位置为画布中心
@@ -556,31 +777,31 @@
                         15% {
                             opacity: 0.8;
                             transform: translate3d(
-                                ${point.x * screenSize}px,
-                                ${point.y * screenSize}px,
+                                calc(${point.x * screenSize}px + var(--gravity-x) * 10px),
+                                calc(${point.y * screenSize}px + var(--gravity-y) * 10px),
                                 ${point.z * screenSize}px
                             ) scale(1);
                         }
                         30% {
                             transform: translate3d(
-                                ${point.x * orbitScale}px,
-                                ${point.y * orbitScale}px,
+                                calc(${point.x * orbitScale}px + var(--gravity-x) * 5px),
+                                calc(${point.y * orbitScale}px + var(--gravity-y) * 5px),
                                 ${point.z * orbitScale}px
                             ) scale(1);
                         }
                         70% {
                             opacity: 0.6;
                             transform: translate3d(
-                                ${point.x * orbitScale}px,
-                                ${point.y * orbitScale}px,
+                                calc(${point.x * orbitScale}px + var(--gravity-x) * 5px),
+                                calc(${point.y * orbitScale}px + var(--gravity-y) * 5px),
                                 ${point.z * orbitScale}px
                             ) scale(1);
                         }
                         85% {
                             opacity: 0.8;
                             transform: translate3d(
-                                ${point.x * screenSize * 0.5}px,
-                                ${point.y * screenSize * 0.5}px,
+                                calc(${point.x * screenSize * 0.5}px + var(--gravity-x) * 8px),
+                                calc(${point.y * screenSize * 0.5}px + var(--gravity-y) * 8px),
                                 ${point.z * screenSize * 0.5}px
                             ) scale(0.8);
                         }
@@ -853,11 +1074,16 @@
                         if (!this.classList.contains('perform-spin')) {
                             this.classList.add('default-sway');
 
-                            // 确保旋转后背面图片仍然正确显示
+                            // 确保旋转后背面图片仍然正确显示，并恢复自定义图片
                             setTimeout(() => {
                                 // 使用已声明的backImage变量
                                 if (backImage) {
                                     backImage.style.transform = 'none';
+                                }
+
+                                // 如果有自定义图片，确保它被正确应用
+                                if (customImageUrl) {
+                                    frontImage.src = customImageUrl;
                                 }
                             }, 50);
 
