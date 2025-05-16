@@ -377,7 +377,7 @@
 </head>
 <body>
     <!-- 返回主菜单链接 -->
-    <a href="/" class="back-link">返回主菜单</a>
+    <a href="../../../index.html" class="back-link">返回主菜单</a>
 
     <!-- 粒子特效容器 -->
     <div class="particle-container" id="particleContainer"></div>
@@ -440,11 +440,8 @@
             // 保存上传的图片URL
             let customImageUrl = null;
 
-            // 修复返回按钮链接
-            document.querySelector('.back-link').addEventListener('click', function(e) {
-                e.preventDefault();
-                window.location.href = '../../../index.html';
-            });
+            // 返回按钮链接由back-link-fix-new.js处理
+            // 不再需要这里的代码
 
             // 检测是否为移动设备
             function isMobileDevice() {
@@ -1110,5 +1107,8 @@
 
         });
     </script>
+
+    <!-- 修复返回链接的脚本 -->
+    <script src="../../../js/back-link-fix-new.js"></script>
 </body>
 </html>
