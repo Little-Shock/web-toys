@@ -409,7 +409,7 @@
         </button>
         <button class="upload-button" id="gyroButton" style="background: rgba(98, 0, 234, 0.2);">
             <span class="upload-icon">📱</span>
-            <span>开启重力感应</span>
+            <span id="gyroButtonText">开启重力感应</span>
         </button>
         <input type="file" id="imageUpload" accept="image/*" style="display: none;">
     </div>
@@ -426,6 +426,7 @@
             const particleContainer = document.getElementById('particleContainer');
             const uploadButton = document.getElementById('uploadButton');
             const gyroButton = document.getElementById('gyroButton');
+            const gyroButtonText = document.getElementById('gyroButtonText');
             const imageUpload = document.getElementById('imageUpload');
             const frontImage = document.getElementById('frontImage');
             const backImage = document.getElementById('backImage');
@@ -442,7 +443,7 @@
             // 修复返回按钮链接
             document.querySelector('.back-link').addEventListener('click', function(e) {
                 e.preventDefault();
-                window.location.href = '/';
+                window.location.href = '../../../index.html';
             });
 
             // 检测是否为移动设备
@@ -451,11 +452,25 @@
                        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             }
 
-            // 在移动设备上自动启用重力感应
+            // 检查是否是iOS设备
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            // 更新iOS设备上的按钮文本
+            if (isIOS && window.DeviceOrientationEvent &&
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                gyroButtonText.textContent = '点击启用重力感应';
+            }
+
+            // 在移动设备上自动启用重力感应（仅Android设备）
             if (isMobileDevice()) {
                 // 延迟一点启动重力感应，确保页面完全加载
                 setTimeout(() => {
-                    enableGyroscope();
+                    // 如果不是iOS设备，自动启用重力感应
+                    // iOS设备需要用户手动点击按钮启用，避免权限弹窗导致问题
+                    if (!isIOS && window.DeviceOrientationEvent &&
+                        typeof DeviceOrientationEvent.requestPermission !== 'function') {
+                        activateGyroscope();
+                    }
                 }, 1000);
             }
 
