@@ -133,6 +133,44 @@
             animation: spin 1s linear infinite;
         }
 
+        /* 调试面板样式 */
+        .debug-panel {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+            max-width: 200px;
+        }
+
+        .debug-panel.active {
+            display: block;
+        }
+
+        .debug-panel input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        .debug-panel button {
+            background: rgba(98, 0, 234, 0.4);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        .debug-panel button:hover {
+            background: rgba(98, 0, 234, 0.6);
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -407,9 +445,13 @@
             <span class="upload-icon">📷</span>
             <span>上传自定义图片</span>
         </button>
-        <button class="upload-button" id="gyroButton" style="background: rgba(98, 0, 234, 0.2);">
+        <button class="upload-button" id="gyroButton" style="background: rgba(98, 0, 234, 0.2); margin-bottom: 10px;">
             <span class="upload-icon">📱</span>
             <span id="gyroButtonText">开启重力感应</span>
+        </button>
+        <button class="upload-button" id="debugButton" style="background: rgba(0, 0, 0, 0.2);">
+            <span class="upload-icon">⚙️</span>
+            <span>调试设置</span>
         </button>
         <input type="file" id="imageUpload" accept="image/*" style="display: none;">
     </div>
@@ -417,6 +459,14 @@
     <!-- 加载动画 -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
+    </div>
+
+    <!-- 调试面板 -->
+    <div class="debug-panel" id="debugPanel">
+        <div>持握角度调整: <span id="betaAngleValue">50</span>°</div>
+        <input type="range" id="betaAngleSlider" min="30" max="70" value="50" step="1">
+        <div id="deviceInfo"></div>
+        <button id="toggleDebugBtn">关闭调试</button>
     </div>
 
     <script>
@@ -433,12 +483,26 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const dynamicLightFront = document.getElementById('dynamicLightFront');
 
+            // 调试相关元素
+            const debugButton = document.getElementById('debugButton');
+            const debugPanel = document.getElementById('debugPanel');
+            const betaAngleSlider = document.getElementById('betaAngleSlider');
+            const betaAngleValue = document.getElementById('betaAngleValue');
+            const deviceInfo = document.getElementById('deviceInfo');
+            const toggleDebugBtn = document.getElementById('toggleDebugBtn');
+
             // 重力感应状态
             let gyroActive = false;
             let gyroPermissionGranted = false;
 
+            // 用户持握角度偏好 (默认为50度)
+            let preferredBetaAngle = 50;
+
             // 保存上传的图片URL
             let customImageUrl = null;
+
+            // 是否显示调试信息
+            let showDebugInfo = false;
 
             // 返回按钮链接由back-link-fix-new.js处理
             // 不再需要这里的代码
@@ -487,6 +551,41 @@
                 }
             });
 
+            // 处理调试按钮点击
+            debugButton.addEventListener('click', function() {
+                toggleDebugPanel();
+            });
+
+            // 处理调试面板中的角度滑块变化
+            betaAngleSlider.addEventListener('input', function() {
+                preferredBetaAngle = parseInt(this.value);
+                betaAngleValue.textContent = preferredBetaAngle;
+                // 如果重力感应已激活，立即应用新的角度设置
+                if (gyroActive) {
+                    // 触发一次方向事件处理，应用新设置
+                    const lastOrientationEvent = window.lastOrientationEvent;
+                    if (lastOrientationEvent) {
+                        handleOrientation(lastOrientationEvent);
+                    }
+                }
+            });
+
+            // 处理调试面板中的切换按钮
+            toggleDebugBtn.addEventListener('click', function() {
+                toggleDebugPanel();
+            });
+
+            // 切换调试面板显示/隐藏
+            function toggleDebugPanel() {
+                showDebugInfo = !showDebugInfo;
+                debugPanel.classList.toggle('active', showDebugInfo);
+                debugButton.style.background = showDebugInfo ?
+                    'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.2)';
+
+                // 更新按钮文本
+                toggleDebugBtn.textContent = showDebugInfo ? '关闭调试' : '开启调试';
+            }
+
             // 启用重力感应
             function enableGyroscope() {
                 // 检查设备是否支持DeviceOrientation事件
@@ -530,6 +629,17 @@
 
                 // 添加设备方向事件监听器
                 window.addEventListener('deviceorientation', handleOrientation);
+
+                // 添加屏幕方向变化监听器，以便在设备旋转时调整显示
+                window.addEventListener('resize', handleScreenOrientationChange);
+
+                // 如果浏览器支持屏幕方向变化事件，也添加这个监听器
+                if (window.screen && window.screen.orientation) {
+                    window.screen.orientation.addEventListener('change', handleScreenOrientationChange);
+                } else if (window.orientation !== undefined) {
+                    // 旧版API支持
+                    window.addEventListener('orientationchange', handleScreenOrientationChange);
+                }
             }
 
             // 禁用重力感应
@@ -550,20 +660,77 @@
 
                 // 移除设备方向事件监听器
                 window.removeEventListener('deviceorientation', handleOrientation);
+
+                // 移除屏幕方向变化监听器
+                window.removeEventListener('resize', handleScreenOrientationChange);
+
+                // 移除屏幕方向变化的专用事件监听器
+                if (window.screen && window.screen.orientation) {
+                    window.screen.orientation.removeEventListener('change', handleScreenOrientationChange);
+                } else if (window.orientation !== undefined) {
+                    window.removeEventListener('orientationchange', handleScreenOrientationChange);
+                }
+            }
+
+            // 处理屏幕方向变化
+            function handleScreenOrientationChange() {
+                // 当屏幕尺寸变化时，可能是设备旋转，重新应用当前的方向数据
+                if (gyroActive) {
+                    // 重置吧唧位置，等待下一次设备方向事件更新
+                    bajiElement.style.transform = '';
+                    dynamicLightFront.style.background = 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)';
+                }
+            }
+
+            // 检测屏幕方向（竖屏/横屏）
+            function isPortraitMode() {
+                return window.innerHeight > window.innerWidth;
             }
 
             // 处理设备方向变化
             function handleOrientation(event) {
                 if (!gyroActive) return;
 
+                // 保存最后一次方向事件，用于调试面板调整时重新应用
+                window.lastOrientationEvent = event;
+
                 // 获取设备方向数据
                 const beta = event.beta;  // X轴旋转 (-180 到 180)
                 const gamma = event.gamma; // Y轴旋转 (-90 到 90)
+                const alpha = event.alpha; // Z轴旋转 (0 到 360)
+
+                // 检查是否为竖屏模式
+                const isPortrait = isPortraitMode();
 
                 // 限制倾斜角度范围
                 const maxTilt = 15;
-                const tiltX = Math.max(-maxTilt, Math.min(maxTilt, gamma));
-                const tiltY = Math.max(-maxTilt, Math.min(maxTilt, beta));
+
+                let tiltX, tiltY;
+
+                if (isPortrait) {
+                    // 竖屏模式下的坐标映射调整
+                    // 在竖屏模式下，我们希望设备正面朝向用户时显示吧唧的正面
+
+                    // gamma对应左右倾斜 (-90 到 90)
+                    // 保持左右倾斜的映射不变
+                    tiltX = Math.max(-maxTilt, Math.min(maxTilt, gamma));
+
+                    // beta对应前后倾斜 (-180 到 180)
+                    // 使用用户设置的持握角度作为基准点
+                    const betaOffset = preferredBetaAngle; // 使用用户设置的角度
+                    const adjustedBeta = beta - betaOffset;
+
+                    // 限制调整后的beta值范围，并反转方向使其更直观
+                    // 当设备向前倾斜时，吧唧向上倾斜；向后倾斜时，吧唧向下倾斜
+                    tiltY = Math.max(-maxTilt, Math.min(maxTilt, -adjustedBeta));
+                } else {
+                    // 横屏模式下的处理方式
+                    // 在横屏模式下，我们可能需要不同的映射
+                    tiltX = Math.max(-maxTilt, Math.min(maxTilt, gamma));
+
+                    // 在横屏模式下，beta=0时设备平放，我们希望显示吧唧正面
+                    tiltY = Math.max(-maxTilt, Math.min(maxTilt, beta));
+                }
 
                 // 应用倾斜效果到吧唧
                 bajiElement.style.transform = `rotateY(${tiltX}deg) rotateX(${-tiltY}deg)`;
@@ -577,6 +744,17 @@
 
                 // 根据倾斜角度调整粒子行为（轻微影响）
                 updateParticlesWithTilt(tiltX, tiltY);
+
+                // 如果调试面板打开，更新设备信息
+                if (showDebugInfo && deviceInfo) {
+                    deviceInfo.innerHTML = `
+                        <div style="margin-top: 8px;">设备方向数据:</div>
+                        <div>Beta: ${beta.toFixed(1)}°</div>
+                        <div>Gamma: ${gamma.toFixed(1)}°</div>
+                        <div>调整后Beta: ${(beta - preferredBetaAngle).toFixed(1)}°</div>
+                        <div>屏幕模式: ${isPortrait ? '竖屏' : '横屏'}</div>
+                    `;
+                }
             }
 
             // 根据倾斜角度更新粒子行为
