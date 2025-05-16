@@ -615,31 +615,7 @@
         else init();
 
         // 修复返回链接
-        function fixBackLink() {
-            const backLink = document.querySelector('.back-link');
-            if (!backLink) return;
-
-            // 获取原始href
-            const originalHref = backLink.getAttribute('href');
-
-            // 构建绝对URL
-            const absoluteUrl = window.location.origin + '/';
-
-            // 修改返回链接的href属性
-            backLink.setAttribute('href', absoluteUrl);
-
-            // 添加点击事件处理
-            backLink.addEventListener('click', function(e) {
-                // 阻止默认行为
-                e.preventDefault();
-
-                // 在URL中添加时间戳参数，确保主页刷新
-                const timestamp = new Date().getTime();
-                const urlWithTimestamp = absoluteUrl + '?t=' + timestamp;
-
-                // 使用绝对URL导航
-                window.location.href = urlWithTimestamp;
-            });
+        // 返回链接修复已移至外部脚本);
         }
 
         // 页面加载完成后修复返回链接
@@ -648,5 +624,6 @@
 
     <!-- 添加返回链接修复脚本 -->
     <script src="../../js/back-link-fix.js"></script>
+    <script src="../../../js/back-link-fix-mobile.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 /**
- * 修复项目页面中的返回链接
- *
+ * 修复移动端项目页面中的返回链接
+ * 
  * 问题原因：
- * 在移动端浏览器中，使用相对路径的返回链接（如 "../index.html"）可能导致
+ * 在移动端浏览器中，使用相对路径的返回链接可能导致
  * 用户返回主页后无法再次点击项目链接，或者在移动端自动返回主页。
  * 这个脚本将修复这些问题。
  */
@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function fixBackLink() {
     // 获取返回链接元素 - 支持多种可能的返回按钮选择器
-    const backLink = document.querySelector('.back-link') ||
-                     document.querySelector('.back-button') ||
+    const backLink = document.querySelector('.back-link') || 
+                     document.querySelector('.back-button') || 
                      document.querySelector('#backBtn') ||
                      document.querySelector('[id*="back"]') ||
                      document.querySelector('[class*="back"]');

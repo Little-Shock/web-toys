@@ -279,9 +279,7 @@
             updateReturnPhysicsParams();
         }
 
-        backBtn.addEventListener('click', () => {
-            window.location.href = '../../../index.html';
-        });
+        // 返回按钮处理已移至外部脚本
 
         settingsToggleBtn.addEventListener('click', () => settingsPanel.classList.toggle('open'));
         settingsCloseBtn.addEventListener('click', () => settingsPanel.classList.remove('open'));
@@ -588,6 +586,6 @@
             animate(lastTimestamp);
         };
     </script>
+    <script src="../../../js/back-link-fix-mobile.js"></script>
 </body>
 </html>
-

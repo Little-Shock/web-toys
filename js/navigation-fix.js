@@ -43,4 +43,36 @@ function fixProjectLinks() {
             sessionStorage.setItem('navigatingToProject', 'true');
         });
     });
+
+    // 检测是否为移动设备
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // 在移动设备上添加额外的处理
+    if (isMobile) {
+        // 监听页面可见性变化，处理返回按钮导致的问题
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // 页面重新可见时，检查是否需要刷新
+                const needsRefresh = sessionStorage.getItem('needsRefreshOnReturn');
+                if (needsRefresh === 'true') {
+                    sessionStorage.removeItem('needsRefreshOnReturn');
+                    // 添加一个短暂延迟，确保页面完全可见后再刷新
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 100);
+                }
+            }
+        });
+
+        // 在用户离开页面时设置标记
+        window.addEventListener('pagehide', function() {
+            // 如果用户是通过点击项目链接离开的，不需要在返回时刷新
+            if (sessionStorage.getItem('navigatingToProject') === 'true') {
+                sessionStorage.removeItem('navigatingToProject');
+            } else {
+                // 否则，在返回时可能需要刷新
+                sessionStorage.setItem('needsRefreshOnReturn', 'true');
+            }
+        });
+    }
 }
