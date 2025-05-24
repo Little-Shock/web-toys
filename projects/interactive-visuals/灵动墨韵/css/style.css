@@ -1,0 +1,19 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#fluid-canvas {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+
+#fluid-canvas:active {
+    cursor: grabbing;
+} 
