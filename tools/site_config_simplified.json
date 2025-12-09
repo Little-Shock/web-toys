@@ -4,7 +4,6 @@
   "team_name": "Little Shock",
   "team_link": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
   "copyright": "© 2025 Little Shock 团队 | 所有项目均为开源网页玩具",
-
   "categories": [
     {
       "id": "interactive-visuals",
@@ -63,6 +62,13 @@
       "icon": "🔧"
     },
     {
+      "id": "neta",
+      "name": "Neta 设定",
+      "description": "沉浸式世界观展示与互动体验",
+      "order": 9,
+      "icon": "📜"
+    },
+    {
       "id": "archived",
       "name": "归档项目",
       "description": "历史项目和早期版本，见证我们的发展历程",
@@ -70,7 +76,6 @@
       "icon": "📦"
     }
   ],
-
   "category_assignments": {
     "赛博流光": "interactive-visuals",
     "墨韵": "interactive-visuals",
@@ -80,41 +85,32 @@
     "粒子花园": "interactive-visuals",
     "粒子交互-2": "interactive-visuals",
     "光影粒子": "interactive-visuals",
-
     "量子弹球": "physics-simulations",
     "blackhole": "physics-simulations",
     "三体模拟": "physics-simulations",
-
     "赛博故障风": "cyber-goods",
     "光绘": "creative-tools",
     "织梦": "creative-tools",
     "量子涂鸦": "creative-tools",
-
     "声音雕塑": "music-and-sound",
     "节奏星图": "music-and-sound",
     "电子木鱼": "music-and-sound",
-
     "neuron": "visual-effects",
     "spiderweb": "visual-effects",
     "赛博闪卡": "visual-effects",
     "Holo-Card-Tilt": "visual-effects",
     "镭射卡": "visual-effects",
     "放烟花": "visual-effects",
-
     "find_emoji": "games-and-entertainment",
     "赛博流麻": "games-and-entertainment",
     "赛博流麻-Gemini": "games-and-entertainment",
-
     "三维谷子空间": "cyber-goods",
     "赛博流体-Cyber-Fluid": "cyber-goods",
     "赛博动感相框-Cyber-Motion-Frame": "cyber-goods",
-
     "放大镜后": "utility-tools",
-
     "Holofoil Card": "archived",
     "赛博流麻_old": "archived"
   },
-
   "tags": [
     {
       "id": "touch-interaction",
