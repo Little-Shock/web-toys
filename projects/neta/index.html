@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>夜十字魔王城 | The Night Cross Citadel</title>
+    
+    <!-- 核心库 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- 字体库 -->
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --c-gold: #FFD700;
+            --c-gold-dim: #998100;
+            --c-bg-dark: #050505;
+            --c-panel-bg: rgba(10, 10, 12, 0.95);
+        }
+
+        body {
+            background-color: var(--c-bg-dark);
+            color: #E0E0E0;
+            font-family: 'Noto Serif SC', serif;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .font-epic { font-family: 'Ma Shan Zheng', cursive; }
+
+        /* 隐藏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .no-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 2px;
+        }
+        .no-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.5);
+        }
+
+        /* 布局容器 */
+        .layout-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 左侧信息面板 */
+        .info-panel {
+            width: 500px;
+            flex-shrink: 0;
+            background: var(--c-panel-bg);
+            border-right: 1px solid rgba(255, 215, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 20;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        /* 右侧展示区 */
+        .showcase-area {
+            flex-grow: 1;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 图片容器 */
+        .image-container {
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        
+        .main-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 装饰性背景 */
+        .bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a1a1a' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 导航点 */
+        .nav-dots {
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: var(--c-gold);
+            transform: scale(1.5);
+            box-shadow: 0 0 10px var(--c-gold);
+        }
+
+        /* 文本样式 */
+        .text-gold-gradient {
+            background: linear-gradient(to bottom, #FFD700, #B8860B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .section-title {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            color: var(--c-gold);
+            font-weight: bold;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 2px;
+            background: var(--c-gold);
+        }
+
+        .info-block {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+        .info-block:hover {
+            border-color: rgba(255,215,0,0.2);
+        }
+
+        .facility-item {
+            margin-bottom: 10px;
+            padding-left: 12px;
+            border-left: 2px solid rgba(255,215,0,0.3);
+        }
+
+        /* 按钮 */
+        .nav-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.6);
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Serif SC', serif;
+        }
+        .nav-btn:hover {
+            border-color: var(--c-gold);
+            color: var(--c-gold);
+        }
+        
+        /* 开屏 */
+        .intro-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .enter-btn {
+            margin-top: 3rem;
+            padding: 1rem 3rem;
+            border: 1px solid var(--c-gold);
+            color: var(--c-gold);
+            font-family: 'Noto Serif SC', serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.2em;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+        .enter-btn:hover {
+            background: var(--c-gold);
+            color: #000;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.8s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+
+        /* 详细内容样式 */
+        .detail-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #b0b0b0;
+        }
+        .detail-text strong {
+            color: #e0e0e0;
+        }
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .layout-container {
+                flex-direction: column;
+            }
+
+            .showcase-area {
+                height: 45vh;
+                width: 100%;
+                order: 1;
+                flex-grow: 0;
+            }
+
+            .info-panel {
+                width: 100%;
+                height: 55vh;
+                order: 2;
+                border-right: none;
+                border-top: 1px solid rgba(255, 215, 0, 0.15);
+            }
+
+            .nav-dots {
+                right: auto;
+                left: 50%;
+                bottom: 20px;
+                top: auto;
+                transform: translateX(-50%);
+                flex-direction: row;
+                width: auto;
+            }
+            
+            .image-container {
+                padding: 20px;
+            }
+
+            .intro-screen h1 {
+                font-size: 3rem !important; /* Override text-7xl */
+                line-height: 1.2;
+                text-align: center;
+            }
+            
+            .intro-screen .text-xl {
+                font-size: 1rem !important;
+                letter-spacing: 0.2em !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="h-screen w-screen overflow-hidden">
+        
+        <!-- 开屏页面 -->
+        <transition name="fade">
+            <div v-if="showIntro" class="intro-screen">
+                <h1 class="text-7xl font-epic text-gold-gradient mb-4 tracking-widest drop-shadow-[0_0_15px_rgba(255,215,0,0.3)]">
+                    夜十字魔王城
+                </h1>
+                <div class="text-xl text-gray-500 tracking-[0.5em] uppercase font-light border-t border-b border-gray-800 py-2">
+                    The Night Cross Citadel
+                </div>
+                <button @click="enterSite" class="enter-btn">
+                    进入领域 · ENTER
+                </button>
+            </div>
+        </transition>
+
+        <!-- 主界面 -->
+        <div v-show="!showIntro" class="layout-container">
+            <!-- 左侧：信息面板 -->
+            <div class="info-panel" @wheel.stop>
+                <!-- 顶部 Logo -->
+                <div class="p-6 border-b border-white/10 flex-shrink-0">
+                    <h1 class="text-2xl font-epic text-gold-gradient tracking-widest cursor-pointer" @click="showIntro=true">
+                        夜十字魔王城
+                    </h1>
+                    <div class="text-xs text-gray-500 mt-1 tracking-[0.2em] uppercase">The Night Cross Citadel</div>
+                </div>
+
+                <!-- 滚动内容区 -->
+                <div class="flex-grow overflow-y-auto no-scrollbar p-6 relative" ref="scrollContainer" @wheel.stop>
+                    <transition name="fade" mode="out-in">
+                        <div :key="currentSlide.title">
+                            <!-- 小标题 -->
+                            <div class="text-[#B8860B] font-bold tracking-widest text-xs mb-2 uppercase">
+                                {{ currentSlide.subTitle }}
+                            </div>
+
+                            <!-- 主标题 -->
+                            <h2 class="text-3xl text-white font-bold mb-4 font-epic leading-tight">
+                                {{ currentSlide.title }}
+                            </h2>
+
+                            <!-- 核心定位 -->
+                            <blockquote class="border-l-2 border-[#FFD700] pl-4 py-2 my-4 text-gray-300 italic bg-white/5 rounded-r text-sm">
+                                {{ currentSlide.core }}
+                            </blockquote>
+
+                            <!-- 完整详细内容 (HTML渲染) -->
+                            <div class="detail-text" v-html="currentSlide.fullContent"></div>
+
+                        </div>
+                    </transition>
+                </div>
+
+                <!-- 底部控制栏 -->
+                <div class="p-4 border-t border-white/10 flex justify-between items-center bg-black/20 flex-shrink-0">
+                    <button @click="prevSlide" class="nav-btn group text-sm" :disabled="currentIndex === 0">
+                        <i class="fas fa-arrow-left mr-2"></i> PREV
+                    </button>
+                    <span class="text-[#FFD700] font-mono text-lg">
+                        {{ String(currentIndex + 1).padStart(2, '0') }} <span class="text-gray-600 text-xs">/ {{ slides.length }}</span>
+                    </span>
+                    <button @click="nextSlide" class="nav-btn group text-sm" :disabled="currentIndex === slides.length - 1">
+                        NEXT <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧：图片展示 -->
+            <div class="showcase-area">
+                <div class="bg-pattern"></div>
+                
+                <div class="image-container" ref="imageContainer">
+                    <img :src="getImagePath(currentSlide.image)" 
+                         class="main-image" 
+                         :alt="currentSlide.title">
+                </div>
+
+                <div class="nav-dots">
+                    <div v-for="(slide, index) in slides" :key="index"
+                         class="dot"
+                         :class="{ 'active': currentIndex === index }"
+                         @click="goToSlide(index)"
+                         :title="slide.title">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const showIntro = ref(true);
+                const currentIndex = ref(0);
+                const imageContainer = ref(null);
+                const scrollContainer = ref(null);
+                const isAnimating = ref(false);
+
+                const slides = [
+                    // ========== 基础设定 ==========
+                    {
+                        subTitle: "The Demon Lord",
+                        title: "魔王 · 牧野世流",
+                        core: "穿越而来的新任魔王，没有魔力却掌握着魔王城的一切",
+                        image: "[基础设定] 魔王.png",
+                        fullContent: `
+                            <p class="mb-4">现任魔王为<strong>牧野 世流</strong>，是个个性有些阴郁的社恐少女，是没有魔力，不会魔法的人类。她有一本精心制作的魔物设定集，网名为夜十字。</p>
+                            <p class="mb-4">一天，她在暗巷里发现一个闪着紫光的传送门。"是否前往魔王城？"</p>
+                            <p class="mb-4">厌倦了现实世界的她踏入了门中，成为了魔王。</p>
+                            <div class="section-title mt-6">魔王的能力</div>
+                            <ul class="list-disc list-inside space-y-2 text-gray-400">
+                                <li>使用召唤卡牌在召唤台召唤魔物，并与魔物签订契约。</li>
+                                <li>当魔王看向魔王城里的设施，会显示出解释窗口与教程演示。</li>
+                            </ul>
+                        `
+                    },
+                    {
+                        subTitle: "Origin State",
+                        title: "夜十字魔王城",
+                        core: "一座被风暴包围的废墟城，唯有召唤台完好无损",
+                        image: "[基础设定] 夜十字魔王城.png",
+                        fullContent: `
+                            <p class="mb-4">一座被风暴包围的废墟城，包含<strong>地下城、庭院与城堡</strong>三部分。</p>
+                            <p class="mb-4">魔王初次到来时，这里十分破败：城墙倒塌，洞窟塌陷……唯有地下一层的召唤台完好无损，闪烁着微弱的紫色光芒。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Structure Diagram",
+                        title: "城堡整体架构",
+                        core: "十七层中央主塔与四大副塔，以及深入地底的地下城",
+                        image: "[城堡] 整体架构.png",
+                        fullContent: `
+                            <div class="section-title">核心主体</div>
+                            <p class="mb-4"><strong>中央主塔</strong>（17层核心，含魔王寝宫、议事厅、图书馆等核心功能）</p>
+                            
+                            <div class="section-title mt-6">四大副塔</div>
+                            <p class="mb-4">环绕主塔分布，通过空中连廊（3层、8层、15层）互通，承接星象、龙族、雷电、军械专属功能</p>
+                            
+                            <div class="section-title mt-6">跨层设施</div>
+                            <ul class="list-disc list-inside space-y-2 text-gray-400">
+                                <li>中央旋转楼梯（贯穿全塔）</li>
+                                <li>魔法升降梯（连接各功能区）</li>
+                                <li>地下通道（直通地下城第一层）</li>
+                            </ul>
+                        `
+                    },
+                    {
+                        subTitle: "Resource System",
+                        title: "魔王城三大能源物质",
+                        core: "燃素、电晶体、魔力——维持魔王城运转的三大基石",
+                        image: "[资源] 燃素电晶体魔力.png",
+                        fullContent: `
+                            <div class="section-title">燃素</div>
+                            <p class="mb-4">魔王城建设所需的重要资源之一，至纯的火元素，魔王城三大能源物质之一，可用于燃烧，能源供应，烹饪，取暖，可与魔力等资源进行转换，由煤矿，木材及火系魔物产出。</p>
+                            
+                            <div class="section-title mt-6">电晶体</div>
+                            <p class="mb-4">魔王城建设所需的重要资源之一，将雷电储存到水晶矿中得到的物质，魔王城三大能源之一，可用于能源供应，武器制作，设备制作等，可与魔力等资源进行转换，由雷电塔将雷电复合至水晶矿上产出。</p>
+                            
+                            <div class="section-title mt-6">魔力</div>
+                            <p class="mb-4">魔王城建设所需的重要资源之一，几乎所有魔王城设施运作所需的能量，魔王城三大能源物质之一，用途广泛，产出多样。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Summoning System",
+                        title: "异界召唤仪式",
+                        core: "以魔力为代价，从异世界召唤魔物来到魔王城",
+                        image: "[基础设定] 召唤.png",
+                        fullContent: `
+                            <p class="mb-4">生物来往魔王城的方式，通过魔王城地下一层的召唤台，魔王能够使用附有魔物信息的<strong>召唤卡牌</strong>，以魔力池中的魔力为代价从其他世界召唤符合特征的魔物来到魔王城。</p>
+                            <p class="mb-4">一扇紫色的传送门会出现在"最可能被召唤"且"最符合条件"的魔物面前，附有相应的"<strong>召唤契约</strong>"，魔物踏入传送门，就会来到夜十字魔王城。</p>
+                            <p class="mb-4">夜十字魔王城的大部分魔物，包括魔王都是被召唤至此。而召唤魔王的人目前尚未可知。</p>
+                        `
+                    },
+                    // ========== 地下城各层 ==========
+                    {
+                        subTitle: "Floor 01",
+                        title: "第一层：地下城大厅",
+                        core: "独占层·全功能中枢——魔王城地下城的门户枢纽",
+                        image: "第一层 地下城大厅.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">魔王城地下城的"门户枢纽"，高度魔法化改造，兼顾交通、召唤、物流与行政功能，是所有魔物与访客的第一站。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>天然穹顶洞窟（高50米，直径1000米），岩壁被魔法符文覆盖，泛着柔和的蓝紫色光芒，地面铺有防滑黑曜石砖，无自然障碍物，视野开阔。</p>
+                                <p class="mt-2"><strong>温度：</strong>恒温22℃，由魔法阵调节，四季如春，适配所有种族魔物活动。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4">岩壁富含"辉光石"，无需额外照明，符文可调节亮度；地下埋设"传导水晶"，为全层魔法设施供能。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 中央传送广场</strong></p>
+                                <p class="text-gray-500 text-sm">占地3000㎡，中心是直径15米的巨型传送台（可连接地表魔王城、第二层商业中心、第七层水晶矿脉），四周分布8个小型传送点（通往各层宿舍区）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 召唤台</strong></p>
+                                <p class="text-gray-500 text-sm">广场东侧，外观古老的祭坛，在魔王城诞生之初就已存在，周围环绕"召唤魔力池"，以水晶矿为燃料，是魔王"夜"召唤魔物来到魔王城的地方。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 物流中枢</strong></p>
+                                <p class="text-gray-500 text-sm">广场西侧，包含"重力传送带"（连接第二层仓库与各层资源点）、"次元储物间"（由空间魔物看管，储存跨层运输的物资）、"登记处"（魔物进出、物资流通需登记，由石像鬼守卫）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 行政办公厅</strong></p>
+                                <p class="text-gray-500 text-sm">洞窟北侧独立石室，魔王直属秘书团办公地，处理地下城日常事务，配备"魔法通讯镜"（监控）连接各层管理处。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>5. 地下城信号站</strong></p>
+                                <p class="text-gray-500 text-sm">魔法通讯设备，兼具收发信号，自动翻译等功能的巨大炼金矩阵，是魔王城的网络信号来源。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与魔物</div>
+                            <p class="mb-4"><strong>常驻魔物：</strong>空间魔物、石像鬼守卫、秘书团高阶魔物，无专属宿舍（多居住在第三/四层），仅设临时休息室。</p>
+                            
+                            <div class="section-title mt-6">联动设计</div>
+                            <p class="mb-4">传送台能量溢出的魔力，为物流中枢的次元储物间提供稳定能量，减少储物损耗；召唤台的余温被符文引导至休息室，维持温暖。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 02",
+                        title: "第二层：喧嚣集市",
+                        core: "商业娱乐中心·高度开发层——魔物的繁华生活区",
+                        image: "第二层 喧嚣集市.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">魔物的"繁华生活区"，洞窟经拓宽改造，兼顾商业交易、餐饮娱乐、竞技社交，是地下城人气最高的区域。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>大型分叉洞窟群，主通道宽10米，两侧分布大小不一的石室（改造为店铺/酒馆），岩壁悬挂彩色魔灯（由萤火虫魔物培育），地面铺有木质地板（防潮防腐），部分区域保留天然石笋，改造为装饰景观。</p>
+                                <p class="mt-2"><strong>温度：</strong>恒温25℃，受第一层魔法阵延伸影响，湿度适中，无闷热感。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4">岩壁含"吸附石"，可吸附空气中的灰尘与异味，保持环境洁净；地下暗河贯穿，提供生活用水。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 中央集市街</strong></p>
+                                <p class="text-gray-500 text-sm">主通道两侧布满商铺，涵盖魔物所需的一切——武器店（由矮人铁匠与恶魔合作经营）、药剂铺（毒蘑菇魔物炼制毒药/疗伤药）、食材店（沼泽区魔物供应菌菇/鱼类）、魔法道具店（水晶区魔物加工饰品）、衣物店（蜘蛛魔物纺织的蛛丝布料）等等。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 喧闹酒馆集群</strong></p>
+                                <p class="text-gray-500 text-sm">集市街南侧，有多家主题酒馆和餐厅，满足一切魔物的口味。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 魔王斗技场</strong></p>
+                                <p class="text-gray-500 text-sm">洞窟最深处的巨型石室（可容纳5000名观众），圆形擂台由熔岩区运来的黑曜石铺设（耐高温耐冲击），四周设魔法防护栏（防止战斗余波伤人），顶部悬挂"转播水晶"（可将赛事画面传送到各层公共区域），定期举办魔物竞技、种族挑战赛，获胜者可获货币奖励。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 娱乐配套区</strong></p>
+                                <p class="text-gray-500 text-sm">斗技场西侧，包含"魔物影院"（由光影魔物投射影像）、"桌游馆"（骨牌、骰子等魔物桌游）、"按摩店"（石肤魔物提供岩石按摩，史莱姆魔物提供SPA），游戏厅等等。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>5. 仓库与后勤区</strong></p>
+                                <p class="text-gray-500 text-sm">集市街北侧，连接第一层物流中枢，储存商铺货物与斗技场物资，由哥布林劳工负责搬运。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与魔物宿舍</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>各类商铺老板、酒馆服务员、斗技场裁判/守卫、哥布林劳工。</p>
+                            <p class="mb-4"><strong>宿舍区：</strong>洞窟上层的小型石室群，按种族划分——哥布林集体宿舍（多人一间，简洁实用）、商铺老板独立宿舍（带小型储物间）、斗技场选手专属宿舍（带训练室），均配备基础家具与魔灯。</p>
+                            
+                            <div class="section-title mt-6">联动设计</div>
+                            <p class="mb-4">地下暗河提供生活用水，部分水流引入酒馆酿酒、厨房洗菜；斗技场的废弃武器可送至第一层，再转运至熔岩区铁匠铺重铸。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 03",
+                        title: "第三层：薄暮回廊",
+                        core: "半明过渡区·暗影商贸与休闲带——暗影休闲枢纽",
+                        image: "第三层 薄暮回廊.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">地下城的"暗影休闲枢纽"，兼具半公开商贸、静谧休憩、过渡缓冲功能，适配喜弱光、擅长潜行或偏爱安静的魔物，是连接繁华集市与干燥盐穴的"中间地带"。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>狭长蜿蜒的洞窟群，穹顶布满会随魔力流动调节亮度的"暮光之虫"（发出柔和的淡紫色微光，亮度仅为第二层的1/3），岩壁呈灰紫色，生长着垂落的"暗影藤蔓"（叶片泛着银纹，能吸附噪音），地面铺有柔软的苔藓与碎石混合层，部分区域形成天然石室，空气微凉湿润，弥漫着藤蔓与矿石混合的清冽气息。</p>
+                                <p class="mt-2"><strong>温度：</strong>恒温19℃，介于第二层（25℃）与第四层（日间30℃）之间，凉爽不闷热，干燥不潮湿，完美缓冲上下层的温度差异。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心资源：</strong>暮光石（蕴含弱光魔力，可制作照明道具、弱化魔法屏障）、暗影藤蔓纤维（韧性极强，可编织潜行斗篷、隔音布料）、微光菌（生长在岩壁缝隙，可食用，口感清甜，也能提炼弱光药剂）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 暗影集市</strong></p>
+                                <p class="text-gray-500 text-sm">主通道两侧的半隐蔽摊位，由潜行魔物、暗影精灵经营，售卖"灰色商品"——潜行卷轴、隔音饰品、弱光视力药剂、盐矿开采的稀有盐晶、第二层集市稀缺的魔物素材，交易无需登记，支持以物易物，设"暗影中介"（由高阶潜行魔物担任，保障交易安全）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 静谧休憩区</strong></p>
+                                <p class="text-gray-500 text-sm">洞窟深处的开阔石室，布置着藤蔓编织的躺椅、石质茶桌，提供微光菌泡制的茶饮、冰镇浆果（冰屑来自第八层，经传送台转运），配有隔音魔法阵，隔绝第二层的喧嚣与第三层的风沙声，是高阶魔物放松、低阶魔物休憩的"避风港"。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 魔物宿舍区</strong></p>
+                                <p class="text-gray-500 text-sm">暗影藤蔓环绕的独立洞穴，适配喜弱光种族——潜行魔物（洞穴设暗门与通风道，便于隐蔽行动）、暗影精灵（居住在藤蔓编织的树屋式石室，与环境共生）、血族的古堡，宿舍区设"微光补给站"，提供暮光石照明、暗影藤蔓编织的床品。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 暮光工坊</strong></p>
+                                <p class="text-gray-500 text-sm">由暗影精灵、蜘蛛与地精合作经营，加工暮光石为照明道具、暗影藤蔓为布料，产品一部分供应暗影集市，一部分送至第二层魔法道具店售卖，工坊设"微光能量池"（储存暮光之虫的弱光魔力，为加工提供动力）。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>潜行魔物、暗影精灵、血族等</p>
+                            <p class="mb-4"><strong>联动：</strong>暗影藤蔓纤维送至第二层衣物店，制作高端隔音服饰；暮光石经第三层盐矿加工坊打磨，制成"盐晶暮光灯"（适配盐穴干燥环境）；第三层的干燥气流引入休憩区，吹干藤蔓上的水汽。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 04",
+                        title: "第四层：砂岩盐穴",
+                        core: "干燥资源区·盐矿产业中心——地下城的盐矿生产基地",
+                        image: "第四层 砂岩盐穴.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">地下城的"盐矿生产基地"，兼具居住与产业功能，干燥环境适配耐渴型魔物。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>干燥砂岩洞窟，岩壁呈土黄色，布满天然盐晶纹理，部分区域形成盐柱/盐钟乳，地面多沙质土壤，偶有小型盐矿洞穴，通风良好（由风系魔物维护气流）。</p>
+                                <p class="mt-2"><strong>温度：</strong>日间30℃，夜间10℃，昼夜温差大，干燥少水汽。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心矿物：</strong>岩盐矿（纯度高，可直接食用或加工为调味盐、腌制盐）、少量"砂岩矿"（可用于建筑材料）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 盐矿开采区</strong></p>
+                                <p class="text-gray-500 text-sm">洞窟南侧，由"岩魔""沙虫魔物"负责开采，采用手工挖掘+魔法剥离（避免破坏盐矿纯度），开采出的岩盐经传送带送至加工区。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 盐品加工坊</strong></p>
+                                <p class="text-gray-500 text-sm">开采区北侧，将岩盐加工为细盐、粗盐、调味盐（添加菌菇粉/熔岩椒）、盐砖（供食草魔物食用），产品通过跨层传送带送至第二层集市与各层厨房。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 魔物宿舍区</strong></p>
+                                <p class="text-gray-500 text-sm">洞窟东侧高地势石室，适配耐干燥种族——岩魔（居住在天然岩穴中，无需额外家具）、沙虫魔物（居住在沙质土壤的洞穴里）等，宿舍区设公共饮水池（由第四层暗河引水，经吸附石过滤）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 生活配套</strong></p>
+                                <p class="text-gray-500 text-sm">主题餐厅（以盐焗、烤制食物为主，使用砂岩锅具）、"盐浴馆"（将岩盐磨成粉末，提供盐浴，可清洁皮肤、缓解疲劳）、小型杂货铺（售卖饮用水、干燥食材）。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>岩魔、沙虫魔物、盐品加工匠</p>
+                            <p class="mb-4"><strong>联动：</strong>盐矿加工产生的盐尘，经风系魔物引导至特定区域，形成"盐雾区"（可用于保存食物）；部分盐矿洞穴与第五层沼泽区相连，形成"盐沼过渡带"（滋生耐盐菌菇，可食用）。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 05",
+                        title: "第五层：菌菇沼泽",
+                        core: "湿地生态区·食材与药材基地——地下城的天然农场",
+                        image: "第五层 菌菇沼泽.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">地下城的"天然农场"，地下水上涌形成湿地，兼具食材供应、药材炼制、居住功能，潮湿环境适配水生/菌生魔物。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>大面积沼泽地（水深0.5-2米），水面漂浮绿色水藻，岩壁与地面生长大量巨型菌菇（高2-10米，伞盖可遮雨，菌褶发光，提供天然照明），部分区域为干燥岛礁（改造为居住/加工区），空气湿润，弥漫菌菇清香与轻微沼气（经魔法处理无毒性）。</p>
+                                <p class="mt-2"><strong>温度：</strong>恒温28℃，高温高湿，无季节变化。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心资源：</strong>巨型菌菇（可食用，部分有药用价值）、沼泽淤泥（富含养分，可用于种植）、水生植物（如灯芯草、水莲，可用于编织/入药）；岩壁含"沼铁"（可炼制韧性武器）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 菌菇种植区</strong></p>
+                                <p class="text-gray-500 text-sm">沼泽边缘的湿润土壤区，由"蘑菇魔物""菌丝魔物"培育各类菌菇——食用类（肥嫩伞菇、菌柄笋）、药用类（解毒菌、疗伤菌）、调味类（辛辣菌、香甜菌），定期采摘后送至第二层集市与各层厨房。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 沼泽捕捞区</strong></p>
+                                <p class="text-gray-500 text-sm">沼泽中心区域，水生魔物（如鳄鱼魔物、鱼人）负责捕捞沼泽鱼、水虫、软体动物（食材来源），设"晒鱼场"（利用第三层吹来的干燥气流风干鱼干）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 魔物宿舍区</strong></p>
+                                <p class="text-gray-500 text-sm">干燥岛礁上的木质高脚屋（防潮防沼泽生物），适配水生/菌生种族——鱼人（房屋带水下通道，直通沼泽）、蘑菇魔物（居住在巨型菌菇内部，由菌丝编织床榻）、鳄鱼魔物（居住在沼泽边缘的洞穴里，铺有干草），宿舍区设公共洗浴池（使用沼泽过滤水）等。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 产业与配套</strong></p>
+                                <p class="text-gray-500 text-sm">药材加工坊（由毒蘑菇魔物炼制疗伤药、解毒剂，供应全地下城）、编织工坊（利用水生植物编织篮子、衣物）、"沼泽茶馆"（提供菌菇茶、沼泽果汁，有清热祛湿功效）、医疗站（处理沼泽地常见的外伤、中毒）。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>鱼人、蘑菇魔物、菌丝魔物、昆虫魔物等。</p>
+                            <p class="mb-4"><strong>联动：</strong>沼泽地的暗河连通第三层盐矿与第五层地下湖，形成"水循环系统"；沼泽产生的沼气经管道引至第二层酒馆，作为燃料（点燃后呈蓝色火焰，无异味）；部分菌菇根系深入第六层地热区，形成"热泉菌菇"（口感更鲜嫩，药用价值更高）。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 06",
+                        title: "第六层：晶湖温泉",
+                        core: "地下湖·休闲疗养中心——魔物的度假疗养区",
+                        image: "第六层 晶湖温泉.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">魔物的"度假疗养区"，地下湖与地热结合，兼具休闲、疗养、水产养殖功能，温暖舒适的环境适配所有种族魔物。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>巨型地下湖（面积约5万㎡，最深处50米），湖水清澈见底，湖底布满发光水晶（提供照明），湖岸线曲折，形成多个天然港湾；西侧区域地热涌动，形成多处温泉池（水温38-45℃），蒸汽缭绕，岩壁覆盖苔藓（可入药）。</p>
+                                <p class="mt-2"><strong>温度：</strong>湖区26℃，温泉区30-40℃，整体温暖湿润，空气清新。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心资源：</strong>地下湖鱼类（肉质鲜美，富含魔力）、温泉矿物质（硫磺、矿物质，有疗养功效）、湖底水晶（低纯度魔力水晶，可用于装饰/低级魔法道具）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 温泉疗养区</strong></p>
+                                <p class="text-gray-500 text-sm">西侧温泉群，分多个主题池——"硫磺池"（缓解肌肉酸痛）、"水晶池"（湖底水晶释放微弱魔力，滋养身体）、"静音池"（有隔音魔法）、"亲子池"（水温较低，适合幼崽魔物），配备休息亭（提供温泉茶、水果）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 水产养殖区</strong></p>
+                                <p class="text-gray-500 text-sm">湖湾区域养殖鱼类、贝类（供应各层厨房与第二层集市），设"捕鱼码头"（木质结构，配备渔网与钓鱼台）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 魔物宿舍区</strong></p>
+                                <p class="text-gray-500 text-sm">湖岸东侧的石质房屋（防潮防腐），适配喜水/喜暖种族——人鱼魔物（房屋带水下入口）、部分鸟类魔物（房屋建在高处石崖，视野开阔），宿舍区设"亲水露台"（供魔物休憩、钓鱼）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 休闲配套</strong></p>
+                                <p class="text-gray-500 text-sm">"湖景餐厅"（主打全鱼宴、温泉煮食材）、"游船租赁"（木质小船，供魔物在湖中游览）、"疗养中心"（由高阶牧师魔物坐诊，利用温泉与药材治疗慢性病）。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>人鱼魔物、鸟类魔物、疗养中心医护人员、水产养殖员。</p>
+                            <p class="mb-4"><strong>联动：</strong>地热来自第七层熔岩区，湖水被加热后形成温泉；湖底暗河连通第五层沼泽（补充水源）与第九层寒冰湖（调节水温，避免过热）；温泉蒸汽上升至第二层，为酒馆提供温泉酒酿造的蒸汽资源。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 07",
+                        title: "第七层：熔岩核心",
+                        core: "高温产业区·锻造与能源中心——地下城的工业心脏",
+                        image: "第七层 熔岩核心.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">地下城的"工业心脏"，地热与熔岩形成高温环境，兼具武器锻造、能源供应、食材加工功能，高温环境适配耐火型魔物。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>巨型熔岩洞窟，中央是流动的熔岩湖（面积约5万㎡，岩浆呈红色，翻滚冒泡），岩壁被熔岩烤得通红，布满火山岩（多孔、耐高温），部分区域为冷却的黑曜石平台（改造为工坊/居住区），空气灼热，弥漫硫磺味（经通风管道排出）。</p>
+                                <p class="mt-2"><strong>温度：</strong>熔岩湖周边60-80℃，黑曜石平台区40-50℃，需耐火能力或魔法防护才能长时间停留。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心资源：</strong>熔岩铁（高纯度铁矿，可炼制顶级武器/armor）、硫磺矿（燃料/药材）、火焰水晶（富含火元素魔力，可作为魔法核心）、火山灰（可用于制作耐火材料）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 巨型锻造区</strong></p>
+                                <p class="text-gray-500 text-sm">黑曜石平台上的核心设施，包含10座"熔岩熔炉"（直接引入熔岩作为燃料，温度可达3000℃）、"铁匠铺集群"，打造武器、铠甲、工具、建筑材料（如耐火砖），产品供应魔王军与各层需求。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 地下城厨房</strong></p>
+                                <p class="text-gray-500 text-sm">锻造区东侧，巨型烤炉（以熔岩余热加热，可烤制巨型魔物肉、菌菇、鱼类）、蒸煮房（利用熔岩蒸汽蒸煮食物），是地下城最大的集中厨房，每日为各层魔物供应热食（通过保温传送带输送）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 魔物宿舍区</strong></p>
+                                <p class="text-gray-500 text-sm">远离熔岩湖的冷却岩穴，适配耐火种族——火元素魔物（居住在小型熔岩洞穴中）、矮人铁匠（居住在石砌房屋，配备降温魔法阵）、恶魔（居住在带火焰装饰的石室），宿舍区设"冷却池"（引入第五层湖水，用于降温消暑）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 能源与配套</strong></p>
+                                <p class="text-gray-500 text-sm">"魔力转换站"（将火焰水晶的火元素魔力转换为通用魔力，供应各层魔法设施）、"耐火材料工坊"（利用火山灰与熔岩黏土制作耐火砖、防火服）、"火焰酒馆"（提供高温烤食与火焰酒，仅耐火魔物可进入）。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>火元素魔物、矮人铁匠、恶魔铁匠、火山魔物（如熔岩蜥蜴）。</p>
+                            <p class="mb-4"><strong>联动：</strong>熔岩湖的地热加热第六层湖水，形成温泉；锻造区的废弃矿渣经冷却后，送至第四层作为盐矿开采的支撑材料；火焰水晶的魔力经管道输送至第一层，为传送台/召唤台供能。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 08",
+                        title: "第八层：水晶矿脉",
+                        core: "魔力核心区·资源战略层——地下城的魔力之源",
+                        image: "第八层 水晶矿脉.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">地下城的"魔力之源"，富含高纯度魔力水晶，兼具采矿、魔力储备、高阶魔物居住功能，高魔力环境适配魔法型魔物。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>晶簇洞窟，岩壁、地面、天花板布满各类水晶（蓝水晶、紫水晶、粉水晶等），晶体折射光线，形成七彩光晕，部分水晶柱高数十米，内部蕴含流动的魔力（肉眼可见），空气稀薄但魔力充沛，呼吸可滋养魔法体质。</p>
+                                <p class="mt-2"><strong>温度：</strong>恒温18℃，凉爽干燥，魔力浓度越高的区域温度越低。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心资源：</strong>魔力水晶（高纯度，可作为魔法道具核心、能源储备、修炼辅助）、水晶矿（加工为饰品/魔法阵材料）、魔力矿石（可提炼液态魔力）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 水晶采矿区</strong></p>
+                                <p class="text-gray-500 text-sm">洞窟深处的矿脉带，由"水晶魔物"负责开采（采用魔法剥离法，避免破坏水晶纯度），开采出的水晶经初步提纯后，分为三类——战略级（供应魔王与高阶魔物）、工业级（供应各层魔法设施）、商业级（送至第二层集市售卖）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 魔力储备库</strong></p>
+                                <p class="text-gray-500 text-sm">洞窟中央的巨型水晶石室，储存高纯度魔力水晶与液态魔力，由"水晶守卫"（水晶魔物进化体）与魔法结界双重守护，是地下城的能源核心，紧急时刻可释放大量魔力激活全层防御阵。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 高阶魔物居住区</strong></p>
+                                <p class="text-gray-500 text-sm">水晶簇环绕的独立石室，每间均镶嵌天然水晶柱（提供持续魔力滋养），适配魔法型高阶种族——巫妖（石室设魔法实验室，内置水晶实验台与魔力隔离罩）、水晶魔物（居住在巨型水晶内部，与矿脉相连）、高阶精灵（房屋由水晶与藤蔓编织，兼具自然与魔法气息）、符文魔导师（石室墙面刻满魔法符文，可随时推演法术）。居住区配套"魔力冥想室"（集体冥想空间，水晶阵放大魔力浓度）、"水晶茶馆"（供应浸泡魔力水晶的茶饮，辅助修炼）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 魔法加工工坊</strong></p>
+                                <p class="text-gray-500 text-sm">采矿区西侧，由宝石地精与水晶魔物合作，将商业级水晶加工为魔法饰品（如魔力项链、防御耳环）、魔法阵核心部件、水晶卷轴（储存法术），产品经跨层传送带送至第二层集市与各层魔法设施维护处。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>水晶魔物、宝石地精、巫妖、高阶精灵、符文魔导师、水晶守卫。</p>
+                            <p class="mb-4"><strong>联动：</strong>水晶矿脉的魔力渗透至上层，滋养第四层的药用菌菇（提升药效）；部分水晶矿脉与各层区相连，形成"元素过渡带"（产出特定属性魔力水晶，兼具元素与魔力特性）；魔力储备库的多余魔力，经管道分流至第一层传送台、召唤台，以及各层魔法设施，构成地下城魔力网络。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 09",
+                        title: "第九层：寒冰深湖",
+                        core: "极寒过渡层·深渊前哨——地下城的最后防线",
+                        image: "第九层 寒冰深湖.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">连接深渊的"极寒门户"，寒冰与深湖交织，兼具防御、养殖、居住功能，极寒环境适配耐寒型魔物，也是地下城的最后一道战略防线。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>巨型寒冰洞窟，岩壁与地面覆盖厚达数米的永冻冰层，部分区域冰柱交错形成冰林（冰柱含魔力，泛着淡蓝色寒光）；中央是"幽寒深湖"（面积约2万㎡，湖水因极寒呈半凝固状态，湖底连通深渊），湖面漂浮薄冰，边缘有冰洞（通往湖底）；洞窟北侧为"冰原区"（平坦冰面，覆盖积雪），南侧为"冰窟群"（天然冰洞改造为居住/设施区）。</p>
+                                <p class="mt-2"><strong>温度：</strong>冰原区-20℃，冰窟区-10℃，深湖周边-5℃，空气干燥寒冷，呼出气息凝结为白雾，冰层下蕴含微弱寒气魔力。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心资源：</strong>冰魄石（蕴含寒气魔力，可制作冰系魔法道具、降温设备）、寒铁（冰层下的铁矿，质地坚硬，耐寒性极强，可炼制防冻武器/铠甲）、深湖冷水鱼（适应极寒环境，肉质紧实，富含寒气能量）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 幽寒深湖养殖区</strong></p>
+                                <p class="text-gray-500 text-sm">由"冰海魔物"负责，养殖冷水鱼、冰虾、雪蟹（供应各层厨房，尤其是第六层熔岩区，可中和高温食物的燥热），设"冰制捕捞码头"（由冰魄石加固，防止融化），捕捞工具为寒铁打造（防冻裂）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 魔物宿舍区</strong></p>
+                                <p class="text-gray-500 text-sm">南侧冰窟群，冰窟内壁镶嵌冰魄石（释放温和寒气，维持恒温），适配耐寒种族——冰元素魔物（居住在冰窟深处的冰核中）、雪怪（居住在铺有兽皮的大型冰窟，群居）、冰霜巨人（居住在独立巨型冰窟，内设冰制家具）等。宿舍区设"暖泉室"（引入第五层温泉水，加热后形成小型暖池，供魔物取暖）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 防御工事</strong></p>
+                                <p class="text-gray-500 text-sm">深湖底部设"深渊结界"（由魔王亲自布下，阻止深渊魔物无序溢出，同时允许己方魔物通行，需要许可）</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 生活与产业配套</strong></p>
+                                <p class="text-gray-500 text-sm">"冰洋酒馆"（供应热饮、烤冷水鱼、冻浆果酒）、"冰魄石加工坊"（由冰元素魔物与地精合作，制作冰系饰品、降温魔法阵部件）、"雪具工坊"（利用兽皮与寒铁，制作防冻衣物、雪橇、冰镐）。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>冰元素魔物、雪怪、冰霜巨人、冰鱼魔物。</p>
+                            <p class="mb-4"><strong>联动：</strong>深湖连通第五层地下湖，形成"冷暖水循环"（第九层冷水作为水冷对第七层工业设施进行冷却后注入深湖，部分被冷却为冷水，回流至第九层，调节湖水温度）；冰魄石加工产生的冰屑，经管道送至第二层酒馆，用于冰镇饮品；冷气经魔法传送阵，提供魔王城全域制冷。</p>
+                        `
+                    },
+                    {
+                        subTitle: "Floor 10",
+                        title: "第十层：扭曲裂隙",
+                        core: "混沌过渡层·生态交融带——寒冰与深渊间的混沌缓冲层",
+                        image: "第十层 扭曲裂隙.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">寒冰区与深渊之间的"混沌缓冲层"，因深渊能量渗透，形成地貌、温度、魔力紊乱的复合生态，兼具实验、狩猎、特殊养殖功能，适配混沌型/适应力极强的魔物。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>天然裂隙与人工改造结合，洞窟结构扭曲（通道时宽时窄，部分区域空间折叠），岩壁一半是寒冰（覆盖冰魄石），一半是熔岩岩（泛着红光），地面交错分布热泉（水温40℃）与冰潭（水温-15℃），空气弥漫混沌魔力（肉眼可见的彩色气流）。</p>
+                                <p class="mt-2"><strong>温度：</strong>区域差异极大，热泉周边30℃，冰潭周边-15℃，无固定恒温，魔力流动时温度会剧烈波动。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心资源：</strong>混沌矿石（蕴含冰火双属性魔力，可制作复合型魔法道具）、扭曲菌丝（混沌菌菇的菌丝，可炼制抗魔力紊乱的药剂）、裂隙水晶（空间属性魔力水晶，可用于空间魔法研究）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <div class="facility-item">
+                                <p><strong>1. 混沌实验区</strong></p>
+                                <p class="text-gray-500 text-sm">由高阶巫妖与混沌魔物主导，设"魔力融合实验室"（研究各种法术并制作法术卷轴）"空间魔法工坊"（以裂隙水晶为核心，制作次元袋、空间传送卷轴），实验区设多重隔离结界（防止魔力泄漏引发灾难）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>2. 狩猎场</strong></p>
+                                <p class="text-gray-500 text-sm">扭曲裂隙的开阔区域，放养从深渊捕获的低阶混沌魔物和野兽供地下城魔物（尤其是斗技场选手）狩猎训练，获取食材与魔物素材，狩猎场设"安全观测台"（由水晶魔导师看管，可随时启动结界救援）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>3. 特殊魔物宿舍区</strong></p>
+                                <p class="text-gray-500 text-sm">裂隙两侧的稳定石室，适配混沌型/适应力强的种族——混沌魔物（居住在魔力紊乱的石室，与混沌能量共鸣）、空间魔物（居住在带裂隙水晶的石室，滋养空间魔力）。宿舍区设"魔力稳定器"（由水晶与冰魄石共同驱动，避免魔力紊乱影响休息）。</p>
+                            </div>
+                            <div class="facility-item">
+                                <p><strong>4. 应急补给站</strong></p>
+                                <p class="text-gray-500 text-sm">连接第八层与第十层（深渊），提供防冻/防热装备、抗混沌魔力药剂、食物与水源，由地精与混沌魔物共同管理，是前往深渊的必经补给点。作为深渊探索的前哨站。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-2"><strong>常驻魔物：</strong>混沌魔物、高阶巫妖、空间魔物。</p>
+                            <p class="mb-4"><strong>联动：</strong>热泉源自第六层熔岩区的地热，冰潭由第八层寒冰区延伸形成，天然构成"冰火交融带"；混沌矿石经加工后，送至第七层水晶矿脉的魔力储备库，作为特殊魔力能源；扭曲菌丝炼制的药剂，供应全地下城，尤其是前往深渊的魔物。</p>
+                        `
+                    },
+                    {
+                        subTitle: "The Abyss",
+                        title: "终层：深渊入口",
+                        core: "禁区·最终连接层——魔王城地下城的终点",
+                        image: "终层 深渊入口.png",
+                        fullContent: `
+                            <div class="section-title">核心定位</div>
+                            <p class="mb-4">魔王城地下城的"终点"，连接深渊的核心通道，以下部分几乎未开发。</p>
+                            
+                            <div class="section-title mt-6">环境与温度</div>
+                            <div class="info-block">
+                                <p><strong>环境：</strong>巨型穹顶洞窟（高100米，直径300米），中央是"深渊裂隙"（直径50米的黑色能量漩涡，通往深渊维度），裂隙周围漂浮着破碎的岩石（被深渊魔力侵蚀，呈暗紫色），几乎无光，空气压抑，深渊魔力浓度极高（低阶魔物进入会被侵蚀变异），地面布满暗紫色魔力纹路（与深渊裂隙相连）。</p>
+                                <p class="mt-2"><strong>温度：</strong>恒定-30℃，但深渊魔力带来的"精神寒意"远超物理寒冷，无高阶魔力防护者会陷入恐惧。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">矿物与基础</div>
+                            <p class="mb-4"><strong>核心资源：</strong>深渊结晶（深渊魔力凝结的晶体，蕴含极强黑暗魔力，是顶级魔法道具核心）、深渊矿石（可炼制黑暗属性武器/铠甲，韧性与魔力传导性极强）。</p>
+                            
+                            <div class="section-title mt-6">核心设施</div>
+                            <p class="mb-2 text-gray-500"><em>几乎未作开发。</em></p>
+                            <div class="facility-item">
+                                <p><strong>深渊结界台</strong></p>
+                                <p class="text-gray-500 text-sm">环绕深渊裂隙的环形平台，设9座"结界柱"（由深渊结晶与魔力水晶共同打造），由魔王与高阶巫妖共同维护，可调节深渊裂隙的开合大小，阻止深渊魔物大规模溢出，同时筛选允许进入地下城的深渊魔物（如契约魔物、归顺的高阶深渊生物）。</p>
+                            </div>
+                            
+                            <div class="section-title mt-6">生态与联动设计</div>
+                            <p class="mb-4"><strong>常驻魔物：</strong>？？？</p>
+                        `
+                    }
+                ];
+
+                const currentSlide = computed(() => slides[currentIndex.value]);
+
+                const getImagePath = (filename) => {
+                    return `./assets/${filename}`;
+                };
+                
+                const enterSite = () => {
+                    showIntro.value = false;
+                    setTimeout(() => {
+                        animateSlide(null); 
+                    }, 500);
+                };
+
+                const animateSlide = (direction) => {
+                    if (isAnimating.value) return;
+                    isAnimating.value = true;
+
+                    gsap.to(imageContainer.value, {
+                        opacity: 0,
+                        scale: 0.9,
+                        duration: 0.3,
+                        onComplete: () => {
+                            if (direction === 'next' && currentIndex.value < slides.length - 1) {
+                                currentIndex.value++;
+                            } else if (direction === 'prev' && currentIndex.value > 0) {
+                                currentIndex.value--;
+                            } else if (typeof direction === 'number') {
+                                currentIndex.value = direction;
+                            }
+                            
+                            if (scrollContainer.value) scrollContainer.value.scrollTop = 0;
+
+                            nextTick(() => {
+                                gsap.to(imageContainer.value, {
+                                    opacity: 1,
+                                    scale: 1,
+                                    duration: 0.5,
+                                    ease: "power2.out",
+                                    onComplete: () => { isAnimating.value = false; }
+                                });
+                            });
+                        }
+                    });
+                };
+
+                const nextSlide = () => animateSlide('next');
+                const prevSlide = () => animateSlide('prev');
+                const goToSlide = (index) => animateSlide(index);
+
+                const handleWheel = (e) => {
+                    if (showIntro.value) return;
+                    if (Math.abs(e.deltaY) < 30 || isAnimating.value) return;
+                    if (e.deltaY > 0) nextSlide();
+                    else prevSlide();
+                };
+
+                onMounted(() => {
+                    window.addEventListener('wheel', handleWheel);
+                });
+
+                onUnmounted(() => {
+                    window.removeEventListener('wheel', handleWheel);
+                });
+
+                return {
+                    showIntro,
+                    enterSite,
+                    currentIndex,
+                    slides,
+                    currentSlide,
+                    nextSlide,
+                    prevSlide,
+                    goToSlide,
+                    getImagePath,
+                    imageContainer,
+                    scrollContainer
+                };
+            }
+        }).mount('#app');
+
+        // Global Swipe Support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleGesture();
+        });
+
+        function handleGesture() {
+            if (touchEndX < touchStartX - 50) {
+                // Swipe Left -> Next
+                 document.querySelector('.fa-arrow-right')?.parentElement.click();
+            }
+            if (touchEndX > touchStartX + 50) {
+                // Swipe Right -> Prev
+                document.querySelector('.fa-arrow-left')?.parentElement.click();
+            }
+        }
+    </script>
+</body>
+</html>

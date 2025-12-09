@@ -1,0 +1,50 @@
+{
+    "title": "夜十字魔王城",
+    "description": "一座被风暴包围的废墟城，唯有召唤台完好无损。探索魔王城的秘密，管理燃素、电晶体与魔力，重建辉煌。",
+    "tags": [
+        "世界观设定",
+        "交互式展示",
+        "奇幻"
+    ],
+    "status": "beta",
+    "order": 10,
+    "primary_category": "neta",
+    "secondary_categories": [
+        "interactive-visuals"
+    ],
+    "version": "1.0.0",
+    "last_updated": "2025-12-09",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2025-12-09",
+            "changes": [
+                "初始版本导入"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "沉浸式滚动交互",
+        "响应式设计",
+        "详细的世界观设定"
+    ],
+    "dependencies": [
+        "Vue 3",
+        "TailwindCSS",
+        "GSAP",
+        "FontAwesome"
+    ],
+    "creation_date": "2025-12-09"
+}
