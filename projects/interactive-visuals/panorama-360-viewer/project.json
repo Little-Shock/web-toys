@@ -1,0 +1,59 @@
+{
+    "title": "环游片刻",
+    "description": "一个沉浸式 360° 全景照片浏览器，支持拖拽导入多张全景图、场景缩略带、自动巡航、全屏和移动端手势/感应浏览。",
+    "tags": [
+        "3d-interaction",
+        "touch-interaction",
+        "mobile-optimized"
+    ],
+    "status": "stable",
+    "order": 3,
+    "primary_category": "interactive-visuals",
+    "secondary_categories": [
+        "utility-tools"
+    ],
+    "version": "1.0.0",
+    "creation_date": "2026-04-22",
+    "last_updated": "2026-04-22",
+    "changelog": [
+        {
+            "version": "1.0.0",
+            "date": "2026-04-22",
+            "changes": [
+                "创建沉浸式 360° 全景浏览单页",
+                "支持拖拽、粘贴和多文件导入全景图",
+                "加入场景缩略带、自动巡航、全屏和移动端手势支持",
+                "提供三个内置演示场景，方便无图时直接体验"
+            ]
+        }
+    ],
+    "compatibility": {
+        "mobile": true,
+        "desktop": true,
+        "min_screen_width": 320,
+        "performance_impact": "medium"
+    },
+    "author": {
+        "name": "Little Shock Team",
+        "contact": "https://waytoagi.feishu.cn/wiki/UaxewECiHiVBmykypR0c48FhnFd",
+        "creator": "Little-Shock",
+        "contributors": []
+    },
+    "features": [
+        "拖拽导入多张全景图",
+        "场景缩略卡片切换",
+        "自动巡航",
+        "滚轮与双指缩放",
+        "全屏查看",
+        "键盘快捷操作",
+        "移动端方向感应浏览",
+        "粘贴图片导入",
+        "演示场景占位"
+    ],
+    "dependencies": [
+        "Three.js",
+        "HTML5",
+        "CSS3",
+        "JavaScript"
+    ]
+}
